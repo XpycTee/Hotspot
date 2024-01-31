@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Авторизация
+{% endblock %}
+
+{% block content %}
+<form name="sendin" action="{{ link_login_only }}" method="post" style="display:none">
+    <input type="hidden" name="username" value="{{ username }}" />
+    <input type="hidden" name="password" value="{{ password }}" />
+    <input type="hidden" name="dst" value="{{ link_orig }}" />
+    <input type="hidden" name="popup" value="true" />
+</form>
+<script>
+    document.sendin.submit();
+</script>
+{% endblock %}

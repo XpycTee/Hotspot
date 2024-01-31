@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Авторизация
+{% endblock %}
+
+{% block content %}
+<form action="/auth" method="post">
+
+    <label for="code">Пожалуйста, введите код полученный в СМС</label>
+    <input type="tel" id="code" name="code" maxlength="4" placeholder="Код из СМС">
+
+    <input type="submit" value="Подтвердить код">
+
+    <label id="modal_trigger" class="text-center mt-2 link-line" for="modal-trigger">Политика конфиденциальности</label>
+</form>
+{% endblock %}
