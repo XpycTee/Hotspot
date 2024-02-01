@@ -108,6 +108,6 @@ async def auth():
         db_client.expiration = int(time.time()) + 24*60*60  # 24 Hours
         db.session.commit()
     else:
-        session['error'] = {"code": 400, "message": "Неверный код"}
+        session['error'] = "Неверный код"
 
     return redirect(url_for('auth.login'), 307)
