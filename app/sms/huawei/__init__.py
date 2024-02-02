@@ -1,11 +1,14 @@
 import logging
+from abc import ABC
 
 from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
+from ...sms import BaseSender
 
-class HuaweiSMSSender:
+
+class HuaweiSMSSender(BaseSender, ABC):
     """
     HuaweiSMSSender class for sending SMS using Huawei SMS gateway.
 
@@ -32,7 +35,7 @@ class HuaweiSMSSender:
         port = str(443) if https else str(80) if not port else str(port)
         self._url = f"{scheme}://{username}:{password}@{hostname}:{port}/"
 
-    def sms_send(self, recipient: str, message: str):
+    def sms_send(self, recipient, message):
         with Connection(self._url) as connection:
             client = Client(connection)
 

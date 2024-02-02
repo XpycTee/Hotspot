@@ -1,13 +1,15 @@
 import base64
 import json
 import logging
+from abc import ABC
 
 from urllib import request
-from urllib import parse
 from urllib import error
 
+from ...sms import BaseSender
 
-class MikrotikSMSSender:
+
+class MikrotikSMSSender(BaseSender, ABC):
     """
     A class for sending SMS using Mikrotik RouterOS API.
 
@@ -45,7 +47,7 @@ class MikrotikSMSSender:
         with request.urlopen(req, data=json.dumps(data).encode() if data else None) as res:
             return json.loads(res.read())
 
-    def sms_send(self, recipient: str, message: str):
+    def sms_send(self, recipient, message):
         data = {
             "phone-number": recipient,
             "message": message,

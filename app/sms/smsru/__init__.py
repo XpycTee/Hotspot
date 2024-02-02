@@ -1,9 +1,12 @@
 import logging
+from abc import ABC
 
 from smsru_api import SmsRu
 
+from ...sms import BaseSender
 
-class SMSRUSender:
+
+class SMSRUSender(BaseSender, ABC):
     """
     SMSRUSender class for sending SMS using the SmsRu API.
 
@@ -21,7 +24,7 @@ class SMSRUSender:
     def __init__(self, api_key: str):
         self._api = SmsRu(api_key)
 
-    def sms_send(self, recipient: str, message: str):
+    def sms_send(self, recipient, message):
         if self._api.send(recipient, message=message).get('status') == "OK":
             logging.info('SMS was send successfully')
         else:
