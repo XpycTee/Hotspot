@@ -1,7 +1,10 @@
 import base64
 import json
+import logging
+
 from urllib import request
 from urllib import parse
+from urllib import error
 
 
 class MikrotikSMSSender:
@@ -22,23 +25,35 @@ class MikrotikSMSSender:
         sender = MikrotikSMSSender('example.com', 'username', 'password')
         sender.sms_send('+1234567890', 'Test message')
     """
-    def __init__(self, host: str, user: str, password: str, port: str | int = None, https: bool = False):
+    def __init__(self, host: str, user: str, password: str, port: str | int = None, https: bool = False, interface: str = "lte1"):
         scheme = 'https' if https else 'http'
         hostname = host
         port = str(443) if https else str(80) if not port else str(port)
-        self._path = '/rest/tool/sms'
+        self._path = '/rest/tool/sms/send'
         self._base64_auth = base64.b64encode(f'{user}:{password}'.encode('utf-8')).decode('utf-8')
         self._url = f"{scheme}://{hostname}:{port}"
+        self._interface = interface
 
-    def _request(self, path=None, data=None):
-        if path is None:
-            path = self._path
+    def _request(self, data=None, path=None):
+        path = path if path is not None else self._path
+        req_url = self._url + path
+        headers = {
+            "Authorization": f"Basic {self._base64_auth}",
+            "Content-type": "application/json"
+        }
+        req = request.Request(req_url, headers=headers)
+        with request.urlopen(req, data=json.dumps(data).encode() if data else None) as res:
+            return json.loads(res.read())
 
-        if not data:
-            req = request.Request(self._url + path)
-        else:
-            encoded_data = parse.urlencode(data).encode()
-            req = request.Request(self._url + path, data=encoded_data)
-        req.add_header('Authorization', f'Basic {self._base64_auth}')
-        res = request.urlopen(req)
-        return json.loads(res.read())
+    def sms_send(self, recipient: str, message: str):
+        data = {
+            "phone-number": recipient,
+            "message": message,
+            "port": self._interface
+        }
+        try:
+            return self._request(data=data)
+        except error.HTTPError as e:
+            if e.code == 500:
+                res = json.loads(e.read())
+                logging.error(res.get('detail'))
