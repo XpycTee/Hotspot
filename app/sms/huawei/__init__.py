@@ -1,5 +1,5 @@
 import logging
-from abc import ABC
+from urllib.parse import urlparse
 
 from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
@@ -8,34 +8,31 @@ from huawei_lte_api.enums.client import ResponseEnum
 from ...sms import BaseSender
 
 
-class HuaweiSMSSender(BaseSender, ABC):
+class HuaweiSMSSender(BaseSender):
     """
     HuaweiSMSSender class for sending SMS using Huawei SMS gateway.
 
     Args:
-        host (str): The hostname of the Huawei SMS gateway.
-        username (str): The username for authentication.
-        password (str): The password for authentication.
-        port (str | int, optional): The port number for the connection. Defaults to None.
-        https (bool, optional): Flag to indicate whether to use HTTPS. Defaults to False.
-
-    Attributes:
-        _url (str): The constructed URL for the Huawei SMS gateway API.
-
-    Methods:
-        sms_send(recipient: str, message: str): Sends an SMS to the specified recipient with the given message.
+        config (str): The configuration URL for the Huawei SMS gateway API.
 
     Example:
-        sender = HuaweiSMSSender('example.com', 'username', 'password')
-        sender.sms_send('+1234567890', 'Test message')
+        sender = HuaweiSMSSender('http://username:password@192.168.8.1')
+        sender.send_sms('+1234567890', 'Test message')
     """
-    def __init__(self, host: str, username: str, password: str, port: str | int = None, https: bool = False):
-        scheme = 'https' if https else 'http'
-        hostname = host
-        port = str(443) if https else str(80) if not port else str(port)
-        self._url = f"{scheme}://{username}:{password}@{hostname}:{port}/"
+    def __init__(self, config):
+        url_parsed = urlparse(config)
+        is_correct = all([
+                url_parsed.scheme,
+                url_parsed.username,
+                url_parsed.password,
+                url_parsed.netloc,
+                url_parsed.path])
+        if not is_correct:
+            raise AttributeError
 
-    def sms_send(self, recipient, message):
+        self._url = config
+
+    def send_sms(self, recipient, message):
         with Connection(self._url) as connection:
             client = Client(connection)
 

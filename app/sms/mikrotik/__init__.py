@@ -1,40 +1,42 @@
 import base64
 import json
 import logging
-from abc import ABC
 
 from urllib import request
 from urllib import error
+from urllib.parse import urlparse
 
 from ...sms import BaseSender
 
 
-class MikrotikSMSSender(BaseSender, ABC):
+class MikrotikSMSSender(BaseSender):
     """
     A class for sending SMS using Mikrotik RouterOS API.
 
     Args:
-        host (str): The hostname or IP address of the Mikrotik router.
-        user (str): The username for authentication.
-        password (str): The password for authentication.
-        port (str | int, optional): The port number for the connection. Defaults to 443 for HTTPS and 80 for HTTP.
-        https (bool, optional): Indicates whether to use HTTPS. Defaults to False.
-
-    Methods:
-        _request(self, path=None, data=None): Sends a request to the Mikrotik router with the specified path and data.
+        config (str): The URL for the Mikrotik router in the format 'http[s]://username:password@hostname[:port]/[?query]', where scheme is either 'http' or 'https', username and password are for authentication, hostname is the IP address or hostname of the Mikrotik router, port is the port number for the connection, path is the API path, and query is the optional interface parameter.
 
     Example:
-        sender = MikrotikSMSSender('example.com', 'username', 'password')
-        sender.sms_send('+1234567890', 'Test message')
+        sender = MikrotikSMSSender('https://username:password@192.168.88.1/[?interface=lte1]')
+        sender.send_sms('+1234567890', 'Test message')
     """
-    def __init__(self, host: str, user: str, password: str, port: str | int = None, https: bool = False, interface: str = "lte1"):
-        scheme = 'https' if https else 'http'
-        hostname = host
-        port = str(443) if https else str(80) if not port else str(port)
+    def __init__(self, config):
+        url_parsed = urlparse(config)
+
+        if not all([url_parsed.scheme, url_parsed.username, url_parsed.password, url_parsed.netloc, url_parsed.path]):
+            raise AttributeError
+
+        self._interface = url_parsed.query.split('=')[1] if url_parsed.query else "lte1"
+
+        username = url_parsed.username
+        password = url_parsed.password
+        scheme = url_parsed.scheme
+        hostname = url_parsed.hostname
+        port = str(443) if scheme == 'https' else str(80) if not url_parsed.port else str(url_parsed.port)
+
         self._path = '/rest/tool/sms/send'
-        self._base64_auth = base64.b64encode(f'{user}:{password}'.encode('utf-8')).decode('utf-8')
+        self._base64_auth = base64.b64encode(f'{username}:{password}'.encode('utf-8')).decode('utf-8')
         self._url = f"{scheme}://{hostname}:{port}"
-        self._interface = interface
 
     def _request(self, data=None, path=None):
         path = path if path is not None else self._path
@@ -47,7 +49,7 @@ class MikrotikSMSSender(BaseSender, ABC):
         with request.urlopen(req, data=json.dumps(data).encode() if data else None) as res:
             return json.loads(res.read())
 
-    def sms_send(self, recipient, message):
+    def send_sms(self, recipient, message):
         data = {
             "phone-number": recipient,
             "message": message,
@@ -56,6 +58,6 @@ class MikrotikSMSSender(BaseSender, ABC):
         try:
             return self._request(data=data)
         except error.HTTPError as e:
-            if e.code == 500:
-                res = json.loads(e.read())
-                logging.error(res.get('detail'))
+            res = json.loads(e.read())
+            logging.error(res.get('detail'))
+            return res

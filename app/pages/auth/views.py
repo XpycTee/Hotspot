@@ -1,9 +1,10 @@
+import logging
 import re
 import time
 from hashlib import md5
 from random import randint
 
-from flask import render_template, request, current_app, redirect, url_for, session
+from flask import render_template, request, current_app, redirect, url_for, session, abort
 
 from . import auth_bp
 from ...database import models, db
@@ -84,8 +85,12 @@ async def code():
     session['code'] = gen_code
     session['phone'] = phone_number
 
-    # TODO use universal handler for sending sms messages
-    print(f"{phone_number}: {gen_code} ваш код WiFi")
+    sender = current_app.config.get('SENDER')
+    result = sender.send_sms(phone_number, f"{gen_code} ваш код WiFi")
+    if 'error' in result:
+        abort(500)
+
+    logging.debug(f"{phone_number}'s code: {gen_code}")
 
     return render_template('code.html')
 

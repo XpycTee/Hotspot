@@ -4,7 +4,6 @@ import time
 
 from gists import str2bool
 
-
 DEBUG = str2bool(os.environ['DEBUG']) if 'DEBUG' in os.environ else False
 
 
@@ -21,9 +20,23 @@ def init():
 
     # Check for required environment variables
     required_env_vars = [
-        'SMSRU_API_KEY'
+        [
+            'SMSRU_SENDER_CFG',
+            'MIKROTIK_SENDER_CFG',
+            'HUAWEI_SENDER_CFG'
+        ],
+        'COMPANY_NAME'
     ]
-    missing_vars = [env_var for env_var in required_env_vars if env_var not in os.environ]
+
+    missing_vars = []
+
+    for env_var in required_env_vars:
+        if isinstance(env_var, list):
+            if not any(key in os.environ for key in env_var):
+                missing_vars.append(env_var)
+        else:
+            if env_var not in os.environ:
+                missing_vars.append(env_var)
 
     # Log an error for missing variables and return False if any are not set
     if missing_vars:
@@ -37,5 +50,6 @@ if __name__ == '__main__':
     if init():
         # START HERE
         from app import create_app
+
         flask_app = create_app()
         flask_app.run(port=3000, debug=DEBUG)

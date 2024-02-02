@@ -1,30 +1,25 @@
 import logging
-from abc import ABC
 
 from smsru_api import SmsRu
 
 from ...sms import BaseSender
 
 
-class SMSRUSender(BaseSender, ABC):
+class SMSRUSender(BaseSender):
     """
     SMSRUSender class for sending SMS using the SmsRu API.
 
     Args:
-        api_key (str): The API key for accessing the SmsRu API.
-
-    Methods:
-        __init__: Initializes the SMSRUSender with the provided API key.
-        sms_send: Sends an SMS to the specified recipient with the given message.
+        config (str): The API key for accessing the SmsRu API.
 
     Example:
         sender = SMSRUSender('your_api_key')
-        sender.sms_send('+1234567890', 'Test message')
+        sender.send_sms('+1234567890', 'Test message')
     """
-    def __init__(self, api_key: str):
-        self._api = SmsRu(api_key)
+    def __init__(self, config):
+        self._api = SmsRu(config)
 
-    def sms_send(self, recipient, message):
+    def send_sms(self, recipient, message):
         if self._api.send(recipient, message=message).get('status') == "OK":
             logging.info('SMS was send successfully')
         else:
