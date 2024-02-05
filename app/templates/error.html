@@ -5,6 +5,9 @@
 {% endblock %}
 
 {% block content %}
-ERROR: {{ code }} - {{ title }}
+<div class="error-container">
+    <div class="error-code">Error {{ code }} - {{ title }}</div>
+    <div class="error-message">{{ description }}</div>
+    <a href="{{ url_for('auth.login') }}" class="back-link">Go Back</a>
+</div>
 {% endblock %}
-

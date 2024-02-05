@@ -11,7 +11,7 @@
     <input type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="Код из СМС">
 
     {% if error %}
-    <div class="error-message">{{ error }}</div>
+    <div class="error-notify">{{ error }}</div>
     {% endif %}
 
     <input type="submit" value="Подтвердить код">
