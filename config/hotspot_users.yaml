@@ -1,7 +1,7 @@
 users:
   guest:
     password: secret
-    delay: 24 # Hours
+    delay: 24h # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
   employee:
     password: supersecret
-    delay: 720 # 30 Days
+    delay: 30d # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.

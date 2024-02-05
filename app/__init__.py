@@ -6,7 +6,7 @@ from app.database import db
 
 from flask import Flask
 
-from config.settings import Config
+from settings import Config
 
 
 def create_app(config_class=Config):
@@ -18,5 +18,6 @@ def create_app(config_class=Config):
 
     app.register_blueprint(auth_bp)
     # Blueprints add here
-
+    with app.app_context():
+        db.create_all()
     return app

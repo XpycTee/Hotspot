@@ -1,7 +1,7 @@
+import datetime
 import hashlib
 import logging
 import re
-import time
 from hashlib import md5
 from random import randint
 
@@ -49,7 +49,7 @@ async def check_authorization():
     mac = session.get('mac')
 
     db_client = models.WifiClient.query.filter_by(mac=mac).first()
-    if db_client and int(time.time()) < db_client.expiration:
+    if db_client and datetime.datetime.now() < db_client.expiration:
         phone = db_client.phone
         phone_number = phone.phone_number
         is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
@@ -134,18 +134,36 @@ async def auth():
 
     if form_code == user_code:
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        now_time = datetime.datetime.now()
         if not db_client:
-            db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=int(time.time()))
+            db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
-            db_client = models.WifiClient(mac=mac, expiration=int(time.time()), staff=is_employee, phone=db_phone)
+            db_client = models.WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
             db.session.add(db_client)
 
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
-        delay = hotspot_user.get('delay')
-        db_client.expiration = int(time.time()) + delay*60*60
+        delay: str = hotspot_user.get('delay')
+
+        time_deltas = {
+            'w': 'weeks',
+            'd': 'days',
+            'h': 'hours',
+            'm': 'minutes',
+            's': 'seconds'
+        }
+        suffix = delay[-1]
+        if suffix.isdigit():
+            db_client.expiration = now_time + datetime.timedelta(hours=int(delay))
+        else:
+            if suffix in time_deltas:
+                amount = int(delay[:-1])
+                db_client.expiration = now_time + datetime.timedelta(**{time_deltas[suffix]: amount})
+            else:
+                abort(500)
+
         db.session.commit()
 
         session['error'] = "Если авторизация не произошла обратитесь в тех.поддержку"
@@ -154,9 +172,9 @@ async def auth():
         session.setdefault('tries', 0)
         session['tries'] += 1
 
-        if session['tries'] > 3:
-            session['error'] = "Неверный код"
-            session.pop('code')
+        if session['tries'] >= 3:
+            session['error'] = "Неверный код, кончились попытки начните заново"
+            session.pop('code')  # Remove code from session
 
             return redirect(url_for('auth.login'), 307)
         else:
