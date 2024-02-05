@@ -29,14 +29,14 @@ class Config:
     sender = senders.get(sender_name)
     SENDER = sender(sender_config)
 
-    with open("config/employees.yaml", "rb") as emp_config_file:
+    with open("employees.yaml", "rb") as emp_config_file:
         file_contents = emp_config_file.read()
     EMPLOYEES = yaml.safe_load(file_contents).get('employees', [])
     EMP_HASH = hashlib.md5(file_contents).hexdigest()
 
-    with open("config/hotspot_users.yaml", "r") as users_config_file:
+    with open("hotspot_users.yaml", "r") as users_config_file:
         HOTSPOT_USERS = yaml.safe_load(users_config_file).get('users', {})
-    with open("config/blacklist.yaml", "r") as bl_config_file:
+    with open("blacklist.yaml", "r") as bl_config_file:
         BLACKLIST = yaml.safe_load(bl_config_file).get('blacklist', [])
 
     COMPANY_NAME = os.environ.get('COMPANY_NAME')

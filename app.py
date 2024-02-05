@@ -2,7 +2,13 @@ import logging
 import os
 import time
 
-from gists import str2bool
+
+def str2bool(string: str | bool) -> bool:
+    if isinstance(string, bool):
+        return string
+    lower_string = string.lower() if isinstance(string, str) else str(string).lower()
+    return lower_string not in ('false', '0', 'no', 'n')
+
 
 DEBUG = str2bool(os.environ['DEBUG']) if 'DEBUG' in os.environ else False
 

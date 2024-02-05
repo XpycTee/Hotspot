@@ -6,7 +6,7 @@ from app.database import db
 
 from flask import Flask
 
-from settings import Config
+from config.settings import Config
 
 
 def create_app(config_class=Config):
