@@ -10,6 +10,10 @@
     <label for="code">Пожалуйста, введите код полученный в СМС</label>
     <input type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="Код из СМС">
 
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% endif %}
+
     <input type="submit" value="Подтвердить код">
 
     <label id="modal_trigger" class="text-center mt-2 link-line" for="modal-trigger">Политика конфиденциальности</label>

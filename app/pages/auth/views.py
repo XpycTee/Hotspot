@@ -76,7 +76,11 @@ async def login():
 
 @auth_bp.route('/code', methods=['POST'])
 async def code():
+    error = session.pop('error', None)
     phone_number = request.form.get('phone')
+    if not phone_number:
+        phone_number = session.get('phone')
+
     phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
     phone_number = re.sub(r'\D', '', phone_number)
 
@@ -92,7 +96,7 @@ async def code():
 
     logging.debug(f"{phone_number}'s code: {gen_code}")
 
-    return render_template('code.html')
+    return render_template('code.html', error=error)
 
 
 @auth_bp.route('/auth', methods=['POST'])
@@ -113,6 +117,15 @@ async def auth():
         db_client.expiration = int(time.time()) + 24*60*60  # 24 Hours
         db.session.commit()
     else:
-        session['error'] = "Неверный код"
+        if 'tries' not in session:
+            session['tries'] = 0
+        session['tries'] += 1
 
-    return redirect(url_for('auth.login'), 307)
+        if session['tries'] > 3:
+            session['error'] = "Неверный код"
+            session.pop('code')
+
+            return redirect(url_for('auth.login'), 307)
+        else:
+            session['error'] = "Неверный код, попробуйте еще раз"
+            return redirect(url_for('auth.code'), 307)
