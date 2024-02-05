@@ -28,12 +28,13 @@ def octal_string_to_bytes(oct_string):
 
 @auth_bp.before_request
 async def update_employees():
-    _employees_hash = current_app.config.get('EMP_HASH')
+    employees_hash = current_app.config.get('EMP_HASH')
     with open("config/employees.yaml", "rb") as emp_config_file:
         file_contents = emp_config_file.read()
-        if _employees_hash != hashlib.md5(file_contents).hexdigest():
-            current_app.config['EMPLOYEES'] = yaml.safe_load(file_contents).get('employees', [])
-            current_app.config['EMP_HASH'] = hashlib.md5(file_contents).hexdigest()
+    new_hash = hashlib.md5(file_contents).hexdigest()
+    if employees_hash != new_hash:
+        current_app.config['EMPLOYEES'] = yaml.safe_load(file_contents).get('employees', [])
+        current_app.config['EMP_HASH'] = new_hash
 
 
 @auth_bp.before_request
@@ -57,7 +58,7 @@ async def check_authorization():
         username = 'employee' if is_employee else 'guest'
         password = current_app.config['HOTSPOT_USERS'][username].get('password')
 
-        link_login_only = session.get('link-login-only').replace('https', 'http')
+        link_login_only = session.get('link-login-only')
         link_orig = session.get('link-orig')
 
         chap_id = session.get('chap-id')
@@ -73,7 +74,7 @@ async def check_authorization():
                 'sendin.html',
                 username=username,
                 password=pass_hash,
-                link_login_only=link_login_only,
+                link_login_only=link_login_only.replace('https', 'http'),
                 link_orig=link_orig
             )
 
