@@ -1,9 +1,12 @@
+import hashlib
 import logging
 import re
 import time
 from hashlib import md5
 from random import randint
 
+import jmespath
+import yaml
 from flask import render_template, request, current_app, redirect, url_for, session, abort
 
 from . import auth_bp
@@ -24,6 +27,16 @@ def octal_string_to_bytes(oct_string):
 
 
 @auth_bp.before_request
+async def update_employees():
+    _employees_hash = current_app.config.get('EMP_HASH')
+    with open("config/employees.yaml", "rb") as emp_config_file:
+        file_contents = emp_config_file.read()
+        if _employees_hash != hashlib.md5(file_contents).hexdigest():
+            current_app.config['EMPLOYEES'] = yaml.safe_load(file_contents).get('employees', [])
+            current_app.config['EMP_HASH'] = hashlib.md5(file_contents).hexdigest()
+
+
+@auth_bp.before_request
 async def check_authorization():
     if not session:
         session['chap-id'] = request.form.get('chap-id')
@@ -36,8 +49,14 @@ async def check_authorization():
 
     db_client = models.WifiClient.query.filter_by(mac=mac).first()
     if db_client and int(time.time()) < db_client.expiration:
-        username = current_app.config.get('HOTSPOT_USER')
-        password = current_app.config.get('HOTSPOT_PASS')
+        phone = db_client.phone
+        phone_number = phone.phone_number
+        is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
+                                      current_app.config['EMPLOYEES'])
+
+        username = 'employee' if is_employee else 'guest'
+        password = current_app.config['HOTSPOT_USERS'][username].get('password')
+
         link_login_only = session.get('link-login-only').replace('https', 'http')
         link_orig = session.get('link-orig')
 
@@ -84,6 +103,9 @@ async def code():
     phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
     phone_number = re.sub(r'\D', '', phone_number)
 
+    if phone_number in current_app.config['BLACKLIST']:
+        abort(403)
+
     gen_code = str(randint(1000, 9999))
 
     session['code'] = gen_code
@@ -106,22 +128,29 @@ async def auth():
     form_code = int(request.form.get('code'))
     user_code = int(session.get('code'))
 
+    is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
+                                  current_app.config['EMPLOYEES'])
+
     if form_code == user_code:
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
         if not db_client:
             db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=int(time.time()))
             db.session.add(db_phone)
             db.session.commit()
-            db_client = models.WifiClient(mac=mac, expiration=int(time.time()), staff=False, phone_id=db_phone.id)
+            db_client = models.WifiClient(mac=mac, expiration=int(time.time()), staff=is_employee, phone=db_phone)
             db.session.add(db_client)
-        db_client.expiration = int(time.time()) + 24*60*60  # 24 Hours
+
+        users_config = current_app.config['HOTSPOT_USERS']
+        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+
+        delay = hotspot_user.get('delay')
+        db_client.expiration = int(time.time()) + delay*60*60
         db.session.commit()
 
         session['error'] = "Если авторизация не произошла обратитесь в тех.поддержку"
         return redirect(url_for('auth.login'), 307)
     else:
-        if 'tries' not in session:
-            session['tries'] = 0
+        session.setdefault('tries', 0)
         session['tries'] += 1
 
         if session['tries'] > 3:

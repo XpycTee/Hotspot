@@ -1,0 +1,7 @@
+users:
+  guest:
+    password: secret
+    delay: 24 # Hours
+  employee:
+    password: supersecret
+    delay: 720 # 30 Days

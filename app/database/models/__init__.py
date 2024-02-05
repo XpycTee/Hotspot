@@ -21,7 +21,8 @@ class WifiClient(db.Model):
     mac = db.Column(String)
     expiration = db.Column(Integer)
     staff = db.Column(Boolean)
-    phone_id = db.Column(Integer, db.ForeignKey('clients_numbers.id'))
+    phone_id = db.Column(Integer, db.ForeignKey(ClientsNumber.id))
+    phone = db.relationship(ClientsNumber, backref='phones')
 
     def __repr__(self):
         return f"<WifiClient {self.mac}>"
