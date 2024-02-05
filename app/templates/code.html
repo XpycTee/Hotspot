@@ -5,13 +5,28 @@
 {% endblock %}
 
 {% block content %}
-<form action="/auth" method="post">
+<form action="/auth" method="post" id="codeForm">
 
     <label for="code">Пожалуйста, введите код полученный в СМС</label>
-    <input type="tel" id="code" name="code" maxlength="4" placeholder="Код из СМС">
+    <input type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="Код из СМС">
 
     <input type="submit" value="Подтвердить код">
 
     <label id="modal_trigger" class="text-center mt-2 link-line" for="modal-trigger">Политика конфиденциальности</label>
 </form>
+<script>
+    function checkCodeForm() {
+        // Get the value of the code input field
+        const codeValue = document.getElementById('code').value;
+
+        // Check if the length of the code is 4
+        if (codeValue.length === 4) {
+            // If the length is 4, submit the form
+            document.getElementById('codeForm').submit();
+          } else {
+            // If the length is not 4, display an error message or handle it as per your requirement
+            console.log('Code must be 4 characters long');
+          }
+    }
+</script>
 {% endblock %}

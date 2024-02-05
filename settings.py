@@ -3,6 +3,7 @@ import os
 from app.sms.huawei import HuaweiSMSSender
 from app.sms.mikrotik import MikrotikSMSSender
 from app.sms.smsru import SMSRUSender
+from app.sms import DebugSender
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -20,6 +21,7 @@ class Config:
         "SMSRU": SMSRUSender,
         "MIKROTIK": MikrotikSMSSender,
         "HUAWEI": HuaweiSMSSender,
+        "DEBUG": DebugSender,
     }
     sender = senders.get(sender_name)
     SENDER = sender(sender_config)

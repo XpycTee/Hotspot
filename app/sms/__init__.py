@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 
 
@@ -17,6 +18,7 @@ class BaseSender(ABC):
         Args:
             config (str): The configuration parameter for initializing the sender.
         """
+        logging.debug(config)
         pass
 
     @abstractmethod
@@ -28,4 +30,14 @@ class BaseSender(ABC):
             recipient (str): The phone number or recipient of the SMS.
             message (str): The content of the SMS.
         """
+        logging.debug(f"{recipient}: {message}")
         pass
+
+
+class DebugSender(BaseSender):
+    def __init__(self, config: str):
+        logging.debug(config)
+
+    def send_sms(self, recipient: str, message: str):
+        logging.debug(f"{recipient}: {message}")
+        return {}

@@ -23,7 +23,8 @@ def init():
         [
             'SMSRU_SENDER_CFG',
             'MIKROTIK_SENDER_CFG',
-            'HUAWEI_SENDER_CFG'
+            'HUAWEI_SENDER_CFG',
+            'DEBUG_SENDER_CFG'
         ],
         'COMPANY_NAME'
     ]
