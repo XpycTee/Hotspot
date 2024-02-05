@@ -116,6 +116,9 @@ async def auth():
             db.session.add(db_client)
         db_client.expiration = int(time.time()) + 24*60*60  # 24 Hours
         db.session.commit()
+
+        session['error'] = "Если авторизация не произошла обратитесь в тех.поддержку"
+        return redirect(url_for('auth.login'), 307)
     else:
         if 'tries' not in session:
             session['tries'] = 0
