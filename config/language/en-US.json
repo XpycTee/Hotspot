@@ -1,0 +1,40 @@
+{
+  "errors": {
+    "http": {
+      "400": {
+        "title": "Bad Request",
+        "description": "Client error, server cannot process the request."
+      },
+      "403": {
+        "title": "Forbidden",
+        "description": "Server refuses to authorize the request."
+      },
+      "404": {
+        "title": "Not Found",
+        "description": "Requested URL was not found on this server."
+      },
+      "405": {
+        "title": "Method Not Allowed",
+        "description": "The method specified in the request is not allowed for the resource."
+      },
+      "500": {
+        "title": "Internal Server Error",
+        "description": "Server encountered a situation it doesn't know how to handle."
+      },
+      "502": {
+        "title": "Bad Gateway",
+        "description": "Invalid response from the upstream server."
+      },
+      "503": {
+        "title": "Service Unavailable",
+        "description": "Server is currently unable to handle the request."
+      }
+    },
+    "auth": {
+      "bad_code_try": "Invalid code, try again",
+      "bad_code_all": "Invalid code, ran out of attempts start again",
+      "bad_auth": "If authorization failed contact tech support"
+    }
+  },
+  "sms_code": "{code} your WiFi code"
+}

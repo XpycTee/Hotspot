@@ -1,3 +1,4 @@
+import json
 import os
 import hashlib
 
@@ -28,6 +29,10 @@ class Config:
     }
     sender = senders.get(sender_name)
     SENDER = sender(sender_config)
+
+    language = os.environ.get('LANGUAGE', 'en-US')
+    with open(f"config/language/{language}.json", "r", encoding='utf-8') as lang_file:
+        LANGUAGE_CONTENT = json.load(lang_file)
 
     with open("config/employees.yaml", "rb") as emp_config_file:
         file_contents = emp_config_file.read()

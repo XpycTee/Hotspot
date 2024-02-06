@@ -52,8 +52,7 @@ async def check_authorization():
     if db_client and datetime.datetime.now() < db_client.expiration:
         phone = db_client.phone
         phone_number = phone.phone_number
-        is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
-                                      current_app.config['EMPLOYEES'])
+        is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
 
         username = 'employee' if is_employee else 'guest'
         password = current_app.config['HOTSPOT_USERS'][username].get('password')
@@ -113,7 +112,7 @@ async def code():
     session['phone'] = phone_number
 
     sender = current_app.config.get('SENDER')
-    result = sender.send_sms(phone_number, f"{gen_code} ваш код WiFi")
+    result = sender.send_sms(phone_number, current_app.config['LANGUAGE_CONTENT']['sms_code'].foramt(code=gen_code))
     if 'error' in result:
         abort(500)
 
@@ -166,17 +165,17 @@ async def auth():
 
         db.session.commit()
 
-        session['error'] = "Если авторизация не произошла обратитесь в тех.поддержку"
+        session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_auth']
         return redirect(url_for('auth.login'), 307)
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
 
         if session['tries'] >= 3:
-            session['error'] = "Неверный код, кончились попытки начните заново"
+            session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_all']
             session.pop('code')  # Remove code from session
 
             return redirect(url_for('auth.login'), 307)
         else:
-            session['error'] = "Неверный код, попробуйте еще раз"
+            session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_try']
             return redirect(url_for('auth.code'), 307)
