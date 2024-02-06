@@ -128,8 +128,7 @@ async def auth():
     form_code = int(request.form.get('code'))
     user_code = int(session.get('code'))
 
-    is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
-                                  current_app.config['EMPLOYEES'])
+    is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
 
     if form_code == user_code:
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
