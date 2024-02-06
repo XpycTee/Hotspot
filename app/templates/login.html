@@ -8,7 +8,7 @@
 <form action="/code" method="post">
 
     <label for="phone">Ведите номер телефона для авторизации:</label>
-    <input type="tel" id="phone" name="phone" class="masked-number" placeholder="Номер телефона">
+    <input type="tel" id="phone" name="phone" data-tel-input placeholder="Номер телефона">
 
     {% if error %}
     <div class="error-notify">{{ error }}</div>

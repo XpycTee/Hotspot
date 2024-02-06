@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    var phoneInputs = document.querySelectorAll('.masked-number');
+    var phoneInputs = document.querySelectorAll('input[data-tel-input]');
 
     var getInputNumbersValue = function (input) {
         // Return stripped input value — just numbers
@@ -45,10 +45,10 @@ document.addEventListener("DOMContentLoaded", function () {
             var firstSymbols = (inputNumbersValue[0] == "8") ? "8" : "+7";
             formattedInputValue = input.value = firstSymbols + " ";
             if (inputNumbersValue.length > 1) {
-                formattedInputValue += inputNumbersValue.substring(1, 4);
+                formattedInputValue += '(' + inputNumbersValue.substring(1, 4);
             }
             if (inputNumbersValue.length >= 5) {
-                formattedInputValue += ' ' + inputNumbersValue.substring(4, 7);
+                formattedInputValue += ') ' + inputNumbersValue.substring(4, 7);
             }
             if (inputNumbersValue.length >= 8) {
                 formattedInputValue += '-' + inputNumbersValue.substring(7, 9);
