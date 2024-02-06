@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Авторизация
+{{ config['LANGUAGE_CONTENT']['html']['code']['title'] }}
 {% endblock %}
 
 {% block content %}
 <form action="/auth" method="post" id="codeForm">
 
-    <label for="code">Пожалуйста, введите код полученный в СМС</label>
-    <input type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="Код из СМС">
+    <label for="code">{{ config['LANGUAGE_CONTENT']['html']['code']['label_code'] }}</label>
+    <input type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ config['LANGUAGE_CONTENT']['html']['code']['placeholder_code'] }}">
 
     {% if error %}
     <div class="error-notify">{{ error }}</div>
     {% endif %}
 
-    <input type="submit" value="Подтвердить код">
+    <input type="submit" value="{{ config['LANGUAGE_CONTENT']['html']['code']['submit_button'] }}">
 
-    <label id="modal_trigger" class="text-center mt-2 link-line" for="modal-trigger">Политика конфиденциальности</label>
+    <label id="modal_trigger" class="text-center mt-2 link-line">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
 </form>
 <script>
     function checkCodeForm() {

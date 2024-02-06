@@ -36,5 +36,20 @@
       "bad_auth": "If authorization failed contact tech support"
     }
   },
+  "html": {
+    "privacy_policy_label": "Privacy Policy",
+    "login": {
+      "title": "Authorization",
+      "label_phone": "Enter your phone number for authorization:",
+      "placeholder_phone": "Phone number",
+      "submit_button": "Send SMS with code"
+    },
+    "code": {
+      "title": "Code Confirmation",
+      "label_code": "Please enter the code received in the SMS",
+      "placeholder_code": "Code from SMS",
+      "submit_button": "Confirm code"
+    }
+  },
   "sms_code": "{code} your WiFi code"
 }
