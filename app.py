@@ -25,15 +25,7 @@ def init():
     log.addHandler(stream_handler)
 
     # Check for required environment variables
-    required_env_vars = [
-        [
-            'SMSRU_SENDER_CFG',
-            'MIKROTIK_SENDER_CFG',
-            'HUAWEI_SENDER_CFG',
-            'DEBUG_SENDER_CFG'
-        ],
-        'COMPANY_NAME'
-    ]
+    required_env_vars = []
 
     missing_vars = []
 

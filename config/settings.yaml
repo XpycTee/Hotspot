@@ -1,0 +1,25 @@
+settings:
+  company_name: No-name LTD
+  language: ru-RU
+
+### Database config example (Remove "#" for use)
+#  db_url: sqlite:///path/to/db/file.db
+
+### Sender examples (Remove "#" for use)
+#  sender:
+#    type: mikrotik
+#    url: https://admin:admin@10.55.0.1/  # Url for REST api of mikrotik RoS Version >=7.9
+#  sender:
+#    type: huawei
+#    url: http://admin:admin@192.168.8.1/  # Url for Huawei modem api
+#  sender:
+#    type: smsru
+#    api_key: YOUR-API-KEY
+
+  hotspot_users:
+    guest:
+      password: secret
+      delay: 24h # Hours. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
+    employee:
+      password: supersecret
+      delay: 30d # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
