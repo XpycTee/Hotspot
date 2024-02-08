@@ -7,18 +7,15 @@ class BaseSender(ABC):
     BaseSender class for sending SMS using different SMS gateways.
 
     Example:
-        sender = BaseSender('config')
+        sender = BaseSender()
         sender.send_sms('+1234567890', 'Test message')
     """
     @abstractmethod
-    def __init__(self, config: str):
+    def __init__(self, *args, **kwargs):
         """
         Initializes the Sender with the provided connection parameters.
-
-        Args:
-            config (str): The configuration parameter for initializing the sender.
         """
-        logging.debug(config)
+        logging.debug((args, kwargs))
         pass
 
     @abstractmethod
@@ -35,8 +32,8 @@ class BaseSender(ABC):
 
 
 class DebugSender(BaseSender):
-    def __init__(self, config: str):
-        logging.debug(config)
+    def __init__(self, *args, **kwargs):
+        logging.debug('Debug Sender used')
 
     def send_sms(self, recipient: str, message: str):
         logging.debug(f"{recipient}: {message}")

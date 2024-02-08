@@ -13,14 +13,14 @@ class HuaweiSMSSender(BaseSender):
     HuaweiSMSSender class for sending SMS using Huawei SMS gateway.
 
     Args:
-        config (str): The configuration URL for the Huawei SMS gateway API.
+        url (str): The configuration URL for the Huawei SMS gateway API.
 
     Example:
         sender = HuaweiSMSSender('http://username:password@192.168.8.1')
         sender.send_sms('+1234567890', 'Test message')
     """
-    def __init__(self, config):
-        url_parsed = urlparse(config)
+    def __init__(self, url, *args, **kwargs):
+        url_parsed = urlparse(url)
         is_correct = all([
                 url_parsed.scheme,
                 url_parsed.username,
@@ -30,7 +30,7 @@ class HuaweiSMSSender(BaseSender):
         if not is_correct:
             raise AttributeError
 
-        self._url = config
+        self._url = url
 
     def send_sms(self, recipient, message):
         with Connection(self._url) as connection:

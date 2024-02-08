@@ -14,14 +14,14 @@ class MikrotikSMSSender(BaseSender):
     A class for sending SMS using Mikrotik RouterOS API.
 
     Args:
-        config (str): The URL for the Mikrotik router in the format 'http[s]://username:password@hostname[:port]/[?query]', where scheme is either 'http' or 'https', username and password are for authentication, hostname is the IP address or hostname of the Mikrotik router, port is the port number for the connection, path is the API path, and query is the optional interface parameter.
+        url (str): The URL for the Mikrotik router in the format 'http[s]://username:password@hostname[:port]/[?query]', where scheme is either 'http' or 'https', username and password are for authentication, hostname is the IP address or hostname of the Mikrotik router, port is the port number for the connection, path is the API path, and query is the optional interface parameter.
 
     Example:
         sender = MikrotikSMSSender('https://username:password@192.168.88.1/[?interface=lte1]')
         sender.send_sms('+1234567890', 'Test message')
     """
-    def __init__(self, config):
-        url_parsed = urlparse(config)
+    def __init__(self, url, *args, **kwargs):
+        url_parsed = urlparse(url)
 
         if not all([url_parsed.scheme, url_parsed.username, url_parsed.password, url_parsed.netloc, url_parsed.path]):
             raise AttributeError
