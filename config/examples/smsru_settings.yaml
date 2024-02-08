@@ -1,6 +1,9 @@
 settings:
   company_name: No-name LTD
-  language: ru-RU
+  language: en-US
+  sender:
+    type: smsru
+    api_key: YOUR-API-KEY  # Setup your api key
   hotspot_users:
     guest:
       password: secret

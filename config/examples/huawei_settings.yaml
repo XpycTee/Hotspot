@@ -1,6 +1,9 @@
 settings:
   company_name: No-name LTD
-  language: ru-RU
+  language: en-US
+  sender:
+    type: huawei
+    url: http://admin:admin@192.168.8.1/  # Url for Huawei modem api
   hotspot_users:
     guest:
       password: secret

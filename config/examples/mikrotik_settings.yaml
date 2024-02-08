@@ -1,6 +1,9 @@
 settings:
   company_name: No-name LTD
-  language: ru-RU
+  language: en-US
+  sender:
+    type: mikrotik
+    url: https://admin:admin@10.55.0.1/  # Url for REST api of mikrotik RoS Version >=7.9
   hotspot_users:
     guest:
       password: secret
