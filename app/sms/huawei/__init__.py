@@ -16,7 +16,7 @@ class HuaweiSMSSender(BaseSender):
         url (str): The configuration URL for the Huawei SMS gateway API.
 
     Example:
-        sender = HuaweiSMSSender('http://username:password@192.168.8.1')
+        sender = HuaweiSMSSender('http://username:password@192.168.8.1/')
         sender.send_sms('+1234567890', 'Test message')
     """
     def __init__(self, url, *args, **kwargs):
