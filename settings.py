@@ -13,13 +13,13 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    with open("config/settings.yaml", "r") as settings_file:
+    with open("config/settings.yaml", "r", encoding="utf-8") as settings_file:
         settings = yaml.safe_load(settings_file).get('settings')
 
-    with open("config/blacklist.yaml", "r") as bl_config_file:
+    with open("config/blacklist.yaml", "r", encoding="utf-8") as bl_config_file:
         BLACKLIST = yaml.safe_load(bl_config_file).get('blacklist', [])
 
-    with open("config/employees.yaml", "rb") as emp_config_file:
+    with open("config/employees.yaml", "rb", encoding="utf-8") as emp_config_file:
         file_contents = emp_config_file.read()
     EMPLOYEES = yaml.safe_load(file_contents).get('employees', [])
     EMP_HASH = hashlib.md5(file_contents).hexdigest()
