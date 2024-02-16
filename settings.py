@@ -40,4 +40,7 @@ class Config:
     }
     sender_config = settings.get('sender', {})
     sender = senders.get(sender_config.get('type'), DebugSender)
-    SENDER = sender(**sender_config if sender_config else None)
+    if sender_config:
+        SENDER = sender(**sender_config)
+    else:
+        SENDER = sender()
