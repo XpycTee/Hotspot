@@ -1,22 +1,19 @@
 {% extends 'base.html' %}
 
 {% block title %}
-{{ config['LANGUAGE_CONTENT']['html']['code']['title'] }}
+{{ config['LANGUAGE_CONTENT']['html']['code']['title'] }} Hotspot | АН СОВА
 {% endblock %}
 
 {% block content %}
-<form action="/auth" method="post" id="codeForm">
-
-    <label for="code">{{ config['LANGUAGE_CONTENT']['html']['code']['label_code'] }}</label>
-    <input type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ config['LANGUAGE_CONTENT']['html']['code']['placeholder_code'] }}">
+<form action="/auth" method="post" id="codeForm" style="display: flex; flex-direction: column; flex: 1 1 0%;">
+    <center><p class="mt-1">{{ config['LANGUAGE_CONTENT']['html']['code']['label_code'] }}</p></center>
+    <input type="tel" id="code" name="code" maxlength="4" class="login-input" oninput="checkCodeForm()" placeholder="{{ config['LANGUAGE_CONTENT']['html']['code']['placeholder_code'] }}">
 
     {% if error %}
-    <div class="error-notify">{{ error }}</div>
+    <div id="error-message" style="flex: 1 1 0%;">{{ error }}</div>
     {% endif %}
 
-    <input type="submit" value="{{ config['LANGUAGE_CONTENT']['html']['code']['submit_button'] }}">
-
-    <label id="modal_trigger" class="text-center mt-2 link-line">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
+    <input type="submit" class="button login-button mt-2" value="{{ config['LANGUAGE_CONTENT']['html']['code']['submit_button'] }}">
 </form>
 <script>
     function checkCodeForm() {

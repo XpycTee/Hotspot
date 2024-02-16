@@ -5,9 +5,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="error-container">
+<div class="error-container" style="display: flex; flex-direction: column; flex: 1 1 0%;">
     <div class="error-code">Error {{ code }} - {{ title }}</div>
     <div class="error-message">{{ description }}</div>
-    <a href="{{ session['link-login-only'] }}" class="back-link">Go To Login</a>
+    <a href="{{ session['link-login-only'] }}" class="button login-button mt-2">Go To Login</a>
 </div>
 {% endblock %}

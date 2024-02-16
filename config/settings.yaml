@@ -1,10 +1,10 @@
 settings:
-  company_name: No-name LTD
+  company_name: ООО "СОВА"
   language: ru-RU
   hotspot_users:
     guest:
       password: secret
-      delay: 24h # Hours. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
+      delay: 24h
     employee:
-      password: supersecret
-      delay: 30d # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
+      password: secret
+      delay: 30d

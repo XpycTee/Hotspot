@@ -1,21 +1,18 @@
 {% extends 'base.html' %}
 
 {% block title %}
-{{ config['LANGUAGE_CONTENT']['html']['login']['title'] }}
+{{ config['LANGUAGE_CONTENT']['html']['login']['title'] }} Hotspot | АН СОВА
 {% endblock %}
 
 {% block content %}
-<form action="/code" method="post">
-
-    <label for="phone">{{ config['LANGUAGE_CONTENT']['html']['login']['label_phone'] }}</label>
-    <input type="tel" id="phone" name="phone" data-tel-input placeholder="{{ config['LANGUAGE_CONTENT']['html']['login']['placeholder_phone'] }}">
+<form action="/code" method="post" name="login" id="login" style="display: flex; flex-direction: column; flex: 1 1 0%;">
+    <center><p class="mt-1">{{ config['LANGUAGE_CONTENT']['html']['login']['label_phone'] }}</p></center>
+    <input type="tel" id="phone" name="phone" class="login-input" data-tel-input placeholder="{{ config['LANGUAGE_CONTENT']['html']['login']['placeholder_phone'] }}">
 
     {% if error %}
-    <div class="error-notify">{{ error }}</div>
+    <div id="error-message" style="flex: 1 1 0%;">{{ error }}</div>
     {% endif %}
 
-    <input type="submit" value="{{ config['LANGUAGE_CONTENT']['html']['login']['submit_button'] }}">
-
-    <label id="modal_trigger" class="text-center mt-2 link-line">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
+    <input type="submit" class="button login-button mt-2" value="{{ config['LANGUAGE_CONTENT']['html']['login']['submit_button'] }}">
 </form>
 {% endblock %}

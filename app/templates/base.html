@@ -1,18 +1,33 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="p-0 m-0 h-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='modal.css') }}">
-    <script src="{{ url_for('static', filename='phoneinput.js') }}"></script>
+    <link rel="icon" href="{{ url_for('static', filename='style/images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/modal.css') }}">
+    <script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
 </head>
-<body>
-{% block content %}
-{% endblock %}
+<body class="p-0 m-0 h-100">
+    <div id="app" class="p-0 m-0 h-100">
+    <main class="p-0 m-0 h-100">
+        <div id="layout" class="h-100">
+            <div class="row justify-content-center" style="margin: 0px !important;">
+                <div id="login-form" class="col-xs-auto align-self-center">
+                    <div class="card p-4 shadow" style="border-radius: 7px;">
+                        <div class="justify-content-between" style="display: flex;"><div><img src="{{ url_for('static', filename='style/images/logo_hotspot_01.svg') }}"></div> <!----></div>
+                        {% block content %}
+                        {% endblock %}
+                        <label id="modal_trigger" class="text-center mt-2 link-line">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    </div>
     <!-- Modal content -->
     <div id="myModal" class="modal">
         <div class="modal-content">
@@ -49,6 +64,3 @@
     </script>
 </body>
 </html>
-
-
-
