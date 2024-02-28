@@ -86,12 +86,14 @@ async def check_registration():
         chap_id = session.get('chap-id')
         chap_challenge = session.get('chap-challenge')
 
+        session.clear()
         # use HTTP CHAP method in hotspot
         if chap_id and chap_challenge:
             chap_id = octal_string_to_bytes(chap_id)
             chap_challenge = octal_string_to_bytes(chap_challenge)
 
             pass_hash = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+
             return render_template(
                 'sendin.html',
                 username=username,
