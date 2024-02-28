@@ -38,7 +38,7 @@ async def update_employees():
 
 
 @auth_bp.before_request
-async def check_authorization():
+async def init_session():
     if not session:
         session['chap-id'] = request.form.get('chap-id')
         session['chap-challenge'] = request.form.get('chap-challenge')
@@ -46,6 +46,56 @@ async def check_authorization():
         session['link-orig'] = request.form.get('link-orig')
         session['mac'] = request.form.get('mac')
 
+
+@auth_bp.before_request
+async def check_authorization():
+    if 'phone' in request.form:
+        phone_number = request.form.get('phone')
+        if not phone_number:
+            phone_number = session.get('phone')
+
+        phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
+        phone_number = re.sub(r'\D', '', phone_number)
+
+        if phone_number in current_app.config['BLACKLIST']:
+            abort(403)
+
+        session['phone'] = phone_number
+
+        mac = session.get('mac')
+        db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        if db_client and db_client.phone.phone_number == phone_number:
+            is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
+                                          current_app.config['EMPLOYEES'])
+            users_config = current_app.config['HOTSPOT_USERS']
+            hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+
+            delay: str = hotspot_user.get('delay')
+
+            time_deltas = {
+                'w': 'weeks',
+                'd': 'days',
+                'h': 'hours',
+                'm': 'minutes',
+                's': 'seconds'
+            }
+            suffix = delay[-1]
+            now_time = datetime.datetime.now()
+
+            if suffix.isdigit():
+                db_client.expiration = now_time + datetime.timedelta(hours=int(delay))
+            else:
+                if suffix in time_deltas:
+                    amount = int(delay[:-1])
+                    db_client.expiration = now_time + datetime.timedelta(**{time_deltas[suffix]: amount})
+                else:
+                    abort(500)
+
+            db.session.commit()
+
+
+@auth_bp.before_request
+async def check_registration():
     mac = session.get('mac')
 
     db_client = models.WifiClient.query.filter_by(mac=mac).first()
@@ -96,15 +146,7 @@ async def login():
 @auth_bp.route('/code', methods=['POST'])
 async def code():
     error = session.pop('error', None)
-    phone_number = request.form.get('phone')
-    if not phone_number:
-        phone_number = session.get('phone')
-
-    phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
-    phone_number = re.sub(r'\D', '', phone_number)
-
-    if phone_number in current_app.config['BLACKLIST']:
-        abort(403)
+    phone_number = session.get('phone')
 
     if 'code' not in session:
 
