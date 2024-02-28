@@ -132,7 +132,7 @@ async def code():
 
     if 'code' not in session:
 
-        gen_code = str(randint(1000, 9999))
+        gen_code = str(randint(0, 9999)).zfill(4)
         session['code'] = gen_code
         session['phone'] = phone_number
 
