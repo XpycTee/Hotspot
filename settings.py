@@ -27,7 +27,7 @@ class Config:
     with open(f"config/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
         LANGUAGE_CONTENT = json.load(lang_file)
 
-    SQLALCHEMY_DATABASE_URI = settings.get('db_url', f"sqlite:///{os.path.join(basedir, 'app/database/hotspot.db')}")
+    SQLALCHEMY_DATABASE_URI = settings.get('db_url', f"sqlite:///{os.path.join(basedir, 'config/hotspot.db')}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     HOTSPOT_USERS = settings.get('hotspot_users', {})
