@@ -1,12 +1,11 @@
 import datetime
-import hashlib
 import logging
 import re
 from hashlib import md5
 from random import randint
 
 import jmespath
-import yaml
+import requests
 from flask import render_template, request, current_app, redirect, url_for, session, abort
 
 from . import auth_bp
@@ -26,15 +25,10 @@ def octal_string_to_bytes(oct_string):
     return bytes(byte_nums)
 
 
-@auth_bp.before_request
-async def update_employees():
-    employees_hash = current_app.config.get('EMP_HASH')
-    with open("config/employees.yaml", "rb") as emp_config_file:
-        file_contents = emp_config_file.read()
-    new_hash = hashlib.md5(file_contents).hexdigest()
-    if employees_hash != new_hash:
-        current_app.config['EMPLOYEES'] = yaml.safe_load(file_contents).get('employees', [])
-        current_app.config['EMP_HASH'] = new_hash
+def check_employee(phone_number):
+    with requests.get('https://is.sova72.ru/documents/employee/phonebook.json') as response:
+        employees = response.json()
+    return jmespath.search(f"employee[].phone[].number | contains([], '{phone_number}')", employees)
 
 
 @auth_bp.before_request
@@ -54,7 +48,7 @@ async def check_authorization():
         if not phone_number:
             phone_number = session.get('phone')
 
-        phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
+        phone_number = re.sub(r'^(\+?7|8)', '', phone_number)
         phone_number = re.sub(r'\D', '', phone_number)
 
         if phone_number in current_app.config['BLACKLIST']:
@@ -65,10 +59,8 @@ async def check_authorization():
         mac = session.get('mac')
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
         if db_client and db_client.phone.phone_number == phone_number:
-            is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
-                                          current_app.config['EMPLOYEES'])
             users_config = current_app.config['HOTSPOT_USERS']
-            hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+            hotspot_user = users_config['employee'] if check_employee(phone_number) else users_config['guest']
 
             now_time = datetime.datetime.now()
 
@@ -84,9 +76,8 @@ async def check_registration():
     if db_client and datetime.datetime.now() < db_client.expiration:
         phone = db_client.phone
         phone_number = phone.phone_number
-        is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
 
-        username = 'employee' if is_employee else 'guest'
+        username = 'employee' if check_employee(phone_number) else 'guest'
         password = current_app.config['HOTSPOT_USERS'][username].get('password')
 
         link_login_only = session.get('link-login-only')
@@ -154,7 +145,7 @@ async def auth():
     form_code = int(request.form.get('code'))
     user_code = int(session.get('code'))
 
-    is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
+    is_employee = check_employee(phone_number)
 
     if form_code == user_code:
         db_client = models.WifiClient.query.filter_by(mac=mac).first()

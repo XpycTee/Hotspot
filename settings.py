@@ -1,6 +1,5 @@
 import json
 import os
-import hashlib
 from datetime import timedelta
 
 import yaml
@@ -32,11 +31,6 @@ class Config:
 
     with open("config/blacklist.yaml", "r", encoding="utf-8") as bl_config_file:
         BLACKLIST = yaml.safe_load(bl_config_file).get('blacklist', [])
-
-    with open("config/employees.yaml", "rb") as emp_config_file:
-        file_contents = emp_config_file.read()
-    EMPLOYEES = yaml.safe_load(file_contents).get('employees', [])
-    EMP_HASH = hashlib.md5(file_contents).hexdigest()
 
     with open(f"config/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
         LANGUAGE_CONTENT = json.load(lang_file)
