@@ -70,27 +70,9 @@ async def check_authorization():
             users_config = current_app.config['HOTSPOT_USERS']
             hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
-            delay: str = hotspot_user.get('delay')
-
-            time_deltas = {
-                'w': 'weeks',
-                'd': 'days',
-                'h': 'hours',
-                'm': 'minutes',
-                's': 'seconds'
-            }
-            suffix = delay[-1]
             now_time = datetime.datetime.now()
 
-            if suffix.isdigit():
-                db_client.expiration = now_time + datetime.timedelta(hours=int(delay))
-            else:
-                if suffix in time_deltas:
-                    amount = int(delay[:-1])
-                    db_client.expiration = now_time + datetime.timedelta(**{time_deltas[suffix]: amount})
-                else:
-                    abort(500)
-
+            db_client.expiration = now_time + hotspot_user.get('delay')
             db.session.commit()
 
 
@@ -187,24 +169,8 @@ async def auth():
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
-        delay: str = hotspot_user.get('delay')
-
-        time_deltas = {
-            'w': 'weeks',
-            'd': 'days',
-            'h': 'hours',
-            'm': 'minutes',
-            's': 'seconds'
-        }
-        suffix = delay[-1]
-        if suffix.isdigit():
-            db_client.expiration = now_time + datetime.timedelta(hours=int(delay))
-        else:
-            if suffix in time_deltas:
-                amount = int(delay[:-1])
-                db_client.expiration = now_time + datetime.timedelta(**{time_deltas[suffix]: amount})
-            else:
-                abort(500)
+        delay = hotspot_user.get('delay')
+        db_client.expiration = now_time + delay
 
         db.session.commit()
 

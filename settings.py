@@ -1,6 +1,7 @@
 import json
 import os
 import hashlib
+from datetime import timedelta
 
 import yaml
 
@@ -10,6 +11,19 @@ from app.sms.smsru import SMSRUSender
 from app.sms import DebugSender
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+
+
+def convert_delay(delay):
+    suffixes = {
+        'w': 'weeks',
+        'd': 'days',
+        'h': 'hours',
+        'm': 'minutes',
+        's': 'seconds'
+    }
+
+    amount, suffix = (int(delay[:-1]), delay[-1]) if delay[-1] in suffixes else (int(delay), 'h')
+    return timedelta(**{suffixes[suffix]: amount})
 
 
 class Config:
@@ -31,6 +45,10 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     HOTSPOT_USERS = settings.get('hotspot_users', {})
+
+    HOTSPOT_USERS['guest']['delay'] = convert_delay(HOTSPOT_USERS['guest']['delay'])
+    HOTSPOT_USERS['employee']['delay'] = convert_delay(HOTSPOT_USERS['employee']['delay'])
+
     COMPANY_NAME = settings.get('company_name')
 
     senders = {
