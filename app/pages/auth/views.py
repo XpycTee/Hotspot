@@ -101,6 +101,8 @@ async def check_registration():
             chap_challenge = octal_string_to_bytes(chap_challenge)
 
             pass_hash = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+
+            session.clear()
             return render_template(
                 'sendin.html',
                 username=username,
@@ -110,6 +112,7 @@ async def check_registration():
             )
 
         # use HTTPS method in hotspot
+        session.clear()
         return render_template(
             'sendin.html',
             username=username,
