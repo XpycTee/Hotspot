@@ -153,3 +153,5 @@ cython_debug/
 #.idea/
 
 /config/hotspot.db
+/mikrotik/
+/html_examples for template/

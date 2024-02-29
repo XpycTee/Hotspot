@@ -6,13 +6,13 @@ LABEL version="${VERSION}"
 
 ENV PYTHONUNBUFFERED True
 
-COPY requirements.txt /tmp/
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY . ./hotspot
 WORKDIR /hotspot
-
 RUN mkdir config
 VOLUME ./config
 
-ENTRYPOINT ["python", "./app.py"]
+ADD . /hotspot
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+CMD ["uwsgi", "app.ini"]
