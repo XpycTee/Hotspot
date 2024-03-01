@@ -1,0 +1,4 @@
+venv/
+/config/hotspot.db
+/mikrotik/
+/html_examples for template/
