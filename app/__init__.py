@@ -28,10 +28,13 @@ def init():
 
     # Configure a stream handler with a formatter
     stream_handler = logging.StreamHandler()
+    file_handler = logging.FileHandler('logs/flask.log')
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     formatter.converter = time.localtime
     stream_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
     log.addHandler(stream_handler)
+    log.addHandler(file_handler)
 
     # Check for required environment variables
     required_env_vars = []
