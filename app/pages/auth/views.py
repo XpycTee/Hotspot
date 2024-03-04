@@ -100,18 +100,9 @@ async def check_registration():
         if chap_id and chap_challenge:
             chap_id = octal_string_to_bytes(chap_id)
             chap_challenge = octal_string_to_bytes(chap_challenge)
+            link_login_only = link_login_only.replace('https', 'http')
+            password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
 
-            pass_hash = md5(chap_id + password.encode() + chap_challenge).hexdigest()
-
-            return render_template(
-                'sendin.html',
-                username=username,
-                password=pass_hash,
-                link_login_only=link_login_only.replace('https', 'http'),
-                link_orig=link_orig
-            )
-
-        # use HTTPS method in hotspot
         return render_template(
             'sendin.html',
             username=username,
