@@ -38,7 +38,7 @@ class Config:
     EMPLOYEES = yaml.safe_load(file_contents).get('employees', [])
     EMP_HASH = hashlib.md5(file_contents).hexdigest()
 
-    with open(f"config/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
+    with open(f"app/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
         LANGUAGE_CONTENT = json.load(lang_file)
 
     SQLALCHEMY_DATABASE_URI = settings.get('db_url', f"sqlite:///{os.path.join(basedir, 'config/hotspot.db')}")
