@@ -14,6 +14,6 @@ else
 VERSION=$(git describe --tags --abbrev=0)
 fi
 
-docker build --build-arg=VERSION=${VERSION} --build-arg=BUILD_DATE=${DATE} -t ${REGISTRY}/${IMAGE}:${VERSION} -t ${REGISTRY}/${IMAGE}:latest . | tee build.log || exit 1
+docker build --build-arg=VERSION=${VERSION} --build-arg=BUILD_DATE=${DATE} -t ${REGISTRY}/${IMAGE}:${VERSION} -t ${REGISTRY}/${IMAGE}:latest . | tee logs/build.log || exit 1
 
 docker images | grep ${IMAGE}
