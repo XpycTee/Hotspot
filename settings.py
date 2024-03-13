@@ -32,7 +32,7 @@ class Config:
     with open("config/blacklist.yaml", "r", encoding="utf-8") as bl_config_file:
         BLACKLIST = yaml.safe_load(bl_config_file).get('blacklist', [])
 
-    with open(f"config/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
+    with open(f"app/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
         LANGUAGE_CONTENT = json.load(lang_file)
 
     SQLALCHEMY_DATABASE_URI = settings.get('db_url', f"sqlite:///{os.path.join(basedir, 'config/hotspot.db')}")
