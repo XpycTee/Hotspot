@@ -40,3 +40,4 @@ class HuaweiSMSSender(BaseSender):
                 logging.info('SMS was send successfully')
             else:
                 logging.error('Error')
+                return 1

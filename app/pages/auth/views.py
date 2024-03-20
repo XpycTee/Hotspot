@@ -132,7 +132,7 @@ async def code():
         sender = current_app.config.get('SENDER')
         result = sender.send_sms(phone_number, current_app.config['LANGUAGE_CONTENT']['sms_code'].format(code=gen_code))
 
-        if 'error' in result:
+        if result:
             abort(500)
 
         logging.debug(f"{phone_number}'s code: {gen_code}")

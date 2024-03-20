@@ -37,4 +37,4 @@ class DebugSender(BaseSender):
 
     def send_sms(self, recipient: str, message: str):
         logging.debug(f"{recipient}: {message}")
-        return {}
+
