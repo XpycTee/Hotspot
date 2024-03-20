@@ -56,8 +56,8 @@ class MikrotikSMSSender(BaseSender):
             "port": self._interface
         }
         try:
-            return self._request(data=data)
+            self._request(data=data)
         except error.HTTPError as e:
             res = json.loads(e.read())
             logging.error(res.get('detail'))
-            return res
+            return 1
