@@ -6,6 +6,7 @@ from random import randint
 
 import jmespath
 import requests
+import yaml
 from flask import render_template, request, current_app, redirect, url_for, session, abort
 
 from . import auth_bp
@@ -28,7 +29,15 @@ def octal_string_to_bytes(oct_string):
 def check_employee(phone_number):
     with requests.get('https://is.sova72.ru/documents/employee/phonebook.json') as response:
         employees = response.json()
-    return jmespath.search(f"employee[].phone[].number | contains([], '{phone_number}')", employees)
+        expression = f"employee[].phone[].number | contains([], '{phone_number}')"
+        in_base = bool(jmespath.search(expression, employees))
+    if not in_base:
+        with open("config/employees.yaml", "r", encoding="utf-8") as employees_file:
+            employees = yaml.safe_load(employees_file)
+            expression = f"employees[].phone[] | contains([], '{phone_number}')"
+            in_employees = bool(jmespath.search(expression, employees))
+        return in_employees
+    return in_base
 
 
 @auth_bp.before_request
