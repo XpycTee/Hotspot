@@ -1,8 +1,11 @@
 venv/
 /config/hotspot.db
 /mikrotik/
+/examples
+/logs
 /html_examples for template/
 build.log
 docker-build.sh
 .git/
 .gitignore
+Dockerfile
