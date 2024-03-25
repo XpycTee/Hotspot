@@ -1,10 +1,11 @@
 settings:
   company_name: ООО "СОВА"
   language: ru-RU
+# db_url: sqlite:///path/to/database.db  # Url for connect database
   hotspot_users:
     guest:
       password: secret
-      delay: 24h
+      delay: 24h  # Hours. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
     employee:
       password: secret
-      delay: 30d
+      delay: 30d  # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.

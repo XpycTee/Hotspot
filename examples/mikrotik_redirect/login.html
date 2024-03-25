@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Hotspot Login</title>
+</head>
+<body>
+    <form name="redirect" action="https://hotspot.server.url/login" method="post" style="display: flex; flex-direction: column; flex: 1 1 0%;">
+        <center>
+            <!--$(if chap-id)-->
+            <noscript>
+                <p class="mt-1">JavaScript is required. Enable JavaScript to continue.</p>
+            </noscript>
+            <!--$(endif)-->
+            <p class="mt-1">If nothing happens, an error has occurred.</p>
+            <p class="mt-1">Please try connecting again later.</p>
+        </center>
+        <input type="hidden" name="mac" value="$(mac)">
+        <input type="hidden" name="link-orig" value="$(link-orig)">
+        <input type="hidden" name="chap-id" value="$(chap-id)">
+        <input type="hidden" name="chap-challenge" value="$(chap-challenge)">
+        <input type="hidden" name="link-login-only" value="$(link-login-only)">
+    </form>
+</body>
+<script language="JavaScript">
+    <!--
+    document.redirect.submit();
+    -->
+</script>
+</html>
