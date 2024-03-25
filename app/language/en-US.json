@@ -3,7 +3,7 @@
     "http": {
       "400": {
         "title": "Bad Request",
-        "description": "Client error, server cannot process the request."
+        "description": "Client error, server cannot process the request. Try reconnecting to the wifi."
       },
       "403": {
         "title": "Forbidden",
