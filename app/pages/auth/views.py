@@ -39,12 +39,16 @@ async def update_employees():
 
 @auth_bp.before_request
 async def init_session():
-    if not session:
-        session['chap-id'] = request.form.get('chap-id')
-        session['chap-challenge'] = request.form.get('chap-challenge')
-        session['link-login-only'] = request.form.get('link-login-only')
-        session['link-orig'] = request.form.get('link-orig')
-        session['mac'] = request.form.get('mac')
+    required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
+
+    if not all(key in request.form for key in required_keys):
+        abort(400)  # Raise a 400 error if any of the required keys is missing
+
+    session['chap-id'] = request.form.get('chap-id')
+    session['chap-challenge'] = request.form.get('chap-challenge')
+    session['link-login-only'] = request.form.get('link-login-only')
+    session['link-orig'] = request.form.get('link-orig')
+    session['mac'] = request.form.get('mac')
 
 
 @auth_bp.before_request
