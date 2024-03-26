@@ -176,7 +176,7 @@ async def auth():
     if form_code == user_code:
         now_time = datetime.datetime.now()
 
-        db_phone = models.WifiClient.query.filter_by(phone_number=phone_number).first()
+        db_phone = models.ClientsNumber.query.filter_by(phone_number=phone_number).first()
         if not db_phone:
             db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
@@ -200,7 +200,7 @@ async def auth():
         db.session.commit()
 
         session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_auth']
-        return redirect(url_for('auth.login'), 307)
+        return redirect(url_for('auth.auth'), 307)
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
@@ -209,7 +209,7 @@ async def auth():
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_all']
             session.pop('code')  # Remove code from session
 
-            return redirect(url_for('auth.login'), 307)
+            return redirect(url_for('auth.auth'), 307)
         else:
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_try']
             return redirect(url_for('auth.code'), 307)
