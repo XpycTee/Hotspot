@@ -78,6 +78,7 @@ async def check_authorization():
             now_time = datetime.datetime.now()
 
             db_client.expiration = now_time + hotspot_user.get('delay')
+            db_client.employee = is_employee
             db.session.commit()
 
 
