@@ -171,7 +171,7 @@ async def auth():
     if form_code == user_code:
         now_time = datetime.datetime.now()
 
-        db_phone = models.WifiClient.query.filter_by(phone_number=phone_number).first()
+        db_phone = models.ClientsNumber.query.filter_by(phone_number=phone_number).first()
         if not db_phone:
             db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
