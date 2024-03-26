@@ -69,14 +69,16 @@ async def check_authorization():
         mac = session.get('mac')
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
         if db_client and db_client.phone.phone_number == phone_number:
-            is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')",
-                                          current_app.config['EMPLOYEES'])
+            expression = f"[].phone | contains([], '{phone_number}')"
+            is_employee = jmespath.search(expression, current_app.config['EMPLOYEES'])
+
             users_config = current_app.config['HOTSPOT_USERS']
             hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
             now_time = datetime.datetime.now()
 
             db_client.expiration = now_time + hotspot_user.get('delay')
+            db_client.employee = is_employee
             db.session.commit()
 
 
