@@ -157,14 +157,22 @@ async def auth():
     is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
 
     if form_code == user_code:
-        db_client = models.WifiClient.query.filter_by(mac=mac).first()
         now_time = datetime.datetime.now()
-        if not db_client:
+
+        db_phone = models.WifiClient.query.filter_by(phone_number=phone_number).first()
+        if not db_phone:
             db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
+
+        db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        if not db_client:
             db_client = models.WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
             db.session.add(db_client)
+        else:
+            db_client.phone = db_phone
+            db_client.expiration = now_time
+            db_client.employee = is_employee
 
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
