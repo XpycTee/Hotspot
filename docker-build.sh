@@ -2,8 +2,8 @@
 
 set -o pipefail
 
-REGISTRY=localhost
-IMAGE=hotspot-mikrotik
+REGISTRY=containers.xpyctee.ru
+IMAGE=hotspot-sova
 
 DATE=$(date '+%Y-%m-%d')
 
