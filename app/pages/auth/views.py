@@ -195,7 +195,7 @@ async def auth():
         db.session.commit()
 
         session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_auth']
-        return redirect(url_for('auth.login'), 307)
+        return redirect(url_for('auth.auth'), 307)
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
@@ -204,7 +204,7 @@ async def auth():
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_all']
             session.pop('code')  # Remove code from session
 
-            return redirect(url_for('auth.login'), 307)
+            return redirect(url_for('auth.auth'), 307)
         else:
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_try']
             return redirect(url_for('auth.code'), 307)
