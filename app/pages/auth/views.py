@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+from functools import wraps
 from hashlib import md5
 from random import randint
 
@@ -40,9 +41,10 @@ def check_employee(phone_number):
     return in_base
 
 
-@auth_bp.before_request
-async def init_session():
-    if not session:
+def init_session(func):
+    @wraps(func)
+    async def wrapped(*args):
+
         required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
 
         if not all(key in request.form for key in required_keys):
@@ -54,13 +56,15 @@ async def init_session():
         session['link-orig'] = request.form.get('link-orig')
         session['mac'] = request.form.get('mac')
 
+        return await func(*args)
+    return wrapped
 
-@auth_bp.before_request
-async def check_authorization():
-    if 'phone' in request.form:
+
+def check_authorization(func):
+    @wraps(func)
+    async def wrapped(*args):
+
         phone_number = request.form.get('phone')
-        if not phone_number:
-            phone_number = session.get('phone')
 
         phone_number = re.sub(r'^(\+?7|8)', '', phone_number)
         phone_number = re.sub(r'\D', '', phone_number)
@@ -72,6 +76,7 @@ async def check_authorization():
 
         mac = session.get('mac')
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
+
         if db_client and db_client.phone.phone_number == phone_number:
             users_config = current_app.config['HOTSPOT_USERS']
             is_employee = check_employee(phone_number)
@@ -83,10 +88,15 @@ async def check_authorization():
             db_client.employee = is_employee
             db.session.commit()
 
+        return await func(*args)
+    return wrapped
 
-@auth_bp.before_request
-async def check_registration():
-    mac = session.get('mac')
+
+def check_expiration(func):
+    @wraps(func)
+    async def wrapped(*args):
+
+        mac = session.get('mac')
 
     db_client = models.WifiClient.query.filter_by(mac=mac).first()
     if db_client and datetime.datetime.now() < db_client.expiration:
@@ -96,36 +106,43 @@ async def check_registration():
         username = 'employee' if check_employee(phone_number) else 'guest'
         password = current_app.config['HOTSPOT_USERS'][username].get('password')
 
-        link_login_only = session.get('link-login-only')
-        link_orig = session.get('link-orig')
+            link_login_only = session.get('link-login-only')
+            link_orig = session.get('link-orig')
 
-        chap_id = session.get('chap-id')
-        chap_challenge = session.get('chap-challenge')
+            chap_id = session.get('chap-id')
+            chap_challenge = session.get('chap-challenge')
 
-        session.clear()
-        # use HTTP CHAP method in hotspot
-        if chap_id and chap_challenge:
-            chap_id = octal_string_to_bytes(chap_id)
-            chap_challenge = octal_string_to_bytes(chap_challenge)
-            link_login_only = link_login_only.replace('https', 'http')
-            password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+            session.clear()
+            # use HTTP CHAP method in hotspot
+            if chap_id and chap_challenge:
+                chap_id = octal_string_to_bytes(chap_id)
+                chap_challenge = octal_string_to_bytes(chap_challenge)
+                link_login_only = link_login_only.replace('https', 'http')
+                password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
 
-        return render_template(
-            'sendin.html',
-            username=username,
-            password=password,
-            link_login_only=link_login_only,
-            link_orig=link_orig
-        )
+            return render_template(
+                'sendin.html',
+                username=username,
+                password=password,
+                link_login_only=link_login_only,
+                link_orig=link_orig
+            )
+
+        return await func(*args)
+    return wrapped
 
 
 @auth_bp.route('/login', methods=['POST'])
+@init_session
+@check_expiration
 async def login():
     error = session.pop('error', None)
-    return render_template('login.html', error=error)
+    return render_template('login.html', error=error)  # Form send phone to /CODE
 
 
 @auth_bp.route('/code', methods=['POST'])
+@check_authorization
+@check_expiration
 async def code():
     error = session.pop('error', None)
     phone_number = session.get('phone')
@@ -134,7 +151,6 @@ async def code():
 
         gen_code = str(randint(0, 9999)).zfill(4)
         session['code'] = gen_code
-        session['phone'] = phone_number
 
         sender = current_app.config.get('SENDER')
         result = sender.send_sms(phone_number, current_app.config['LANGUAGE_CONTENT']['sms_code'].format(code=gen_code))
@@ -148,6 +164,7 @@ async def code():
 
 
 @auth_bp.route('/auth', methods=['POST'])
+@check_expiration
 async def auth():
     mac = session.get('mac')
     phone_number = session.get('phone')
@@ -157,14 +174,22 @@ async def auth():
     is_employee = check_employee(phone_number)
 
     if form_code == user_code:
-        db_client = models.WifiClient.query.filter_by(mac=mac).first()
         now_time = datetime.datetime.now()
-        if not db_client:
+
+        db_phone = models.WifiClient.query.filter_by(phone_number=phone_number).first()
+        if not db_phone:
             db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
+
+        db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        if not db_client:
             db_client = models.WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
             db.session.add(db_client)
+        else:
+            db_client.phone = db_phone
+            db_client.expiration = now_time
+            db_client.employee = is_employee
 
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
