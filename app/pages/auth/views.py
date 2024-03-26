@@ -1,5 +1,4 @@
 import datetime
-import hashlib
 import logging
 import re
 from functools import wraps
@@ -25,6 +24,14 @@ def octal_string_to_bytes(oct_string):
         byte_nums.append(decimal_value)
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
+
+
+def check_employee(phone_number):
+    with open("config/employees.yaml", "r", encoding="utf-8") as employees_file:
+        employees = yaml.safe_load(employees_file)
+        expression = f"[].phone | contains([], '{phone_number}')"
+        in_employees = bool(jmespath.search(expression, employees))
+    return in_employees
 
 
 def init_session(func):
@@ -64,8 +71,7 @@ def check_authorization(func):
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
 
         if db_client and db_client.phone.phone_number == phone_number:
-            expression = f"[].phone | contains([], '{phone_number}')"
-            is_employee = jmespath.search(expression, current_app.config['EMPLOYEES'])
+            is_employee = check_employee(phone_number)
 
             users_config = current_app.config['HOTSPOT_USERS']
             hotspot_user = users_config['employee'] if is_employee else users_config['guest']
@@ -90,7 +96,7 @@ def check_expiration(func):
         if db_client and datetime.datetime.now() < db_client.expiration:
             phone = db_client.phone
             phone_number = phone.phone_number
-            is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
+            is_employee = check_employee(phone_number)
 
             username = 'employee' if is_employee else 'guest'
             password = current_app.config['HOTSPOT_USERS'][username].get('password')
@@ -119,17 +125,6 @@ def check_expiration(func):
 
         return await func(*args)
     return wrapped
-
-
-@auth_bp.before_request
-async def update_employees():
-    employees_hash = current_app.config.get('EMP_HASH')
-    with open("config/employees.yaml", "rb") as emp_config_file:
-        file_contents = emp_config_file.read()
-    new_hash = hashlib.md5(file_contents).hexdigest()
-    if employees_hash != new_hash:
-        current_app.config['EMPLOYEES'] = yaml.safe_load(file_contents).get('employees', [])
-        current_app.config['EMP_HASH'] = new_hash
 
 
 @auth_bp.route('/login', methods=['POST'])
@@ -171,7 +166,7 @@ async def auth():
     form_code = int(request.form.get('code'))
     user_code = int(session.get('code'))
 
-    is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
+    is_employee = check_employee(phone_number)
 
     if form_code == user_code:
         now_time = datetime.datetime.now()
