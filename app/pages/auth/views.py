@@ -98,13 +98,13 @@ def check_expiration(func):
 
         mac = session.get('mac')
 
-    db_client = models.WifiClient.query.filter_by(mac=mac).first()
-    if db_client and datetime.datetime.now() < db_client.expiration:
-        phone = db_client.phone
-        phone_number = phone.phone_number
+        db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        if db_client and datetime.datetime.now() < db_client.expiration:
+            phone = db_client.phone
+            phone_number = phone.phone_number
 
-        username = 'employee' if check_employee(phone_number) else 'guest'
-        password = current_app.config['HOTSPOT_USERS'][username].get('password')
+            username = 'employee' if check_employee(phone_number) else 'guest'
+            password = current_app.config['HOTSPOT_USERS'][username].get('password')
 
             link_login_only = session.get('link-login-only')
             link_orig = session.get('link-orig')
