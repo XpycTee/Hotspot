@@ -73,7 +73,8 @@ async def check_authorization():
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
         if db_client and db_client.phone.phone_number == phone_number:
             users_config = current_app.config['HOTSPOT_USERS']
-            hotspot_user = users_config['employee'] if check_employee(phone_number) else users_config['guest']
+            is_employee = check_employee(phone_number)
+            hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
             now_time = datetime.datetime.now()
 
