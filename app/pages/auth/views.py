@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import logging
 import re
+from functools import wraps
 from hashlib import md5
 from random import randint
 
@@ -26,20 +27,10 @@ def octal_string_to_bytes(oct_string):
     return bytes(byte_nums)
 
 
-@auth_bp.before_request
-async def update_employees():
-    employees_hash = current_app.config.get('EMP_HASH')
-    with open("config/employees.yaml", "rb") as emp_config_file:
-        file_contents = emp_config_file.read()
-    new_hash = hashlib.md5(file_contents).hexdigest()
-    if employees_hash != new_hash:
-        current_app.config['EMPLOYEES'] = yaml.safe_load(file_contents).get('employees', [])
-        current_app.config['EMP_HASH'] = new_hash
+def init_session(func):
+    @wraps(func)
+    async def wrapped(*args):
 
-
-@auth_bp.before_request
-async def init_session():
-    if not session:
         required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
 
         if not all(key in request.form for key in required_keys):
@@ -51,13 +42,15 @@ async def init_session():
         session['link-orig'] = request.form.get('link-orig')
         session['mac'] = request.form.get('mac')
 
+        return await func(*args)
+    return wrapped
 
-@auth_bp.before_request
-async def check_authorization():
-    if 'phone' in request.form:
+
+def check_authorization(func):
+    @wraps(func)
+    async def wrapped(*args):
+
         phone_number = request.form.get('phone')
-        if not phone_number:
-            phone_number = session.get('phone')
 
         phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
         phone_number = re.sub(r'\D', '', phone_number)
@@ -69,6 +62,7 @@ async def check_authorization():
 
         mac = session.get('mac')
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
+
         if db_client and db_client.phone.phone_number == phone_number:
             expression = f"[].phone | contains([], '{phone_number}')"
             is_employee = jmespath.search(expression, current_app.config['EMPLOYEES'])
@@ -82,50 +76,73 @@ async def check_authorization():
             db_client.employee = is_employee
             db.session.commit()
 
+        return await func(*args)
+    return wrapped
+
+
+def check_expiration(func):
+    @wraps(func)
+    async def wrapped(*args):
+
+        mac = session.get('mac')
+
+        db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        if db_client and datetime.datetime.now() < db_client.expiration:
+            phone = db_client.phone
+            phone_number = phone.phone_number
+            is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
+
+            username = 'employee' if is_employee else 'guest'
+            password = current_app.config['HOTSPOT_USERS'][username].get('password')
+
+            link_login_only = session.get('link-login-only')
+            link_orig = session.get('link-orig')
+
+            chap_id = session.get('chap-id')
+            chap_challenge = session.get('chap-challenge')
+
+            session.clear()
+            # use HTTP CHAP method in hotspot
+            if chap_id and chap_challenge:
+                chap_id = octal_string_to_bytes(chap_id)
+                chap_challenge = octal_string_to_bytes(chap_challenge)
+                link_login_only = link_login_only.replace('https', 'http')
+                password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+
+            return render_template(
+                'sendin.html',
+                username=username,
+                password=password,
+                link_login_only=link_login_only,
+                link_orig=link_orig
+            )
+
+        return await func(*args)
+    return wrapped
+
 
 @auth_bp.before_request
-async def check_registration():
-    mac = session.get('mac')
-
-    db_client = models.WifiClient.query.filter_by(mac=mac).first()
-    if db_client and datetime.datetime.now() < db_client.expiration:
-        phone = db_client.phone
-        phone_number = phone.phone_number
-        is_employee = jmespath.search(f"[].phone | contains([], '{phone_number}')", current_app.config['EMPLOYEES'])
-
-        username = 'employee' if is_employee else 'guest'
-        password = current_app.config['HOTSPOT_USERS'][username].get('password')
-
-        link_login_only = session.get('link-login-only')
-        link_orig = session.get('link-orig')
-
-        chap_id = session.get('chap-id')
-        chap_challenge = session.get('chap-challenge')
-
-        session.clear()
-        # use HTTP CHAP method in hotspot
-        if chap_id and chap_challenge:
-            chap_id = octal_string_to_bytes(chap_id)
-            chap_challenge = octal_string_to_bytes(chap_challenge)
-            link_login_only = link_login_only.replace('https', 'http')
-            password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
-
-        return render_template(
-            'sendin.html',
-            username=username,
-            password=password,
-            link_login_only=link_login_only,
-            link_orig=link_orig
-        )
+async def update_employees():
+    employees_hash = current_app.config.get('EMP_HASH')
+    with open("config/employees.yaml", "rb") as emp_config_file:
+        file_contents = emp_config_file.read()
+    new_hash = hashlib.md5(file_contents).hexdigest()
+    if employees_hash != new_hash:
+        current_app.config['EMPLOYEES'] = yaml.safe_load(file_contents).get('employees', [])
+        current_app.config['EMP_HASH'] = new_hash
 
 
 @auth_bp.route('/login', methods=['POST'])
+@init_session
+@check_expiration
 async def login():
     error = session.pop('error', None)
-    return render_template('login.html', error=error)
+    return render_template('login.html', error=error)  # Form send phone to /CODE
 
 
 @auth_bp.route('/code', methods=['POST'])
+@check_authorization
+@check_expiration
 async def code():
     error = session.pop('error', None)
     phone_number = session.get('phone')
@@ -134,7 +151,6 @@ async def code():
 
         gen_code = str(randint(0, 9999)).zfill(4)
         session['code'] = gen_code
-        session['phone'] = phone_number
 
         sender = current_app.config.get('SENDER')
         result = sender.send_sms(phone_number, current_app.config['LANGUAGE_CONTENT']['sms_code'].format(code=gen_code))
@@ -148,6 +164,7 @@ async def code():
 
 
 @auth_bp.route('/auth', methods=['POST'])
+@check_expiration
 async def auth():
     mac = session.get('mac')
     phone_number = session.get('phone')
