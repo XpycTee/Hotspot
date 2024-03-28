@@ -44,7 +44,7 @@ docker run -d hotspot-mikrotik:latest
 
 ## License
 
-This project is licensed under the [MIT License](link-to-license).
+This project is licensed under the [Apache](./LICENSE).
 
 ## Authors
 
