@@ -8,8 +8,8 @@ This project provides a backend hotspot web application deployed in a Docker con
 - Download the Mikrotik web template files from the repository in `examples/mikrotik_redirect`.
 - Upload the template files `mikrotik_redirect` to your Mikrotik files.
 - Create hotspot profile
-   - set HTML Directory to mikrotik_redirect
-   - set enabled HTTP CHAP, MAC Cookie and optional HTTPS
+   - set HTML Directory to `mikrotik_redirect`
+   - set enabled `HTTP CHAP`, `MAC Cookie` and optional `HTTPS`
 - Create hotspot users and profiles for employee and guest
 
 #### Config:
