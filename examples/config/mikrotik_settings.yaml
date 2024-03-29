@@ -1,13 +1,14 @@
 settings:
   company_name: No-name LTD
   language: en-US
+  db_url: sqlite:///path/to/database.db  # OPTIONAL. Url for connect database use SQLAlchemy URL, by default used sqlite db, file created after start in config directory
   sender:
     type: mikrotik
     url: https://admin:admin@10.55.0.1/  # Url for REST api of mikrotik RoS Version >=7.9
   hotspot_users:
     guest:
-      password: secret
+      password: secret # Default password for guests used in mikrotik /ip hotspot user add password=secret ...
       delay: 24h # Hours. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
     employee:
-      password: supersecret
+      password: supersecret # Default password for employees used in mikrotik /ip hotspot user add password=supersecret ...
       delay: 30d # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
