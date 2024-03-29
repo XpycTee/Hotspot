@@ -58,25 +58,27 @@ This project provides a backend hotspot web application deployed in a Docker con
 ### Installing the Backend
 #### Prepare PostgresSQL
 ```bash
-podman run -d \
+docker run -d \
     --name hotspot-db \
     -e POSTGRES_DB=hotspot \
     -e POSTGRES_USER=hotspot \
     -e POSTGRES_PASSWORD=OmegaSuperSecret \
     postgres
 ```
+> This command runs a PostgresSQL container named `hotspot-db` with specific environment variables for database setup.
+#### Create Hotspot container
 Start a hotspot backend web-interface container as follows:
 ```bash
 docker run -d \
-    --name=hotspot-app \
-    -v=/path/to/config:/hotspot/config \
+    --name hotspot-app \
+    -v /path/to/config:/hotspot/config \
     xpyctee/hotspot-mikrotik:latest
 ```
-> Use config directory mounted from volume.
+> This command starts a hotspot backend container named `hotspot-app` with a volume mounted for configuration.
 
 ### Config Examples
 Default we have some sms senders:
-1. Mikrotik  - Send SMS use Mikrotik RESTFul API (Required ROS7).
+1. Mikrotik  - Send SMS use Mikrotik RESTful API (Required ROS7).
 2. HUAWEI Modem - Send SMS use HUAWEI Modem's API.
 3. sms.ru - Russian service for SMS sending.
 > Maybe expand in the future. Examples of APIs see in `examples/config`
@@ -99,7 +101,7 @@ settings:
       password: supersecret # Default password for employees used in mikrotik /ip hotspot user add password=supersecret ...
       delay: 30d # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
 ```
-
+> This YAML configuration file provides settings for the Mikrotik API, company details, and user configurations.
 #### Employees.yaml
 File where you can list your employees.
 ```yaml
