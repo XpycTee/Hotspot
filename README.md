@@ -12,63 +12,118 @@ This project provides a backend hotspot web application deployed in a Docker con
 -->
 
 ## Installation
+
 ### Installing the Template in Mikrotik
-#### Hotspot HTML Template configure
-Download the Mikrotik web template files from the repository in `examples/mikrotik_redirect`.
+1. Download the Mikrotik web template files from the repository in `examples/mikrotik_redirect`.
+2. Edit the hostname `hotspot.server.url` in the action of the redirect form to your server IP or DNS name.
 
-Edit hostname `hotspot.server.url` in action of redirect form to your server ip or dns name.
+> If you want to edit the template, refer to the Mikrotik [Hotspot Customization Documentation](https://help.mikrotik.com/docs/display/ROS/Hotspot+customisation).
 
-> If you want edit template read Mikrotik [Hotspot Customization Documentation](https://help.mikrotik.com/docs/display/ROS/Hotspot+customisation)
-
-For work with backend save required inputs
+3. For working with the backend, save the required inputs:
 ```html
-<!-- This is required inputs don't remove -->
+<!-- These are required inputs, do not remove -->
 <input type="hidden" name="mac" value="$(mac)">
 <input type="hidden" name="link-orig" value="$(link-orig)">
 <input type="hidden" name="chap-id" value="$(chap-id)">
 <input type="hidden" name="chap-challenge" value="$(chap-challenge)">
 <input type="hidden" name="link-login-only" value="$(link-login-only)">
-<!-- This is required inputs don't remove -->
+<!-- These are required inputs, do not remove -->
 ```
 
-Upload the template folder `mikrotik_redirect` in your Mikrotik files.
+4. Upload the template folder mikrotik_redirect to your Mikrotik files.
 
-#### Mikrotik Hotspot configure
-- Create hotspot profile
-   - set HTML Directory to `mikrotik_redirect`
-   - set enabled `HTTP CHAP`, `MAC Cookie` and optional `HTTPS`
-- Create hotspot users and profiles for employee and guest
+### Mikrotik Hotspot Configuration
+- Create a hotspot profile:
+   - Set HTML Directory to `mikrotik_redirect`
+   - Enable `HTTP CHAP`, `MAC Cookie` and optionally `HTTPS`
+- Create hotspot users and profiles for employees and guests.
 
-##### Configs:
-Hotspot profile, using macc-cookie and http-chap is required
+##### Configurations:
+1. Hotspot profile, using macc-cookie and http-chap is required:
 ```
 /ip hotspot profile add html-directory=flash/mikrotik_redirect login-by=mac-cookie,http-chap[,https ssl-certificate=hotspot-certificate] ...
 ```
-Employees, required `name=employee` of user, but user `password` you can edit in configuration of backend.
-Param `mac-cookie-timeout` you can set what you want, default for employees `30d`
+2. Employees, with required `name=employee` of the user, but you can edit the user `password` in the backend configuration. The parameter `mac-cookie-timeout` can be set as needed, default for employees is `30d`:
 ```
 /ip hotspot user profile add name=employees add-mac-cookie=yes mac-cookie-timeout=30d ...
 /ip hotspot user add name=employee password=supersecret profile=employees ...
 ```
-Guests, required `name=guest` of user, but `password` you can edit in configuration of backend.
-Param `mac-cookie-timeout` you can set what you want, default for guests `1d`
+3. Guests, with required `name=guest` of the user, but you can edit the `password` in the backend configuration. The parameter `mac-cookie-timeout` can be set as needed, default for guests is `1d`:
 ```
 /ip hotspot user profile add name=guests add-mac-cookie=yes mac-cookie-timeout=1d ...
 /ip hotspot user add name=guest password=secret profile=guests ...
 ```
 > For more detail read Mikrotik [Hotspot User Documentation](https://help.mikrotik.com/docs/display/ROS/User)
-### Installing the Backend in Docker
-Pull the Docker image from DockerHub: 
+
+### Installing the Backend
+#### Prepare PostgresSQL
 ```bash
-docker pull hotspot-mikrotik:latest
+podman run -d \
+    --name hotspot-db \
+    -e POSTGRES_DB=hotspot \
+    -e POSTGRES_USER=hotspot \
+    -e POSTGRES_PASSWORD=OmegaSuperSecret \
+    postgres
 ```
-- Run the Docker container: 
+Start a hotspot backend web-interface container as follows:
 ```bash
-docker run -d hotspot-mikrotik:latest
+docker run -d \
+    --name=hotspot-app \
+    -v=/path/to/config:/hotspot/config \
+    xpyctee/hotspot-mikrotik:latest
+```
+> Use config directory mounted from volume.
+
+### Config Examples
+Default we have some sms senders:
+1. Mikrotik  - Send SMS use Mikrotik RESTFul API (Required ROS7).
+2. HUAWEI Modem - Send SMS use HUAWEI Modem's API.
+3. sms.ru - Russian service for SMS sending.
+> Maybe expand in the future. Examples of APIs see in `examples/config`
+
+#### Settings.yaml
+For example use mikrotik api configuration file saved in: `config/settings.yaml`:
+```yaml
+settings:
+  company_name: No-name LTD
+  language: en-US
+  db_url: postgresql://hotspot:OmegaSuperSecret@127.0.0.1:5432/hotspot  # OPTIONAL. Url for connect database use SQLAlchemy URL, by default used sqlite db, file created after start in config directory
+  sender:
+    type: mikrotik
+    url: https://admin:@182.168.88.1/  # Url for REST api of mikrotik RoS Version >=7.9
+  hotspot_users:
+    guest:
+      password: secret # Default password for guests used in mikrotik /ip hotspot user add password=secret ...
+      delay: 24h # Hours. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
+    employee:
+      password: supersecret # Default password for employees used in mikrotik /ip hotspot user add password=supersecret ...
+      delay: 30d # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
 ```
 
-### Environment Variables for the Backend
-- `ENV_NAME`: Example of env var
+#### Employees.yaml
+File where you can list your employees.
+```yaml
+employees:
+- lastname: Lastname
+  name: Name
+  phone:
+  - '79999999999'
+  - '79999999998'
+- lastname: AnotherLastname
+  name: AnotherName
+  phone:
+  - '37129999999'
+  - '37129999998'
+```
+> Numbers are recorded with the country code without `+`
+
+#### Blacklist.yaml
+The file in which you can specify the numbers on the blacklist.
+```yaml
+blacklist:
+- '79999999993'  # Example blocked 1
+- '37129999993'  # Example blocked 2
+```
 
 ## License
 
