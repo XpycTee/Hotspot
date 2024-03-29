@@ -8,6 +8,7 @@
     <title>Hotspot Login</title>
 </head>
 <body>
+    <!-- Edit action to yours ip or dns of server where used backend -->
     <form name="redirect" action="https://hotspot.server.url/login" method="post" style="display: flex; flex-direction: column; flex: 1 1 0%;">
         <center>
             <!--$(if chap-id)-->
@@ -18,16 +19,20 @@
             <p class="mt-1">If nothing happens, an error has occurred.</p>
             <p class="mt-1">Please try connecting again later.</p>
         </center>
+        <!-- This is required inputs don't remove -->
         <input type="hidden" name="mac" value="$(mac)">
         <input type="hidden" name="link-orig" value="$(link-orig)">
         <input type="hidden" name="chap-id" value="$(chap-id)">
         <input type="hidden" name="chap-challenge" value="$(chap-challenge)">
         <input type="hidden" name="link-login-only" value="$(link-login-only)">
+        <!-- This is required inputs don't remove -->
     </form>
 </body>
+<!-- This script is required don't remove-->
 <script language="JavaScript">
     <!--
     document.redirect.submit();
     -->
 </script>
+<!-- This script is required don't remove-->
 </html>
