@@ -48,40 +48,7 @@ def init_session(func):
         session['link-orig'] = request.form.get('link-orig')
         session['mac'] = request.form.get('mac')
 
-        return await func(*args)
-    return wrapped
-
-
-def check_authorization(func):
-    @wraps(func)
-    async def wrapped(*args):
-
-        phone_number = request.form.get('phone')
-
-        phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
-        phone_number = re.sub(r'\D', '', phone_number)
-
-        if phone_number in current_app.config['BLACKLIST']:
-            abort(403)
-
-        session['phone'] = phone_number
-
-        mac = session.get('mac')
-        db_client = models.WifiClient.query.filter_by(mac=mac).first()
-
-        if db_client and db_client.phone.phone_number == phone_number:
-            is_employee = check_employee(phone_number)
-
-            users_config = current_app.config['HOTSPOT_USERS']
-            hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-
-            now_time = datetime.datetime.now()
-
-            db_client.expiration = now_time + hotspot_user.get('delay')
-            db_client.employee = is_employee
-            db.session.commit()
-
-        return await func(*args)
+        return func(*args)
     return wrapped
 
 
@@ -135,11 +102,40 @@ async def login():
 
 
 @auth_bp.route('/code', methods=['POST'])
-@check_authorization
 @check_expiration
 async def code():
     error = session.pop('error', None)
-    phone_number = session.get('phone')
+
+    phone_number = request.form.get('phone')
+    if not phone_number:
+        abort(400)
+        
+    phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
+    phone_number = re.sub(r'\D', '', phone_number)
+
+    if phone_number in current_app.config['BLACKLIST']:
+        abort(403)
+
+    session['phone'] = phone_number
+
+    mac = session.get('mac')
+    if not mac:
+        abort(400)
+
+    db_client = models.WifiClient.query.filter_by(mac=mac).first()
+
+    if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
+        is_employee = check_employee(phone_number)
+
+        users_config = current_app.config['HOTSPOT_USERS']
+
+        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+
+        now_time = datetime.datetime.now()
+
+        db_client.expiration = now_time + hotspot_user.get('delay')
+        db_client.employee = is_employee
+        db.session.commit()
 
     if 'code' not in session:
 
@@ -147,9 +143,9 @@ async def code():
         session['code'] = gen_code
 
         sender = current_app.config.get('SENDER')
-        result = sender.send_sms(phone_number, current_app.config['LANGUAGE_CONTENT']['sms_code'].format(code=gen_code))
+        sms_error = sender.send_sms(phone_number, current_app.config['LANGUAGE_CONTENT']['sms_code'].format(code=gen_code))
 
-        if result:
+        if sms_error:
             abort(500)
 
         current_app.logger.debug(f"{phone_number}'s code: {gen_code}")
