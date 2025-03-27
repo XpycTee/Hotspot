@@ -35,7 +35,7 @@ def check_employee(phone_number):
 
 def init_session(func):
     @wraps(func)
-    async def wrapped(*args):
+    def wrapped(*args):
 
         required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
 
@@ -54,7 +54,7 @@ def init_session(func):
 
 def check_expiration(func):
     @wraps(func)
-    async def wrapped(*args):
+    def wrapped(*args):
 
         mac = session.get('mac')
 
@@ -89,21 +89,21 @@ def check_expiration(func):
                 link_orig=link_orig
             )
 
-        return await func(*args)
+        return func(*args)
     return wrapped
 
 
 @auth_bp.route('/login', methods=['POST'])
 @init_session
 @check_expiration
-async def login():
+def login():
     error = session.pop('error', None)
     return render_template('login.html', error=error)  # Form send phone to /CODE
 
 
 @auth_bp.route('/code', methods=['POST'])
 @check_expiration
-async def code():
+def code():
     error = session.pop('error', None)
 
     phone_number = request.form.get('phone')
@@ -155,7 +155,7 @@ async def code():
 
 @auth_bp.route('/auth', methods=['POST'])
 @check_expiration
-async def auth():
+def auth():
     mac = session.get('mac')
     phone_number = session.get('phone')
     form_code = int(request.form.get('code'))
