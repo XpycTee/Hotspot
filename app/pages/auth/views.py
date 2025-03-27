@@ -1,5 +1,4 @@
 import datetime
-import logging
 import re
 from functools import wraps
 from hashlib import md5
@@ -153,7 +152,7 @@ async def code():
         if result:
             abort(500)
 
-        logging.debug(f"{phone_number}'s code: {gen_code}")
+        current_app.logger.debug(f"{phone_number}'s code: {gen_code}")
 
     return render_template('code.html', error=error)
 
