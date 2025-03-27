@@ -10,6 +10,7 @@ from flask import render_template, request, current_app, redirect, url_for, sess
 
 from . import auth_bp
 from ...database import models, db
+import os
 
 
 def octal_string_to_bytes(oct_string):
@@ -25,11 +26,23 @@ def octal_string_to_bytes(oct_string):
     return bytes(byte_nums)
 
 
+employee_cache = {
+    'data': None,
+    'last_modified': 0
+}
+
 def check_employee(phone_number):
-    with open("config/employees.yaml", "r", encoding="utf-8") as employees_file:
-        employees = yaml.safe_load(employees_file)
-        expression = f"[].phone | contains([], '{phone_number}')"
-        in_employees = bool(jmespath.search(expression, employees))
+    file_path = "config/employees.yaml"
+    last_modified = os.path.getmtime(file_path)
+
+    if employee_cache['data'] is None or last_modified > employee_cache['last_modified']:
+        with open(file_path, "r", encoding="utf-8") as employees_file:
+            employees = yaml.safe_load(employees_file)
+            employee_cache['data'] = employees
+            employee_cache['last_modified'] = last_modified
+
+    expression = f"employees[].phone | contains([], '{phone_number}')"
+    in_employees = bool(jmespath.search(expression, employee_cache['data']))
     return in_employees
 
 
@@ -39,8 +52,8 @@ def init_session(func):
 
         required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
 
-        if not all(key in request.form for key in required_keys):
-            abort(400)  # Raise a 400 error if any of the required keys is missing
+        if not all(key in request.form and request.form.get(key) for key in required_keys):
+            abort(400)  # Raise a 400 error if any of the required keys is missing or empty
 
         session['chap-id'] = request.form.get('chap-id')
         session['chap-challenge'] = request.form.get('chap-challenge')
@@ -57,15 +70,22 @@ def check_expiration(func):
     def wrapped(*args):
 
         mac = session.get('mac')
+        if not mac:
+            abort(400)
 
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
         if db_client and datetime.datetime.now() < db_client.expiration:
             phone = db_client.phone
+            if not phone:
+                abort(500)
+
             phone_number = phone.phone_number
             is_employee = check_employee(phone_number)
 
             username = 'employee' if is_employee else 'guest'
             password = current_app.config['HOTSPOT_USERS'][username].get('password')
+            if not password:
+                abort(500)
 
             link_login_only = session.get('link-login-only')
             link_orig = session.get('link-orig')
@@ -158,10 +178,17 @@ def code():
 def auth():
     mac = session.get('mac')
     phone_number = session.get('phone')
-    form_code = int(request.form.get('code'))
-    user_code = int(session.get('code'))
+    form_code = request.form.get('code')
+    user_code = session.get('code')
 
-    is_employee = check_employee(phone_number)
+    if form_code is None or user_code is None:
+        session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['missing_code']
+        redirect_url = url_for('auth.code')
+        return redirect(redirect_url, 307)
+
+
+    form_code = int(form_code)
+    user_code = int(user_code)
 
     if form_code == user_code:
         now_time = datetime.datetime.now()
@@ -171,6 +198,8 @@ def auth():
             db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
+        
+        is_employee = check_employee(phone_number)
 
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
         if not db_client:
@@ -190,16 +219,20 @@ def auth():
         db.session.commit()
 
         session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_auth']
-        return redirect(url_for('auth.auth'), 307)
+        redirect_url = url_for('auth.auth')
+        return redirect(redirect_url, 307)
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
 
         if session['tries'] >= 3:
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_all']
-            session.pop('code')  # Remove code from session
+            session.pop('code')  # Remove code from session for generating new when tries end
 
-            return redirect(url_for('auth.auth'), 307)
+            redirect_url = url_for('auth.auth')
+            return redirect(redirect_url, 307)
         else:
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_try']
-            return redirect(url_for('auth.code'), 307)
+            redirect_url = url_for('auth.code')
+            return redirect(redirect_url, 307)
+
