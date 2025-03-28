@@ -1,6 +1,5 @@
 import datetime
 import re
-from functools import wraps
 from hashlib import md5
 from random import randint
 
@@ -10,6 +9,7 @@ from flask import render_template, request, current_app, redirect, url_for, sess
 
 from . import auth_bp
 from ...database import models, db
+
 import os
 
 
@@ -46,118 +46,114 @@ def check_employee(phone_number):
     return in_employees
 
 
-def init_session(func):
-    @wraps(func)
-    def wrapped(*args):
+@auth_bp.route('/sendin', methods=['POST'])
+def sendin():
+    phone_number = session.get('phone')
+    if not phone_number:
+        abort(400)
 
-        required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
+    is_employee = check_employee(phone_number)
 
-        if not all(key in request.form and request.form.get(key) for key in required_keys):
-            abort(400)  # Raise a 400 error if any of the required keys is missing or empty
+    username = 'employee' if is_employee else 'guest'
+    password = current_app.config['HOTSPOT_USERS'][username].get('password')
+    if not password:
+        abort(500)
 
+    link_login_only = session.get('link-login-only')
+    link_orig = session.get('link-orig')
+
+    chap_id = session.get('chap-id')
+    chap_challenge = session.get('chap-challenge')
+    
+    # use HTTP CHAP method in hotspot
+    if chap_id and chap_challenge:
+        chap_id = octal_string_to_bytes(chap_id)
+        chap_challenge = octal_string_to_bytes(chap_challenge)
+        link_login_only = link_login_only.replace('https', 'http')
+        password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+
+    return render_template(
+        'sendin.html',
+        username=username,
+        password=password,
+        link_login_only=link_login_only,
+        link_orig=link_orig
+    )
+
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    error = session.pop('error', None)
+
+    required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
+
+    
+    if not any(key in set(request.form.keys()) for key in required_keys):
+        if not any(key in set(session.keys()) for key in required_keys):
+            abort(400)
+    else:
         session['chap-id'] = request.form.get('chap-id')
         session['chap-challenge'] = request.form.get('chap-challenge')
         session['link-login-only'] = request.form.get('link-login-only')
         session['link-orig'] = request.form.get('link-orig')
         session['mac'] = request.form.get('mac')
 
-        return func(*args)
-    return wrapped
+    mac = session.get('mac')
+
+    db_client = models.WifiClient.query.filter_by(mac=mac).first()
+    if db_client and datetime.datetime.now() < db_client.expiration:
+        phone = db_client.phone
+        if not phone:
+            abort(500)
+        session['phone'] = phone.phone_number
+
+        redirect_url = url_for('auth.sendin')
+        return redirect(redirect_url, 302)
+
+    return render_template('login.html', error=error)
 
 
-def check_expiration(func):
-    @wraps(func)
-    def wrapped(*args):
+@auth_bp.route('/code', methods=['POST'])
+def code():
+    error = session.pop('error', None)
+
+    phone_number = request.form.get('phone')
+
+    if phone_number:
+        phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
+        phone_number = re.sub(r'\D', '', phone_number)
+
+        if phone_number in current_app.config['BLACKLIST']:
+            abort(403)
+
+        session['phone'] = phone_number
 
         mac = session.get('mac')
         if not mac:
             abort(400)
 
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
-        if db_client and datetime.datetime.now() < db_client.expiration:
-            phone = db_client.phone
-            if not phone:
-                abort(500)
 
-            phone_number = phone.phone_number
+        if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
             is_employee = check_employee(phone_number)
 
-            username = 'employee' if is_employee else 'guest'
-            password = current_app.config['HOTSPOT_USERS'][username].get('password')
-            if not password:
-                abort(500)
+            users_config = current_app.config['HOTSPOT_USERS']
 
-            link_login_only = session.get('link-login-only')
-            link_orig = session.get('link-orig')
+            hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
-            chap_id = session.get('chap-id')
-            chap_challenge = session.get('chap-challenge')
+            expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
 
-            session.clear()
-            # use HTTP CHAP method in hotspot
-            if chap_id and chap_challenge:
-                chap_id = octal_string_to_bytes(chap_id)
-                chap_challenge = octal_string_to_bytes(chap_challenge)
-                link_login_only = link_login_only.replace('https', 'http')
-                password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+            db_client.expiration = expire_time + hotspot_user.get('delay')
+            db_client.employee = is_employee
+            db.session.commit()
+            redirect_url = url_for('auth.sendin')
+            return redirect(redirect_url, 302)
 
-            return render_template(
-                'sendin.html',
-                username=username,
-                password=password,
-                link_login_only=link_login_only,
-                link_orig=link_orig
-            )
-
-        return func(*args)
-    return wrapped
-
-
-@auth_bp.route('/login', methods=['POST'])
-@init_session
-@check_expiration
-def login():
-    error = session.pop('error', None)
-    return render_template('login.html', error=error)  # Form send phone to /CODE
-
-
-@auth_bp.route('/code', methods=['POST'])
-@check_expiration
-def code():
-    error = session.pop('error', None)
-
-    phone_number = request.form.get('phone')
-    if not phone_number:
-        abort(400)
-        
-    phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
-    phone_number = re.sub(r'\D', '', phone_number)
-
-    if phone_number in current_app.config['BLACKLIST']:
-        abort(403)
-
-    session['phone'] = phone_number
-
-    mac = session.get('mac')
-    if not mac:
-        abort(400)
-
-    db_client = models.WifiClient.query.filter_by(mac=mac).first()
-
-    if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
-        is_employee = check_employee(phone_number)
-
-        users_config = current_app.config['HOTSPOT_USERS']
-
-        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-
-        now_time = datetime.datetime.now()
-
-        db_client.expiration = now_time + hotspot_user.get('delay')
-        db_client.employee = is_employee
-        db.session.commit()
 
     if 'code' not in session:
+        phone_number = session.get('phone')
+        if not phone_number:
+            abort(400)
 
         gen_code = str(randint(0, 9999)).zfill(4)
         session['code'] = gen_code
@@ -174,7 +170,6 @@ def code():
 
 
 @auth_bp.route('/auth', methods=['POST'])
-@check_expiration
 def auth():
     mac = session.get('mac')
     phone_number = session.get('phone')
@@ -184,8 +179,7 @@ def auth():
     if form_code is None or user_code is None:
         session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['missing_code']
         redirect_url = url_for('auth.code')
-        return redirect(redirect_url, 307)
-
+        return redirect(redirect_url, 302)
 
     form_code = int(form_code)
     user_code = int(user_code)
@@ -207,32 +201,32 @@ def auth():
             db.session.add(db_client)
         else:
             db_client.phone = db_phone
-            db_client.expiration = now_time
             db_client.employee = is_employee
 
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
         delay = hotspot_user.get('delay')
-        db_client.expiration = now_time + delay
+        expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
+        db_client.expiration = expire_time + delay
 
         db.session.commit()
 
-        session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_auth']
-        redirect_url = url_for('auth.auth')
-        return redirect(redirect_url, 307)
+        redirect_url = url_for('auth.sendin')
+        return redirect(redirect_url, 302)
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
 
         if session['tries'] >= 3:
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_all']
-            session.pop('code')  # Remove code from session for generating new when tries end
+            session.pop('code', None)
+            session.pop('tries', None)
+            session.pop('phone', None)
 
-            redirect_url = url_for('auth.auth')
-            return redirect(redirect_url, 307)
+            redirect_url = url_for('auth.login')
+            return redirect(redirect_url, 302)
         else:
             session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_try']
             redirect_url = url_for('auth.code')
             return redirect(redirect_url, 307)
-
