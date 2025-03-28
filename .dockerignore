@@ -9,3 +9,4 @@ docker-build.sh
 .git/
 .gitignore
 Dockerfile
+__pycache__
