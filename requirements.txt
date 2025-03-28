@@ -5,4 +5,4 @@ Flask-SQLAlchemy~=3.1.1
 SQLAlchemy~=2.0.27
 smsru-api~=1.1.2
 huawei-lte-api~=1.8.1
-uwsgi~=2.0.24
+gunicorn~=23.0.0
