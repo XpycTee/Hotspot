@@ -2,7 +2,7 @@ import logging
 
 from smsru_api import Client
 
-from ...sms import BaseSender
+from app.sms import BaseSender
 
 
 class SMSRUSender(BaseSender):

@@ -5,7 +5,7 @@ from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
-from ...sms import BaseSender
+from app.sms import BaseSender
 
 
 class HuaweiSMSSender(BaseSender):

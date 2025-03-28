@@ -5,12 +5,20 @@ from random import randint
 
 import jmespath
 import yaml
-from flask import render_template, request, current_app, redirect, url_for, session, abort
+from flask import Blueprint, render_template, request, current_app, redirect, url_for, session, abort
 
-from . import auth_bp
-from ...database import models, db
+from app.database import db
+from app.database import models
 
 import os
+
+
+auth_bp = Blueprint('auth', __name__)
+
+employee_cache = {
+    'data': None,
+    'last_modified': 0
+}
 
 
 def octal_string_to_bytes(oct_string):
@@ -25,11 +33,6 @@ def octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
-
-employee_cache = {
-    'data': None,
-    'last_modified': 0
-}
 
 def check_employee(phone_number):
     file_path = "config/employees.yaml"

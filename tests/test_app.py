@@ -8,7 +8,7 @@ from flask import Flask, session
 
 # Add the root directory of the project to the sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from app.pages.auth.views import (
+from app.pages.auth import (
     octal_string_to_bytes,
     check_employee,
     sendin,
@@ -60,8 +60,8 @@ class TestAuthViews(unittest.TestCase):
     def test_octal_string_to_bytes(self):
         self.assertEqual(octal_string_to_bytes("\\141\\142\\143"), b'abc')
 
-    @patch('app.pages.auth.views.yaml.safe_load')
-    @patch('app.pages.auth.views.os.path.getmtime')
+    @patch('app.pages.auth.yaml.safe_load')
+    @patch('app.pages.auth.os.path.getmtime')
     @patch('builtins.open', new_callable=unittest.mock.mock_open, read_data="phone: ['1234567890']")
     def test_check_employee(self, mock_open, mock_getmtime, mock_safe_load):
         with self.app.app_context():
@@ -70,7 +70,7 @@ class TestAuthViews(unittest.TestCase):
             self.assertTrue(check_employee('1234567890'))
             self.assertFalse(check_employee('0987654321'))
 
-    @patch('app.pages.auth.views.render_template')
+    @patch('app.pages.auth.render_template')
     def test_login_post(self, mock_render_template):
         test_init_data = {
             'chap-id': '1', 
@@ -86,7 +86,7 @@ class TestAuthViews(unittest.TestCase):
                 response = login()
                 self.assertEqual(response, ('login.html', None))
 
-    @patch('app.pages.auth.views.render_template')
+    @patch('app.pages.auth.render_template')
     def test_login_session(self, mock_render_template):
         test_init_data = {
             'chap-id': '1', 
@@ -104,8 +104,8 @@ class TestAuthViews(unittest.TestCase):
                 response = login()
                 self.assertEqual(response, ('login.html', None))
 
-    @patch('app.pages.auth.views.check_employee')
-    @patch('app.pages.auth.views.render_template')
+    @patch('app.pages.auth.check_employee')
+    @patch('app.pages.auth.render_template')
     def test_sendin_guest_chap(self, mock_render_template, mock_check_employee):
         test_init_data = {
             'chap-id': '1', 
@@ -130,8 +130,8 @@ class TestAuthViews(unittest.TestCase):
                     })
                 self.assertEqual(response, right_response)
 
-    @patch('app.pages.auth.views.check_employee')
-    @patch('app.pages.auth.views.render_template')
+    @patch('app.pages.auth.check_employee')
+    @patch('app.pages.auth.render_template')
     def test_sendin_guest_https(self, mock_render_template, mock_check_employee):
         test_init_data = {
             'link-login-only': 'link', 
@@ -154,8 +154,8 @@ class TestAuthViews(unittest.TestCase):
                     })
                 self.assertEqual(response, right_response)
 
-    @patch('app.pages.auth.views.check_employee')
-    @patch('app.pages.auth.views.render_template')
+    @patch('app.pages.auth.check_employee')
+    @patch('app.pages.auth.render_template')
     def test_sendin_employee_chap(self, mock_render_template, mock_check_employee):
         test_init_data = {
             'chap-id': '1', 
@@ -180,8 +180,8 @@ class TestAuthViews(unittest.TestCase):
                     })
                 self.assertEqual(response, right_response)
 
-    @patch('app.pages.auth.views.check_employee')
-    @patch('app.pages.auth.views.render_template')
+    @patch('app.pages.auth.check_employee')
+    @patch('app.pages.auth.render_template')
     def test_sendin_employee_https(self, mock_render_template, mock_check_employee):
         test_init_data = {
             'link-login-only': 'link', 
@@ -204,8 +204,8 @@ class TestAuthViews(unittest.TestCase):
                     })
                 self.assertEqual(response, right_response)
 
-    @patch('app.pages.auth.views.render_template')
-    @patch('app.pages.auth.views.current_app', new_callable=MagicMock)
+    @patch('app.pages.auth.render_template')
+    @patch('app.pages.auth.current_app', new_callable=MagicMock)
     def test_code_post(self, mock_current_app, mock_render_template):
         with self.app.app_context():
             with self.app.test_request_context('/code', method='POST', data={'phone': '71234567890'}):
@@ -217,8 +217,8 @@ class TestAuthViews(unittest.TestCase):
                 response = code()
                 self.assertEqual(response, ('code.html', None))
 
-    @patch('app.pages.auth.views.render_template')
-    @patch('app.pages.auth.views.current_app', new_callable=MagicMock)
+    @patch('app.pages.auth.render_template')
+    @patch('app.pages.auth.current_app', new_callable=MagicMock)
     def test_code_session(self, mock_current_app, mock_render_template):
         with self.app.app_context():
             with self.app.test_request_context('/code', method='POST'):
@@ -231,10 +231,10 @@ class TestAuthViews(unittest.TestCase):
                 response = code()
                 self.assertEqual(response, ('code.html', None))
 
-    @patch('app.pages.auth.views.url_for')
-    @patch('app.pages.auth.views.redirect')
-    @patch('app.pages.auth.views.models.WifiClient.query.filter_by')
-    @patch('app.pages.auth.views.models.ClientsNumber.query.filter_by')
+    @patch('app.pages.auth.url_for')
+    @patch('app.pages.auth.redirect')
+    @patch('app.pages.auth.models.WifiClient.query.filter_by')
+    @patch('app.pages.auth.models.ClientsNumber.query.filter_by')
     def test_auth(self, mock_clients_number_filter_by, mock_wifi_client_filter_by, mock_redirect, mock_url_for):
         with self.app.app_context():
             with self.app.test_request_context('/auth', method='POST', data={'code': '1234'}):
@@ -253,10 +253,10 @@ class TestAuthViews(unittest.TestCase):
                 self.assertEqual(response, ("auth.sendin", 302))
 
 
-    @patch('app.pages.auth.views.url_for')
-    @patch('app.pages.auth.views.redirect')
-    @patch('app.pages.auth.views.models.WifiClient.query.filter_by')
-    @patch('app.pages.auth.views.models.ClientsNumber.query.filter_by')
+    @patch('app.pages.auth.url_for')
+    @patch('app.pages.auth.redirect')
+    @patch('app.pages.auth.models.WifiClient.query.filter_by')
+    @patch('app.pages.auth.models.ClientsNumber.query.filter_by')
     def test_auth_wrong_code(self, mock_clients_number_filter_by, mock_wifi_client_filter_by, mock_redirect, mock_url_for):
         with self.app.app_context():
             with self.app.test_request_context('/auth', method='POST', data={'code': '1234'}):

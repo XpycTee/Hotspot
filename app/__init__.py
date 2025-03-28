@@ -1,8 +1,8 @@
 import os
 import logging
 
-from .pages.auth import auth_bp
-from .pages.error import error_bp
+from app.pages.auth import auth_bp
+from app.pages.error import error_bp
 
 from app.database import db
 
