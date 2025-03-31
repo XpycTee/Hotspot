@@ -51,6 +51,8 @@ class Config:
 
     COMPANY_NAME = settings.get('company_name')
 
+    DEBUG = settings.get('debug')
+
     senders = {
         "smsru": SMSRUSender,
         "mikrotik": MikrotikSMSSender,

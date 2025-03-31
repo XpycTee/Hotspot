@@ -31,28 +31,29 @@ def check_required_env(required: list, logger=logging.getLogger()) -> bool:
 
 
 def create_app(config_class=Config):
-    stream_handler = logging.StreamHandler()
-    file_handeler = logging.FileHandler('logs/flask.log')
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    file_handeler = logging.FileHandler(os.path.join(log_dir, 'flask.log'))
 
     formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
 
-    stream_handler.setFormatter(formatter)
     file_handeler.setFormatter(formatter)
-    
-    logger = logging.getLogger()
-    logger.addHandler(stream_handler)
-    logger.addHandler(file_handeler)
 
      # Check for required environment variables
     required_env_vars = []
     
-    init = check_required_env(required_env_vars, logger)
+    init = check_required_env(required_env_vars)
 
     if init:
         app = Flask(__name__)
         app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(30).hex()
         app.config.from_object(config_class)
         app.logger.addHandler(file_handeler)
+        if app.debug:
+            app.logger.setLevel(logging.DEBUG)
+        
         db.init_app(app)
 
         app.register_blueprint(auth_bp)
