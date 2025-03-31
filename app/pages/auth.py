@@ -49,7 +49,7 @@ def check_employee(phone_number):
     return in_employees
 
 
-@auth_bp.route('/sendin', methods=['POST'])
+@auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():
     phone_number = session.get('phone')
     if not phone_number:
