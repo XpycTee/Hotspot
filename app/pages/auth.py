@@ -1,27 +1,40 @@
+# Imports
+import os
 import datetime
 import re
+
 from hashlib import md5
 from random import randint
 
 import jmespath
 import yaml
-from flask import Blueprint, render_template, request, current_app, redirect, url_for, session, abort
+
+# Importing Blueprint for creating Flask blueprints
+from flask import Blueprint
+
+# Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
+from flask import (
+    render_template,
+    redirect,
+    url_for,
+    abort
+)
+
+# Importing session for session management, request for handling HTTP requests, and current_app for accessing the Flask application context
+from flask import (
+    session,
+    request,
+    current_app
+)
 
 from app.database import db
 from app.database import models
-
-import os
-
+from extensions import cache
 
 auth_bp = Blueprint('auth', __name__)
 
-employee_cache = {
-    'data': None,
-    'last_modified': 0
-}
 
-
-def octal_string_to_bytes(oct_string):
+def _octal_string_to_bytes(oct_string):
     # Split the octal string by backslash and process each part
     byte_nums = []
     for octal_num in oct_string.split("\\")[1:]:
@@ -33,21 +46,22 @@ def octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
+@cache.memoize(timeout=3600)
+def _load_employees(file_path, last_modified):
+    with open(file_path, "r", encoding="utf-8") as employees_file:
+        employees = yaml.safe_load(employees_file)
+    return employees
 
-def check_employee(phone_number):
+def _check_employee(phone_number):
     file_path = "config/employees.yaml"
     last_modified = os.path.getmtime(file_path)
 
-    if employee_cache['data'] is None or last_modified > employee_cache['last_modified']:
-        with open(file_path, "r", encoding="utf-8") as employees_file:
-            employees = yaml.safe_load(employees_file)
-            employee_cache['data'] = employees
-            employee_cache['last_modified'] = last_modified
+    # Load employees data with caching
+    employees = _load_employees(file_path, last_modified)
 
     expression = f"employees[].phone | contains([], '{phone_number}')"
-    in_employees = bool(jmespath.search(expression, employee_cache['data']))
+    in_employees = bool(jmespath.search(expression, employees))
     return in_employees
-
 
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():
@@ -55,7 +69,7 @@ def sendin():
     if not phone_number:
         abort(400)
 
-    is_employee = check_employee(phone_number)
+    is_employee = _check_employee(phone_number)
 
     username = 'employee' if is_employee else 'guest'
     password = current_app.config['HOTSPOT_USERS'][username].get('password')
@@ -70,19 +84,33 @@ def sendin():
     
     # use HTTP CHAP method in hotspot
     if chap_id and chap_challenge:
-        chap_id = octal_string_to_bytes(chap_id)
-        chap_challenge = octal_string_to_bytes(chap_challenge)
+        chap_id = _octal_string_to_bytes(chap_id)
+        chap_challenge = _octal_string_to_bytes(chap_challenge)
         link_login_only = link_login_only.replace('https', 'http')
         password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
 
     return render_template(
-        'sendin.html',
+        'auth/sendin.html',
         username=username,
         password=password,
         link_login_only=link_login_only,
         link_orig=link_orig
     )
 
+@auth_bp.route('/test_login', methods=['GET'])
+def test_login():
+    if not current_app.debug:
+        abort(404)
+    required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
+    if not any(key in set(request.values.keys()) for key in required_keys):
+        abort(400)
+    else:
+        session['chap-id'] = request.values.get('chap-id')
+        session['chap-challenge'] = request.values.get('chap-challenge')
+        session['link-login-only'] = request.values.get('link-login-only')
+        session['link-orig'] = request.values.get('link-orig')
+        session['mac'] = request.values.get('mac')
+    return login()
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -113,7 +141,7 @@ def login():
         redirect_url = url_for('auth.sendin')
         return redirect(redirect_url, 302)
 
-    return render_template('login.html', error=error)
+    return render_template('auth/login.html', error=error)
 
 
 @auth_bp.route('/code', methods=['POST'])
@@ -138,7 +166,7 @@ def code():
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
 
         if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
-            is_employee = check_employee(phone_number)
+            is_employee = _check_employee(phone_number)
 
             users_config = current_app.config['HOTSPOT_USERS']
 
@@ -169,7 +197,7 @@ def code():
 
         current_app.logger.debug(f"{phone_number}'s code: {gen_code}")
 
-    return render_template('code.html', error=error)
+    return render_template('auth/code.html', error=error)
 
 
 @auth_bp.route('/auth', methods=['POST'])
@@ -196,7 +224,7 @@ def auth():
             db.session.add(db_phone)
             db.session.commit()
         
-        is_employee = check_employee(phone_number)
+        is_employee = _check_employee(phone_number)
 
         db_client = models.WifiClient.query.filter_by(mac=mac).first()
         if not db_client:
