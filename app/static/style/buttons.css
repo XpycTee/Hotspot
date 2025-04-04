@@ -1,0 +1,61 @@
+.btn {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    display: block;
+}
+
+.btn:hover {
+    background-color: #45a049;
+}
+
+.btn-exit {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    color: #4CAF50; /* Цвет текста как у основного цвета кнопки */
+    border: 2px solid #4CAF50; /* Рамка цвета как у основного цвета кнопки */
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-block; /* Убедитесь, что кнопка не занимает всю ширину */
+    width: auto; /* Убедитесь, что ширина авто, чтобы не занимать всю ширину */
+}
+
+.btn-exit:hover {
+    background-color: rgba(76, 175, 80, 0.1); /* Лёгкий зелёный фон при наведении */
+}
+
+.btn-submit {
+    margin-bottom: 20px;
+}
+
+.btn-delete {
+    background-color: #f44336; /* Красный цвет для кнопки удаления */
+}
+
+.btn-delete:hover {
+    background-color: #e53935; /* Более тёмный красный при наведении */
+}
+
+.btn-edit {
+    background-color: #ff9800; /* Оранжевый цвет для кнопки редактирования */
+}
+
+.btn-edit:hover {
+    background-color: #fb8c00; /* Более тёмный оранжевый при наведении */
+}
+
+.btn-controls {
+    display: inline-block;
+    width: auto;
+    margin: 0 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+}

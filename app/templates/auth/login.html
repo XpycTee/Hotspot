@@ -8,13 +8,13 @@
 <form action="/code" method="post">
 
     <label for="phone">{{ config['LANGUAGE_CONTENT']['html']['login']['label_phone'] }}</label>
-    <input type="tel" id="phone" name="phone" data-tel-input placeholder="{{ config['LANGUAGE_CONTENT']['html']['login']['placeholder_phone'] }}">
+    <input class="input-auth" type="tel" id="phone" name="phone" data-tel-input placeholder="{{ config['LANGUAGE_CONTENT']['html']['login']['placeholder_phone'] }}">
 
     {% if error %}
     <div class="error-notify">{{ error }}</div>
     {% endif %}
 
-    <input type="submit" value="{{ config['LANGUAGE_CONTENT']['html']['login']['submit_button'] }}">
+    <input class="btn btn-submit" type="submit" value="{{ config['LANGUAGE_CONTENT']['html']['login']['submit_button'] }}">
 
     <label id="modal_trigger" class="text-center mt-2 link-line">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
 </form>

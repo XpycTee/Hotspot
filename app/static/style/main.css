@@ -1,0 +1,36 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+.link-line{
+	cursor: pointer;
+	margin: 0;
+    background-color: transparent;
+    text-decoration: none;
+    color: #4CAF50;
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.link-line:hover{
+	cursor: pointer;
+    color: #45a049;
+    text-decoration: underline;
+}
+
+.admin-dashboard {
+    width: 80%;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+.content-tab {
+    overflow-x: auto;
+}

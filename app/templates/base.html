@@ -6,9 +6,14 @@
           content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='modal.css') }}">
-    <script src="{{ url_for('static', filename='phoneinput.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/forms.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/tables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/navigation.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/modal.css') }}">
+    <script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
 </head>
 <body>
 {% block content %}
