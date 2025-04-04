@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Panel
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <a href="{{ url_for('admin.logout') }}" class="btn btn-exit">Выход</a>
+    <ul class="nav-tabs">
+        <li><a href="#tab1">WiFi Clients</a></li>
+        <li><a href="#tab2">Employees list</a></li>
+        <li><a href="#tab3">Blacklist</a></li>
+    </ul>
+    <div class="table-container">
+        <div id="tab1" class="content-tab table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mac Address</th>
+                        <th>Expiration</th>
+                        <th>Is Employee</th>
+                        <th>Phone Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in wifi_clients %}
+                    <tr>
+                        <td>{{ client.get('mac') }}</td>
+                        <td>{{ client.get('expiration') }}</td>
+                        <td>{{ client.get('employee') }}</td>
+                        <td>{{ client.get('phone') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab2" class="content-tab table-container" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Lastname</th>
+                        <th>Name</th>
+                        <th>Phones</th>
+                        <th class="column-controls">Controls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.get('lastname') }}</td>
+                        <td>{{ employee.get('name') }}</td>
+                         <td>
+                            <ul>
+                                {% for phone in employee.get('phone') %}
+                                <li>{{ phone }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="column-controls">
+                            <button class="btn btn-edit btn-controls">Edit</button>
+                            <button class="btn btn-delete btn-controls">Delete</button></td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="4"><button class="btn btn-add">Добавить</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tab3" class="content-tab table-container" style="display: none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Phone</th>
+                        <th class="column-controls">Controls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for blocked in blacklist %}
+                    <tr>
+                        <td>{{ blocked }}</td>
+                        <td class="column-controls">
+                            <button class="btn btn-delete btn-controls">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="2"><button class="btn btn-add">Добавить</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = document.querySelectorAll('.nav-tabs a');
+        const contentTabs = document.querySelectorAll('.content-tab');
+
+        // Hide all content tabs initially
+        contentTabs.forEach(content => content.style.display = 'none');
+
+        // Check localStorage for saved tab
+        const savedTab = localStorage.getItem('activeTab');
+        if (savedTab) {
+            document.querySelector(savedTab).style.display = 'block';
+            document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
+        } else {
+            // Default to first tab if no saved tab
+            contentTabs[0].style.display = 'block';
+            tabs[0].classList.add('active');
+        }
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = this.getAttribute('href');
+
+                // Hide all content tabs
+                contentTabs.forEach(content => content.style.display = 'none');
+                // Show the selected tab content
+                document.querySelector(target).style.display = 'block';
+
+                // Remove active class from all tabs
+                tabs.forEach(link => link.classList.remove('active'));
+                // Add active class to the clicked tab
+                this.classList.add('active');
+
+                // Save the active tab to localStorage
+                localStorage.setItem('activeTab', target);
+            });
+        });
+    });
+</script>
+{% endblock %}

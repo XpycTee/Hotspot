@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ config['LANGUAGE_CONTENT']['html']['login']['title'] }}
+{% endblock %}
+
+{% block content %}
+<form action="/admin/auth" method="post">
+
+    <h2>Admin login</h2>
+    <div>
+        <input class="input-auth" type="text" id="username" name="username" placeholder="Введите логин" required>
+        <input class="input-auth" type="password" id="password" name="password" placeholder="Введите пароль" required>
+    </div>
+
+    {% if error %}
+    <div class="error-notify">{{ error }}</div>
+    {% endif %}
+
+    <input class="btn btn-submit" type="submit" value="Войти">
+
+</form>
+{% endblock %}

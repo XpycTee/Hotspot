@@ -2,6 +2,7 @@ import os
 import logging
 
 from app.pages.auth import auth_bp
+from app.pages.admin import admin_bp
 from app.pages.error import error_bp
 
 from app.database import db
@@ -60,6 +61,7 @@ def create_app(config_class=Config):
         cache.init_app(app)
 
         app.register_blueprint(auth_bp)
+        app.register_blueprint(admin_bp)
         app.register_blueprint(error_bp)
         # Blueprints add here
         with app.app_context():
