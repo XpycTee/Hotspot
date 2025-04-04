@@ -2,7 +2,7 @@ import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import (
-    Blueprint, render_template, redirect, url_for,
+    Blueprint, abort, render_template, redirect, url_for,
     session, request, current_app
 )
 from app.database import models
@@ -92,6 +92,31 @@ def panel():
 def logout():
     session.clear()  # Очищаем сессию
     return redirect(url_for('admin.login'), 302)
+
+
+@admin_bp.route('/save/<tabel_name>', methods=['POST'])
+@login_required
+def save_data(tabel_name):
+    data = request.json
+    if tabel_name not in ['employee', 'blacklist']:
+        abort(404)
+
+    print(data)
+    # Process and save data to the database
+    # Return a JSON response
+    return {'success': True}
+
+@admin_bp.route('/delete/<tabel_name>', methods=['POST'])
+@login_required
+def delete_data(tabel_name):
+    data = request.json
+    if tabel_name not in ['employee', 'blacklist']:
+        abort(404)
+
+    print(data)
+    # Process and save data to the database
+    # Return a JSON response
+    return {'success': True}
 
 
 # Вспомогательные функции для повышения читаемости и повторного использования

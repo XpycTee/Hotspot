@@ -1,16 +1,14 @@
 settings:
-  company_name: No-name LTD
-  language: ru-RU
-# db_url: sqlite:///path/to/database.db  # Url for connect database
-# debug: true  # Enable debug mode
   admin:
     user:
+      password: $2b$12$1eCgbtk3pzMX7UhSfs6OTOIYlHe0ifHkiryUnWc2YrlimD8AYY6S.
       username: admin
-      password: admin  # Default password is admin
+  company_name: No-name LTD
   hotspot_users:
-    guest:
-      password: secret
-      delay: 24h  # Hours. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
     employee:
+      delay: 30d
       password: supersecret
-      delay: 30d  # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
+    guest:
+      delay: 24h
+      password: secret
+  language: ru-RU

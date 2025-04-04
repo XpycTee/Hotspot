@@ -49,9 +49,9 @@ Panel
                 <tbody>
                     {% for employee in employees %}
                     <tr>
-                        <td>{{ employee.get('lastname') }}</td>
-                        <td>{{ employee.get('name') }}</td>
-                         <td>
+                        <td data-lastname>{{ employee.get('lastname') }}</td>
+                        <td data-name>{{ employee.get('name') }}</td>
+                         <td data-phones>
                             <ul>
                                 {% for phone in employee.get('phone') %}
                                 <li>{{ phone }}</li>
@@ -59,12 +59,13 @@ Panel
                             </ul>
                         </td>
                         <td class="column-controls">
-                            <button class="btn btn-edit btn-controls">Edit</button>
-                            <button class="btn btn-delete btn-controls">Delete</button></td>
+                            <button class="btn btn-edit btn-controls" onclick="editRow(this)">Edit</button>
+                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this)">Delete</button>
+                        </td>
                     </tr>
                     {% endfor %}
                     <tr>
-                        <td colspan="4"><button class="btn btn-add">Добавить</button></td>
+                        <td colspan="4"><button class="btn btn-add" onclick="addRow(this)">Добавить</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -81,14 +82,14 @@ Panel
                 <tbody>
                     {% for blocked in blacklist %}
                     <tr>
-                        <td>{{ blocked }}</td>
+                        <td class="blocked-phone">{{ blocked }}</td>
                         <td class="column-controls">
-                            <button class="btn btn-delete btn-controls">Delete</button>
+                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this)">Delete</button>
                         </td>
                     </tr>
                     {% endfor %}
                     <tr>
-                        <td colspan="2"><button class="btn btn-add">Добавить</button></td>
+                        <td colspan="2"><button class="btn btn-add" onclick="addRow(this)">Добавить</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -135,5 +136,120 @@ Panel
             });
         });
     });
+</script>
+<script>
+    function addRow(button) {
+        const tableBody = button.closest('table').querySelector('tbody');
+        const addButtonRow = button.closest('tr');
+        const newRow = document.createElement('tr');
+
+        // Determine which table is being modified
+        if (tableBody.closest('#tab2')) {
+            newRow.innerHTML = `
+                <td data-lastname><input type="text" name="lastname" placeholder="Lastname"></td>
+                <td data-name><input type="text" name="name" placeholder="Name"></td>
+                <td data-phones><input type="text" name="phones" placeholder="Phones"></td>
+                <td class="column-controls">
+                    <button class="btn btn-save btn-controls" onclick="saveRow(this)">Save</button>
+                    <button class="btn btn-delete btn-controls" onclick="deleteRow(this)">Delete</button>
+                </td>
+            `;
+        } else if (tableBody.closest('#tab3')) {
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Phone"></td>
+                <td class="column-controls">
+                    <button class="btn btn-save btn-controls" onclick="saveRow(this)">Save</button>
+                    <button class="btn btn-delete btn-controls" onclick="deleteRow(this)">Delete</button>
+                </td>
+            `;
+        }
+
+        // Insert the new row before the row containing the "Add" button
+        tableBody.insertBefore(newRow, addButtonRow);
+    }
+</script>
+<script>
+    function saveRow(button) {
+        const row = button.closest('tr');
+        const inputs = row.querySelectorAll('input');
+        const data = {};
+
+        // Collect data from inputs
+        inputs.forEach(input => {
+            const key = input.getAttribute('name') || 'phone';
+            data[key] = input.value;
+        });
+
+        // Determine which tab is being modified
+        let url = '';
+        if (row.closest('#tab2')) {
+            url = '/admin/save/employee';
+        } else if (row.closest('#tab3')) {
+            url = '/admin/save/blacklist';
+        }
+
+        // Send AJAX request
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Replace inputs with text
+                inputs.forEach(input => {
+                    const td = input.closest('td');
+                    td.textContent = input.value;
+                });
+                // Remove save button
+                button.remove();
+            } else {
+                alert('Error saving data');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+<script>
+    function deleteRow(button) {
+        const row = button.closest('tr');
+        const data = {};
+        
+
+        // Determine which tab is being modified
+        let url = '';
+        
+        if (row.closest('#tab2')) {
+            url = '/admin/delete/employee';
+            // Extract lastname and name for identification
+            data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
+            data['name'] = row.querySelector('td[data-name]').textContent.trim();
+        } else if (row.closest('#tab3')) {
+            url = '/admin/delete/blacklist';
+            data['phone'] = row.querySelector('.blocked-phone') ? row.querySelector('.blocked-phone').textContent : null;
+        }
+
+        // Send AJAX request
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Remove row
+                row.remove();
+            } else {
+                alert('Error deleting data');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
 </script>
 {% endblock %}
