@@ -9,6 +9,7 @@ from app.database import db
 from flask import Flask
 
 from settings import Config
+from extensions import cache
 
 
 def check_required_env(required: list, logger=logging.getLogger()) -> bool:
@@ -48,6 +49,7 @@ def create_app(config_class=Config):
 
     if init:
         app = Flask(__name__)
+
         app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(30).hex()
         app.config.from_object(config_class)
         app.logger.addHandler(file_handeler)
@@ -55,6 +57,7 @@ def create_app(config_class=Config):
             app.logger.setLevel(logging.DEBUG)
         
         db.init_app(app)
+        cache.init_app(app)
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(error_bp)

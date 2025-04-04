@@ -2,6 +2,7 @@ jmespath~=1.0.1
 PyYAML~=6.0.1
 Flask~=3.1.0
 Flask-SQLAlchemy~=3.1.1
+Flask-Caching~=2.3.1
 SQLAlchemy~=2.0.27
 smsru-api~=1.1.2
 huawei-lte-api~=1.8.1
