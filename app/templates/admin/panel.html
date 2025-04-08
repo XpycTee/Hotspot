@@ -42,7 +42,7 @@ Panel
                     <tr>
                         <th>Lastname</th>
                         <th>Name</th>
-                        <th>Phones</th>
+                        <th class="column-phones">Phones</th>
                         <th class="column-controls">Controls</th>
                     </tr>
                 </thead>
@@ -51,7 +51,7 @@ Panel
                     <tr>
                         <td data-lastname>{{ employee.get('lastname') }}</td>
                         <td data-name>{{ employee.get('name') }}</td>
-                         <td data-phones>
+                        <td data-phones class="column-phones">
                             <ul>
                                 {% for phone in employee.get('phone') %}
                                 <li>{{ phone }}</li>

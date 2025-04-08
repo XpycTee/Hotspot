@@ -1,7 +1,7 @@
 .table-container table {
-    width: 100%;
+    /* width: 100%; */ /* Удаляем фиксированную ширину */
     border-collapse: collapse;
-    margin: 25px 0;
+    margin: 25px auto; /* Центрируем таблицу */
     font-size: 18px;
     text-align: left;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -27,14 +27,29 @@
 
 .table-container ul {
     margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+.table-container ul li {
+    display: flex;
+    align-items: center;
+}
+
+.table-container ul li .table-input {
+    flex-grow: 1;
+    margin-right: 5px; /* Отступ между полем ввода и кнопкой */
+}
+
+.table-container ul li .btn-delete {
+    flex-shrink: 0;
 }
 
 .column-controls {
+    width: auto;
     white-space: nowrap;
-    width: 100px;
 }
 
-#tab3 table {
-    width: 50%;
-    margin: 0 auto;
+.column-phones {
+    width: 200px;
 }

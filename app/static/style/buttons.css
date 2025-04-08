@@ -52,6 +52,10 @@
     background-color: #fb8c00; /* Более тёмный оранжевый при наведении */
 }
 
+.btn-add-phone {
+    margin-top: 12px;
+}
+
 .btn-controls {
     display: inline-block;
     width: auto;

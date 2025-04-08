@@ -3,102 +3,77 @@ function addRow(button, type) {
     const tableBody = button.closest('table').querySelector('tbody');
     const addButtonRow = button.closest('tr');
     const newRow = document.createElement('tr');
+    newRow.dataset.new = "true"; // Добавляем атрибут для новых строк
 
-    if (type === 'employee') {
-        newRow.innerHTML = `
-            <td data-lastname><input type="text" name="lastname" placeholder="Lastname"></td>
-            <td data-name><input type="text" name="name" placeholder="Name"></td>
+    const templates = {
+        employee: `
+            <td data-lastname><input class="table-input" type="text" name="lastname" placeholder="Lastname"></td>
+            <td data-name><input class="table-input" type="text" name="name" placeholder="Name"></td>
             <td data-phones>
                 <ul>
-                    <li><input type="text" name="phones" placeholder="Phone"></li>
+                    <li><input class="table-input" type="text" name="phones" placeholder="Phone"></li>
                 </ul>
-                <button type="button" class="btn btn-add-phone" onclick="addPhoneField(this)">+ phone</button>
+                <button type="button" class="btn btn-add-phone">+ phone</button>
             </td>
             <td class="column-controls">
-                <button class="btn btn-save btn-controls" onclick="saveRow(this, 'employee')">Save</button>
-                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">Delete</button>
+                <button class="btn btn-save btn-controls">Save</button>
+                <button class="btn btn-delete btn-controls">Delete</button>
             </td>
-        `;
-    } else if (type === 'blacklist') {
-        newRow.innerHTML = `
-            <td><input type="text" name="phone" placeholder="Phone"></td>
+        `,
+        blacklist: `
+            <td><input class="table-input" type="text" name="phone" placeholder="Phone"></td>
             <td class="column-controls">
-                <button class="btn btn-save btn-controls" onclick="saveRow(this, 'blacklist')">Save</button>
-                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">Delete</button>
+                <button class="btn btn-save btn-controls">Save</button>
+                <button class="btn btn-delete btn-controls">Delete</button>
             </td>
-        `;
-    }
-
-    tableBody.insertBefore(newRow, addButtonRow);
-}
-
-function addPhoneField(button) {
-    const ul = button.previousElementSibling;
-
-    // Создаём новый элемент списка с полем ввода
-    const li = document.createElement('li');
-    const newInput = document.createElement('input');
-    newInput.type = 'text';
-    newInput.name = 'phones';
-    newInput.placeholder = 'Phone';
-
-    // Создаём кнопку удаления
-    const deleteButton = document.createElement('button');
-    deleteButton.type = 'button';
-    deleteButton.classList = 'btn btn-delete btn-controls'
-    deleteButton.textContent = 'x';
-    deleteButton.onclick = () => {
-        li.remove();
-        // Найдите input с именем phones-count и уменьшите его значение на 1
-        const phonesCountInput = button.parentElement.querySelector('input[name="phones-count"]');
-        if (phonesCountInput) {
-            phonesCountInput.value = Math.max(0, parseInt(phonesCountInput.value, 10) - 1);
-        }
+        `
     };
 
-    li.appendChild(newInput);
-    li.appendChild(deleteButton);
-    ul.appendChild(li);
+    newRow.innerHTML = templates[type] || '';
+    tableBody.insertBefore(newRow, addButtonRow);
 
-    // Найдите input с именем phones-count и увеличьте его значение на 1
-    const phonesCountInput = button.parentElement.querySelector('input[name="phones-count"]');
-    if (phonesCountInput) {
-        phonesCountInput.value = parseInt(phonesCountInput.value, 10) + 1;
-    }
+    // Добавляем обработчики событий после вставки строки
+    newRow.querySelector('.btn-add-phone')?.addEventListener('click', () => addPhoneField(newRow.querySelector('.btn-add-phone')));
+    newRow.querySelector('.btn-save')?.addEventListener('click', () => saveRow(newRow.querySelector('.btn-save'), type));
+    newRow.querySelector('.btn-delete')?.addEventListener('click', () => deleteRow(newRow.querySelector('.btn-delete'), type));
 }
 
-function convertInputsToCells(inputs, data, type, row, button) {
-    inputs.forEach(input => {
-        if (input.type !== 'hidden') {
-            const td = input.closest('td');
-            if (td) {
-                if (input.name === 'phones') {
-                    const ul = document.createElement('ul');
-                    data['phones'].forEach(phone => {
-                        const li = document.createElement('li');
-                        li.textContent = phone;
-                        ul.appendChild(li);
-                    });
-                    td.innerHTML = '';
-                    td.appendChild(ul);
-                } else {
-                    td.textContent = input.value;
-                }
-            }
-        }
-    });
-    button.remove();
-    const controlsTd = row.querySelector('.column-controls');
+
+// Общая функция для удаления строки
+function deleteRow(button, type) {
+    const row = button.closest('tr');
+
+    // Проверяем, является ли строка новой
+    if (row.dataset.new === "true") {
+        row.remove(); // Просто удаляем строку без отправки запроса
+        return;
+    }
+
+    const data = {};
+
     if (type === 'employee') {
-        if (controlsTd) {
-            const editButton = document.createElement('button');
-            editButton.className = 'btn btn-edit btn-controls';
-            editButton.textContent = 'Edit';
-            editButton.onclick = () => editRow(editButton, type);
-            controlsTd.insertBefore(editButton, controlsTd.firstChild);
-        }
+        data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
+        data['name'] = row.querySelector('td[data-name]').textContent.trim();
+    } else if (type === 'blacklist') {
+        data['phone'] = row.querySelector('td').textContent.trim();
     }
+
+    fetch(`/admin/delete/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            row.remove();
+        } else {
+            alert('Error deleting data');
+        }
+    })
+    .catch(error => console.error('Error:', error));
 }
+
 
 // Общая функция для сохранения строки
 function saveRow(button, type) {
@@ -144,12 +119,11 @@ function saveRow(button, type) {
     // Если изменений нет, не отправляем запрос
     if (!hasChanges) {
         convertInputsToCells(inputs, data, type, row, button);
+        delete row.dataset.new; // Удаляем атрибут после сохранения
         return;
     }
 
-    const url = `/admin/save/${type}`;
-
-    fetch(url, {
+    fetch(`/admin/save/${type}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -158,12 +132,14 @@ function saveRow(button, type) {
     .then(result => {
         if (result.success) {
             convertInputsToCells(inputs, data, type, row, button);
+            delete row.dataset.new; // Удаляем атрибут после сохранения
         } else {
             alert('Error saving data');
         }
     })
     .catch(error => console.error('Error:', error));
 }
+
 
 // Общая функция для редактирования строки
 function editRow(button, type) {
@@ -175,6 +151,7 @@ function editRow(button, type) {
             const text = cell.textContent.trim();
             const input = document.createElement('input');
             input.type = 'text';
+            input.classList = 'table-input';
             input.value = text;
             input.name = cell.hasAttribute('data-lastname') ? 'lastname' : 'name';
             input.setAttribute('data-original-value', text);
@@ -202,6 +179,7 @@ function editRow(button, type) {
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.name = 'phones';
+                input.classList = 'table-input';
                 input.value = phone;
                 input.setAttribute('data-original-value', phone);
 
@@ -249,31 +227,73 @@ function editRow(button, type) {
     }
 }
 
-// Общая функция для удаления строки
-function deleteRow(button, type) {
-    const row = button.closest('tr');
-    const data = {};
-    const url = `/admin/delete/${type}`;
 
-    if (type === 'employee') {
-        data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
-        data['name'] = row.querySelector('td[data-name]').textContent.trim();
-    } else if (type === 'blacklist') {
-        data['phone'] = row.querySelector('td').textContent.trim();
-    }
+function addPhoneField(button) {
+    const ul = button.previousElementSibling;
 
-    fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            row.remove();
-        } else {
-            alert('Error deleting data');
+    // Создаём новый элемент списка с полем ввода
+    const li = document.createElement('li');
+    const newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.name = 'phones';
+    newInput.placeholder = 'Phone';
+    newInput.classList = 'table-input';
+
+    // Создаём кнопку удаления
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.classList = 'btn btn-delete btn-controls'
+    deleteButton.textContent = 'x';
+    deleteButton.onclick = () => {
+        li.remove();
+        // Найдите input с именем phones-count и уменьшите его значение на 1
+        const phonesCountInput = button.parentElement.querySelector('input[name="phones-count"]');
+        if (phonesCountInput) {
+            phonesCountInput.value = Math.max(0, parseInt(phonesCountInput.value, 10) - 1);
         }
-    })
-    .catch(error => console.error('Error:', error));
+    };
+
+    li.appendChild(newInput);
+    li.appendChild(deleteButton);
+    ul.appendChild(li);
+
+    // Найдите input с именем phones-count и увеличьте его значение на 1
+    const phonesCountInput = button.parentElement.querySelector('input[name="phones-count"]');
+    if (phonesCountInput) {
+        phonesCountInput.value = parseInt(phonesCountInput.value, 10) + 1;
+    }
+}
+
+
+function convertInputsToCells(inputs, data, type, row, button) {
+    inputs.forEach(input => {
+        if (input.type !== 'hidden') {
+            const td = input.closest('td');
+            if (td) {
+                if (input.name === 'phones') {
+                    const ul = document.createElement('ul');
+                    data['phones'].forEach(phone => {
+                        const li = document.createElement('li');
+                        li.textContent = phone;
+                        ul.appendChild(li);
+                    });
+                    td.innerHTML = '';
+                    td.appendChild(ul);
+                } else {
+                    td.textContent = input.value;
+                }
+            }
+        }
+    });
+    button.remove();
+    const controlsTd = row.querySelector('.column-controls');
+    if (type === 'employee') {
+        if (controlsTd) {
+            const editButton = document.createElement('button');
+            editButton.className = 'btn btn-edit btn-controls';
+            editButton.textContent = 'Edit';
+            editButton.onclick = () => editRow(editButton, type);
+            controlsTd.insertBefore(editButton, controlsTd.firstChild);
+        }
+    }
 }

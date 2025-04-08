@@ -4,29 +4,29 @@
     display: flex;
     justify-content: space-around;
     margin-bottom: 20px;
-    border-bottom: 2px solid #ddd;
 }
 
 .nav-tabs li {
-    margin: 0;
+    flex-grow: 1; /* Позволяет кнопкам занимать равное пространство */
+    text-align: center; /* Центрирует текст внутри кнопок */
 }
 
 .nav-tabs a {
     display: block;
-    padding: 10px 20px;
+    padding: 10px 0; /* Убираем боковые отступы, чтобы текст был по центру */
     text-decoration: none;
     color: #4CAF50;
-    border-radius: 4px 4px 0 0;
-    transition: background-color 0.3s, color 0.3s;
+    transition: color 0.3s;
+    border-bottom: 2px solid #ddd;
+    /*border-bottom: 2px solid transparent; /* Добавляем прозрачную нижнюю границу */
 }
 
 .nav-tabs a:hover {
-    background-color: #f1f1f1;
     color: #333;
 }
 
 .nav-tabs a.active {
-    background-color: #4CAF50;
-    color: white;
-    border-bottom: 2px solid transparent;
+    color: #4CAF50;
+    border-bottom: 2px solid #4CAF50; /* Подчеркивание активной кнопки */
+    background-color: #f0f0f0; /* Добавляем светло-серый фон */
 }
