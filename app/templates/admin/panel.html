@@ -8,12 +8,12 @@ Panel
 <div class="admin-dashboard">
     <a href="{{ url_for('admin.logout') }}" class="btn btn-exit">Выход</a>
     <ul class="nav-tabs">
-        <li><a href="#tab1">WiFi Clients</a></li>
-        <li><a href="#tab2">Employees list</a></li>
-        <li><a href="#tab3">Blacklist</a></li>
+        <li><a href="#wifi_clients">WiFi Clients</a></li>
+        <li><a href="#employees_list">Employees list</a></li>
+        <li><a href="#blacklist">Blacklist</a></li>
     </ul>
     <div class="table-container">
-        <div id="tab1" class="content-tab table-container">
+        <div id="wifi_clients" class="content-tab table-container">
             <table>
                 <thead>
                     <tr>
@@ -36,7 +36,7 @@ Panel
             </table>
         </div>
 
-        <div id="tab2" class="content-tab table-container" style="display: none;">
+        <div id="employees_list" class="content-tab table-container" style="display: none;">
             <table>
                 <thead>
                     <tr>
@@ -73,7 +73,7 @@ Panel
             </table>
         </div>
 
-        <div id="tab3" class="content-tab table-container" style="display: none;">
+        <div id="blacklist" class="content-tab table-container" style="display: none;">
             <table>
                 <thead>
                     <tr>
