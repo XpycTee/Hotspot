@@ -1,3 +1,4 @@
+import re
 import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
@@ -6,7 +7,8 @@ from flask import (
     Blueprint, abort, render_template, redirect, url_for,
     session, request, current_app, jsonify
 )
-from app.database import models, db
+from app.database import db
+from app.database.models import WifiClient, Employee, EmployeePhone, Blacklist
 from extensions import cache
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -68,9 +70,9 @@ def auth():
 @login_required
 def panel():
     error = session.pop('error', None)
-    wifi_clients = models.WifiClient.query.all()
-    employees = models.Employee.query.all()
-    blacklist = models.Blacklist.query.all()
+    wifi_clients = WifiClient.query.all()
+    employees = Employee.query.all()
+    blacklist = Blacklist.query.all()
 
     wifi_clients_data = [
         {
@@ -82,8 +84,16 @@ def panel():
         for client in wifi_clients
     ]
 
-    employees_data = [{'lastname': emp.lastname, 'name': emp.name, 'phone': emp.phone} for emp in employees]
-    blacklist_data = [entry.phone for entry in blacklist]
+    employees_data = [
+        {
+            'id': emp.id,
+            'lastname': emp.lastname,
+            'name': emp.name,
+            'phones': [phone.phone_number for phone in emp.phones]
+        }
+        for emp in employees
+    ]
+    blacklist_data = [entry.phone_number for entry in blacklist]
 
     return render_template(
         'admin/panel.html',
@@ -104,34 +114,97 @@ def logout():
 @login_required
 def save_data(tabel_name):
     data = request.json
+    new_id = None
+
+    if not data:
+        return jsonify({'error': 'Request data is missing'}), 400
 
     if tabel_name == 'employee':
-        if not models.Employee.query.filter_by(lastname=data['lastname'], name=data['name']).first():
-            new_employee = models.Employee(lastname=data['lastname'], name=data['name'], phone=data['phone'])
+        emp_id = data.get('id')
+        if emp_id is not None:
+            employee = Employee.query.filter_by(id=emp_id).first()
+            if not employee:
+                return jsonify({'error': 'Employee not found'}), 404
+
+            # Обновление существующего сотрудника
+            employee.lastname = data['lastname']
+            employee.name = data['name']
+
+            # Обновление телефонов сотрудника
+            existing_phones = {phone.phone_number for phone in employee.phones}
+            new_phones = set()
+
+            for phone_number in data['phone']:
+                phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
+                phone_number = re.sub(r'\D', '', phone_number)
+                new_phones.add(phone_number)
+
+            # Удаление старых телефонов
+            for phone in employee.phones:
+                if phone.phone_number not in new_phones:
+                    db.session.delete(phone)
+
+            # Добавление новых телефонов
+            for phone_number in new_phones - existing_phones:
+                new_phone = EmployeePhone(phone_number=phone_number, employee=employee)
+                db.session.add(new_phone)
+        else:
+            # Создание нового сотрудника
+            new_employee = Employee(lastname=data['lastname'], name=data['name'])
             db.session.add(new_employee)
-            db.session.commit()
+            db.session.flush()  # Чтобы получить ID нового сотрудника
+
+            # Добавление телефонов
+            for phone_number in data['phone']:
+                phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
+                phone_number = re.sub(r'\D', '', phone_number)
+                if EmployeePhone.query.filter_by(phone_number=phone_number).first():
+                    return jsonify({'error': 'Phone number is exist'}), 400
+                new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
+                db.session.add(new_phone)
+            new_id = new_employee.id
+        db.session.commit()
     elif tabel_name == 'blacklist':
-        if not models.Blacklist.query.filter_by(phone=data['phone']).first():
-            new_blacklist_entry = models.Blacklist(phone=data['phone'])
-            db.session.add(new_blacklist_entry)
-            db.session.commit()
+        if Blacklist.query.filter_by(phone_number=data['phone']).first():
+            return jsonify({'error': 'Phone number is exist'}), 400
+        
+        phone_number = re.sub(r'^(\+?7|8)', '7', data['phone'])
+        phone_number = re.sub(r'\D', '', phone_number)
+
+        new_blacklist_entry = Blacklist(phone_number=phone_number)
+        db.session.add(new_blacklist_entry)
+        db.session.commit()
     else:
         abort(404)
 
-    return jsonify({'success': True})
+    response = {'success': True}
+    if new_id:
+        response.update({'new_id': new_id})
+    return jsonify(response)
 
 @admin_bp.route('/delete/<tabel_name>', methods=['POST'])
 @login_required
 def delete_data(tabel_name):
     data = request.json
 
+    if not data:
+        return jsonify({'error': 'Request data is missing'}), 400
+
     if tabel_name == 'employee':
-        employee = models.Employee.query.filter_by(lastname=data['lastname'], name=data['name']).first()
-        if employee:
+        emp_id = data.get('id')
+        if emp_id is not None:
+            employee = Employee.query.filter_by(id=emp_id).first()
+
+            if not employee:
+                return jsonify({'error': 'Employee not found'}), 404
+
+            # Удаление всех связанных телефонов
+            for phone in employee.phones:
+                db.session.delete(phone)
             db.session.delete(employee)
             db.session.commit()
     elif tabel_name == 'blacklist':
-        blacklist_entry = models.Blacklist.query.filter_by(phone=data['phone']).first()
+        blacklist_entry = Blacklist.query.filter_by(phone_number=data['phone']).first()
         if blacklist_entry:
             db.session.delete(blacklist_entry)
             db.session.commit()

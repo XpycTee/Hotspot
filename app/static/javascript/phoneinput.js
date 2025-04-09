@@ -1,6 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
     var phoneInputs = document.querySelectorAll('input[data-tel-input]');
+    for (var phoneInput of phoneInputs) {
+        detectPhoneInput(phoneInput)
+    }
+})
 
+function detectPhoneInput(phoneInput) {
+    
     var getInputNumbersValue = function (input) {
         // Return stripped input value — just numbers
         return input.value.replace(/\D/g, '');
@@ -68,9 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
             e.target.value = "";
         }
     }
-    for (var phoneInput of phoneInputs) {
-        phoneInput.addEventListener('keydown', onPhoneKeyDown);
-        phoneInput.addEventListener('input', onPhoneInput, false);
-        phoneInput.addEventListener('paste', onPhonePaste, false);
-    }
-})
+    phoneInput.addEventListener('keydown', onPhoneKeyDown);
+    phoneInput.addEventListener('input', onPhoneInput, false);
+    phoneInput.addEventListener('paste', onPhonePaste, false);
+}

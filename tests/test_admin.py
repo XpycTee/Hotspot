@@ -94,11 +94,11 @@ class TestAdminViews(unittest.TestCase):
             self.assertIn('/admin/login', response.location)
     
     def test_panel_route(self):
-            with self.client as c:
-                with c.session_transaction() as sess:
-                    sess['is_authenticated'] = True
-                response = c.get('/admin/panel')
-                self.assertEqual(response.status_code, 200)
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['is_authenticated'] = True
+            response = c.get('/admin/panel')
+            self.assertEqual(response.status_code, 200)
 
     def test_logout_route(self):
         with self.client as c:
@@ -128,6 +128,29 @@ class TestAdminViews(unittest.TestCase):
                 else:
                     mock_cache.set.assert_any_call("lockout_until", mock.ANY, timeout=300)
 
+    def test_save_route(self):
+        table_data = {
+            "employee": {"lastname": "Someson", "name": "John", "phone": ["1234567890", "0987654321"]},
+            "blacklist": {"phone": "1234567890"}
+        }
+        for table_name, data in table_data.items():
+            with self.client as c:
+                with c.session_transaction() as sess:
+                    sess['is_authenticated'] = True
+                response = c.post(f'/admin/delete/{table_name}', json=data)
+                self.assertEqual(response.status_code, 200)
+
+    def test_delete_route(self):
+        table_data = {
+            "employee": {"lastname": "Someson", "name": "John"},
+            "blacklist": {"phone": "1234567890"}
+        }
+        for table_name, data in table_data.items():
+            with self.client as c:
+                with c.session_transaction() as sess:
+                    sess['is_authenticated'] = True
+                response = c.post(f'/admin/delete/{table_name}', json=data)
+                self.assertEqual(response.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()

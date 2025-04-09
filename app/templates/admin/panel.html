@@ -40,6 +40,7 @@ Panel
             <table>
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Lastname</th>
                         <th>Name</th>
                         <th class="column-phones">Phones</th>
@@ -49,11 +50,12 @@ Panel
                 <tbody>
                     {% for employee in employees %}
                     <tr>
+                        <td data-id>{{ employee.get('id') }}</td>
                         <td data-lastname>{{ employee.get('lastname') }}</td>
                         <td data-name>{{ employee.get('name') }}</td>
                         <td data-phones class="column-phones">
                             <ul>
-                                {% for phone in employee.get('phone') %}
+                                {% for phone in employee.get('phones') %}
                                 <li>{{ phone }}</li>
                                 {% endfor %}
                             </ul>
@@ -65,7 +67,7 @@ Panel
                     </tr>
                     {% endfor %}
                     <tr>
-                        <td colspan="4"><button class="btn btn-add" onclick="addRow(this, 'employee')">Добавить</button></td>
+                        <td colspan="5"><button class="btn btn-add" onclick="addRow(this, 'employee')">Добавить</button></td>
                     </tr>
                 </tbody>
             </table>

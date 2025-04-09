@@ -32,12 +32,9 @@ class Employee(db.Model):
 
 
 class EmployeePhone(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    phone_number = db.Column(db.String(20), nullable=False)
+    phone_number = db.Column(db.String(20), primary_key=True)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=False)
 
 
 class Blacklist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    phone = db.Column(db.String(20), unique=True, nullable=False)
-
+    phone_number = db.Column(db.String(20), primary_key=True)

@@ -1,17 +1,18 @@
-// Общая функция для добавления строки в таблицу
+// Функция для добавления строки в таблицу
 function addRow(button, type) {
     const tableBody = button.closest('table').querySelector('tbody');
     const addButtonRow = button.closest('tr');
     const newRow = document.createElement('tr');
-    newRow.dataset.new = "true"; // Добавляем атрибут для новых строк
+    newRow.dataset.new = "true";
 
     const templates = {
         employee: `
+            <td data-id><input type="hidden" name="id" value="#">#</td>
             <td data-lastname><input class="table-input" type="text" name="lastname" placeholder="Lastname"></td>
             <td data-name><input class="table-input" type="text" name="name" placeholder="Name"></td>
             <td data-phones>
                 <ul>
-                    <li><input class="table-input" type="text" name="phone" placeholder="Phone"></li>
+                    <li><input class="table-input" type="tel" name="phone" data-tel-input placeholder="Phone"></li>
                 </ul>
                 <button type="button" class="btn btn-add-phone">+ phone</button>
             </td>
@@ -21,7 +22,7 @@ function addRow(button, type) {
             </td>
         `,
         blacklist: `
-            <td><input class="table-input" type="text" name="phone" placeholder="Phone"></td>
+            <td><input class="table-input" type="tel" data-tel-input name="phone" placeholder="Phone"></td>
             <td class="column-controls">
                 <button class="btn btn-save btn-controls">Save</button>
                 <button class="btn btn-delete btn-controls">Delete</button>
@@ -33,46 +34,41 @@ function addRow(button, type) {
     tableBody.insertBefore(newRow, addButtonRow);
 
     // Добавляем обработчики событий после вставки строки
-    newRow.querySelector('.btn-add-phone')?.addEventListener('click', () => addPhoneField(newRow.querySelector('.btn-add-phone')));
-    newRow.querySelector('.btn-save')?.addEventListener('click', () => saveRow(newRow.querySelector('.btn-save'), type));
-    newRow.querySelector('.btn-delete')?.addEventListener('click', () => deleteRow(newRow.querySelector('.btn-delete'), type));
+    const phoneInputs = newRow.querySelectorAll('input[data-tel-input]');
+    for (var phoneInput of phoneInputs) {
+        detectPhoneInput(phoneInput)
+    }
+
+    addEventListeners(newRow, type);
 }
 
+// Функция для добавления обработчиков событий
+function addEventListeners(row, type) {
+    const addPhoneButton = row.querySelector('.btn-add-phone');
+    const saveButton = row.querySelector('.btn-save');
+    const deleteButton = row.querySelector('.btn-delete');
 
-// Общая функция для удаления строки
+    if (addPhoneButton) {
+        addPhoneButton.addEventListener('click', () => addPhoneField(addPhoneButton));
+    }
+    if (saveButton) {
+        saveButton.addEventListener('click', () => saveRow(saveButton, type));
+    }
+    if (deleteButton) {
+        deleteButton.addEventListener('click', () => deleteRow(deleteButton, type));
+    }
+}
+
+// Функция для удаления строки
 function deleteRow(button, type) {
     const row = button.closest('tr');
 
-    // Проверяем, является ли строка новой
     if (row.dataset.new === "true") {
-        row.remove(); // Просто удаляем строку без отправки запроса
+        row.remove();
         return;
     }
 
-    const data = {};
-    const inputs = row.querySelectorAll('input');
-
-    if (inputs.length > 0) {
-        // Если строка в режиме редактирования, используем значения из data-original-value
-        inputs.forEach(input => {
-            const key = input.getAttribute('name');
-            const originalValue = input.dataset.originalValue || '';
-            if (key === 'phone' && type !== 'blacklist') {
-                data[key] = data[key] || [];
-                data[key].push(originalValue);
-            } else {
-                data[key] = originalValue;
-            }
-        });
-    } else {
-        // Если строка не в режиме редактирования, используем текстовое содержимое ячеек
-        if (type === 'employee') {
-            data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
-            data['name'] = row.querySelector('td[data-name]').textContent.trim();
-        } else if (type === 'blacklist') {
-            data['phone'] = row.querySelector('td').textContent.trim();
-        }
-    }
+    const data = collectRowData(row, type, false);
 
     fetch(`/admin/delete/${type}`, {
         method: 'POST',
@@ -84,14 +80,13 @@ function deleteRow(button, type) {
         if (result.success) {
             row.remove();
         } else {
-            alert('Error deleting data');
+            alert('Error saving data\nError message:\n'+result.error);
         }
     })
     .catch(error => console.error('Error:', error));
 }
 
-
-// Общая функция для сохранения строки
+// Функция для сохранения строки
 function saveRow(button, type) {
     const row = button.closest('tr');
     const inputs = row.querySelectorAll('input');
@@ -99,7 +94,6 @@ function saveRow(button, type) {
     let hasChanges = false;
     let hasEmptyFields = false;
 
-    // Проверка на пустые поля
     inputs.forEach(input => {
         const currentValue = input.value.trim();
         if (!currentValue) {
@@ -115,9 +109,8 @@ function saveRow(button, type) {
     inputs.forEach(input => {
         const key = input.getAttribute('name');
         const currentValue = input.value.trim();
-
-        // Проверка на изменения
         const originalValue = input.dataset.originalValue || '';
+
         if (currentValue !== originalValue) {
             hasChanges = true;
         }
@@ -126,16 +119,13 @@ function saveRow(button, type) {
             data[key] = data[key] || [];
             data[key].push(currentValue);
         } else {
-            if (input.type !== 'hidden') {
-                data[key] = currentValue;
-            }
+            data[key] = input.name === 'id' ? Number(currentValue) : currentValue;
         }
     });
 
-    // Если изменений нет, не отправляем запрос
     if (!hasChanges) {
         convertInputsToCells(inputs, data, type, row, button);
-        delete row.dataset.new; // Удаляем атрибут после сохранения
+        delete row.dataset.new;
         return;
     }
 
@@ -147,85 +137,112 @@ function saveRow(button, type) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            convertInputsToCells(inputs, data, type, row, button);
-            delete row.dataset.new; // Удаляем атрибут после сохранения
+            convertInputsToCells(inputs, data, type, row, button, result.new_id || null);
+            delete row.dataset.new;
         } else {
-            alert('Error saving data');
+            alert('Error saving data\nError message:\n'+result.error);
         }
     })
     .catch(error => console.error('Error:', error));
 }
 
-
-// Общая функция для редактирования строки
+// Функция для редактирования строки
 function editRow(button, type) {
     const row = button.closest('tr');
     const cells = row.querySelectorAll('td');
 
     cells.forEach(cell => {
-        if (cell.hasAttribute('data-lastname') || cell.hasAttribute('data-name')) {
-            const text = cell.textContent.trim();
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.classList = 'table-input';
-            input.value = text;
-            input.name = cell.hasAttribute('data-lastname') ? 'lastname' : 'name';
-            input.setAttribute('data-original-value', text);
-            cell.innerHTML = '';
-            cell.appendChild(input);
+        if (cell.hasAttribute('data-id')) {
+            createHiddenInput(cell, 'id');
+        } else if (cell.hasAttribute('data-lastname') || cell.hasAttribute('data-name')) {
+            createTextInput(cell, cell.hasAttribute('data-lastname') ? 'lastname' : 'name');
         } else if (cell.hasAttribute('data-phones')) {
-            // Извлекаем текущие значения телефонов из списка
-            const ul = cell.querySelector('ul');
-            const phones = Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
-
-            // Очищаем списка
-            ul.innerHTML = '';
-
-            // Создаем невидимый инпут с атрибутом data-original-phones-count
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'phones-count';
-            hiddenInput.value = phones.length;
-            hiddenInput.setAttribute('data-original-value', phones.length);
-            ul.appendChild(hiddenInput);
-
-            // Добавляем в список элементы с полями ввода
-            phones.forEach(phone => {
-                const li = document.createElement('li');
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.name = 'phone';
-                input.classList = 'table-input';
-                input.value = phone;
-                input.setAttribute('data-original-value', phone);
-
-                // Создаём кнопку удаления
-                const deleteButton = document.createElement('button');
-                deleteButton.type = 'button';
-                deleteButton.textContent = 'x';
-                deleteButton.classList = 'btn btn-delete btn-controls'
-                deleteButton.onclick = () => {
-                    li.remove();
-                    // Найдите input с именем phones-count и уменьшите его значение на 1
-                    const phonesCountInput = ul.querySelector('input[name="phones-count"]');
-                    if (phonesCountInput) {
-                        phonesCountInput.value = Math.max(0, parseInt(phonesCountInput.value, 10) - 1);
-                    }
-                };
-                li.appendChild(input);
-                li.appendChild(deleteButton);
-                ul.appendChild(li);
-            });
-
-            const addPhoneButton = document.createElement('button');
-            addPhoneButton.type = 'button';
-            addPhoneButton.className = 'btn btn-add-phone';
-            addPhoneButton.textContent = '+ phone';
-            addPhoneButton.onclick = () => addPhoneField(addPhoneButton);
-            cell.appendChild(addPhoneButton);
+            editPhoneList(cell);
         }
     });
 
+    updateControlButtons(row, type);
+}
+
+// Функция для создания скрытого инпута
+function createHiddenInput(cell, name) {
+    const text = cell.textContent.trim();
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.value = text;
+    input.name = name;
+    input.setAttribute('data-original-value', text);
+    cell.appendChild(input);
+}
+
+// Функция для создания текстового инпута
+function createTextInput(cell, name) {
+    const text = cell.textContent.trim();
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.classList = 'table-input';
+    input.value = text;
+    input.name = name;
+    input.setAttribute('data-original-value', text);
+    cell.innerHTML = '';
+    cell.appendChild(input);
+}
+
+// Функция для редактирования списка телефонов
+function editPhoneList(cell) {
+    const ul = cell.querySelector('ul');
+    const phones = Array.from(ul.querySelectorAll('li')).map(li => li.textContent.trim());
+    ul.innerHTML = '';
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'phones-count';
+    hiddenInput.value = phones.length;
+    hiddenInput.setAttribute('data-original-value', phones.length);
+    ul.appendChild(hiddenInput);
+
+    phones.forEach(phone => {
+        const li = document.createElement('li');
+        const input = document.createElement('input');
+        input.type = 'tel';
+        input.name = 'phone';
+        input.classList = 'table-input';
+        input.value = phone;
+        input.setAttribute('data-original-value', phone);
+        detectPhoneInput(input)
+
+        const deleteButton = createDeleteButton(li, ul);
+        li.appendChild(input);
+        li.appendChild(deleteButton);
+        ul.appendChild(li);
+    });
+
+    const addPhoneButton = document.createElement('button');
+    addPhoneButton.type = 'button';
+    addPhoneButton.className = 'btn btn-add-phone';
+    addPhoneButton.textContent = '+ phone';
+    addPhoneButton.onclick = () => addPhoneField(addPhoneButton);
+    cell.appendChild(addPhoneButton);
+}
+
+// Функция для создания кнопки удаления
+function createDeleteButton(li, ul) {
+    const deleteButton = document.createElement('button');
+    deleteButton.type = 'button';
+    deleteButton.textContent = 'x';
+    deleteButton.classList = 'btn btn-delete btn-controls';
+    deleteButton.onclick = () => {
+        li.remove();
+        const phonesCountInput = ul.querySelector('input[name="phones-count"]');
+        if (phonesCountInput) {
+            phonesCountInput.value = Math.max(0, parseInt(phonesCountInput.value, 10) - 1);
+        }
+    };
+    return deleteButton;
+}
+
+// Функция для обновления кнопок управления
+function updateControlButtons(row, type) {
     const controlsTd = row.querySelector('.column-controls');
     if (controlsTd) {
         controlsTd.innerHTML = '';
@@ -243,67 +260,55 @@ function editRow(button, type) {
     }
 }
 
-
+// Функция для добавления поля телефона
 function addPhoneField(button) {
     const ul = button.previousElementSibling;
-
-    // Создаём новый элемент списка с полем ввода
     const li = document.createElement('li');
     const newInput = document.createElement('input');
-    newInput.type = 'text';
+    newInput.type = 'tel';
     newInput.name = 'phone';
     newInput.placeholder = 'Phone';
     newInput.classList = 'table-input';
+    detectPhoneInput(newInput)
 
-    // Создаём кнопку удаления
-    const deleteButton = document.createElement('button');
-    deleteButton.type = 'button';
-    deleteButton.classList = 'btn btn-delete btn-controls'
-    deleteButton.textContent = 'x';
-    deleteButton.onclick = () => {
-        li.remove();
-        // Найдите input с именем phones-count и уменьшите его значение на 1
-        const phonesCountInput = button.parentElement.querySelector('input[name="phones-count"]');
-        if (phonesCountInput) {
-            phonesCountInput.value = Math.max(0, parseInt(phonesCountInput.value, 10) - 1);
-        }
-    };
-
+    const deleteButton = createDeleteButton(li, ul);
     li.appendChild(newInput);
     li.appendChild(deleteButton);
     ul.appendChild(li);
 
-    // Найдите input с именем phones-count и увеличьте его значение на 1
     const phonesCountInput = button.parentElement.querySelector('input[name="phones-count"]');
     if (phonesCountInput) {
         phonesCountInput.value = parseInt(phonesCountInput.value, 10) + 1;
     }
+    
 }
 
-
-function convertInputsToCells(inputs, data, type, row, button) {
-    inputs.forEach(input => {
-        if (input.type !== 'hidden') {
-            const td = input.closest('td');
-            if (td) {
-                if (input.name === 'phone') {
-                    const ul = document.createElement('ul');
-                    data['phone'].forEach(phone => {
-                        const li = document.createElement('li');
-                        li.textContent = phone;
-                        ul.appendChild(li);
-                    });
-                    td.innerHTML = '';
-                    td.appendChild(ul);
-                } else {
-                    td.textContent = input.value;
+// Функция для преобразования инпутов в ячейки
+function convertInputsToCells(inputs, data, type, row, button, new_id) {
+    if (type === 'employee') {
+        inputs.forEach(input => {
+            if (input.type !== 'hidden' || input.name === 'id') {
+                const td = input.closest('td');
+                if (td) {
+                    if (input.name === 'id' && input.value === '#') {
+                        td.textContent = String(new_id);
+                    } else if (input.name === 'phone') {
+                        const ul = document.createElement('ul');
+                        data['phone'].forEach(phone => {
+                            const li = document.createElement('li');
+                            li.textContent = phone;
+                            ul.appendChild(li);
+                        });
+                        td.innerHTML = '';
+                        td.appendChild(ul);
+                    } else {
+                        td.textContent = input.value;
+                    }
                 }
             }
-        }
-    });
-    button.remove();
-    const controlsTd = row.querySelector('.column-controls');
-    if (type === 'employee') {
+        });
+    
+        const controlsTd = row.querySelector('.column-controls');
         if (controlsTd) {
             const editButton = document.createElement('button');
             editButton.className = 'btn btn-edit btn-controls';
@@ -311,5 +316,44 @@ function convertInputsToCells(inputs, data, type, row, button) {
             editButton.onclick = () => editRow(editButton, type);
             controlsTd.insertBefore(editButton, controlsTd.firstChild);
         }
+    } else if (type === 'blacklist') {
+        inputs.forEach(input => {
+            if (input.type !== 'hidden') {
+                const td = input.closest('td');
+                if (td) {
+                    td.textContent = input.value;
+                }
+            }
+        });
     }
+    
+    button.remove();
+}
+
+// Функция для сбора данных строки
+function collectRowData(row, type, isEditing) {
+    const data = {};
+    const inputs = row.querySelectorAll('input');
+
+    if (inputs.length > 0) {
+        inputs.forEach(input => {
+            const key = input.getAttribute('name');
+            const originalValue = input.dataset.originalValue || '';
+            if (key === 'phone' && type !== 'blacklist') {
+                data[key] = data[key] || [];
+                data[key].push(originalValue);
+            } else {
+                data[key] = originalValue;
+            }
+        });
+    } else {
+        if (type === 'employee') {
+            data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
+            data['name'] = row.querySelector('td[data-name]').textContent.trim();
+        } else if (type === 'blacklist') {
+            data['phone'] = row.querySelector('td').textContent.trim();
+        }
+    }
+
+    return data;
 }
