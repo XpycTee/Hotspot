@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block headers %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/forms.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/tables.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/navigation.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
+<script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
+{% endblock %}
