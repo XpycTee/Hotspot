@@ -1,5 +1,4 @@
 .table-container table {
-    /* width: 100%; */ /* Удаляем фиксированную ширину */
     border-collapse: collapse;
     margin: 25px auto; /* Центрируем таблицу */
     font-size: 18px;
