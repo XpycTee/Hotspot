@@ -1,11 +1,12 @@
 import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
+
 from flask import (
     Blueprint, abort, render_template, redirect, url_for,
-    session, request, current_app
+    session, request, current_app, jsonify
 )
-from app.database import models
+from app.database import models, db
 from extensions import cache
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -67,23 +68,28 @@ def auth():
 @login_required
 def panel():
     error = session.pop('error', None)
-    wifi_clients = []
-    db_clients = models.WifiClient.query.all()
-    for db_client in db_clients:
-        if db_client:
-            wifi_clients.append({
-                'mac': db_client.mac,
-                'expiration': db_client.expiration,
-                'employee': db_client.employee,
-                'phone': db_client.phone.phone_number
-            })
-    employees = current_app.config.get('EMPLOYEES', [])
-    blacklist = current_app.config.get('BLACKLIST', [])
+    wifi_clients = models.WifiClient.query.all()
+    employees = models.Employee.query.all()
+    blacklist = models.Blacklist.query.all()
+
+    wifi_clients_data = [
+        {
+            'mac': client.mac,
+            'expiration': client.expiration,
+            'employee': client.employee,
+            'phone': client.phone.phone_number
+        }
+        for client in wifi_clients
+    ]
+
+    employees_data = [{'lastname': emp.lastname, 'name': emp.name, 'phone': emp.phone} for emp in employees]
+    blacklist_data = [entry.phone for entry in blacklist]
+
     return render_template(
         'admin/panel.html',
-        wifi_clients=wifi_clients,
-        employees=employees,
-        blacklist=blacklist,
+        wifi_clients=wifi_clients_data,
+        employees=employees_data,
+        blacklist=blacklist_data,
         error=error
     )
 
@@ -98,25 +104,41 @@ def logout():
 @login_required
 def save_data(tabel_name):
     data = request.json
-    if tabel_name not in ['employee', 'blacklist']:
+
+    if tabel_name == 'employee':
+        if not models.Employee.query.filter_by(lastname=data['lastname'], name=data['name']).first():
+            new_employee = models.Employee(lastname=data['lastname'], name=data['name'], phone=data['phone'])
+            db.session.add(new_employee)
+            db.session.commit()
+    elif tabel_name == 'blacklist':
+        if not models.Blacklist.query.filter_by(phone=data['phone']).first():
+            new_blacklist_entry = models.Blacklist(phone=data['phone'])
+            db.session.add(new_blacklist_entry)
+            db.session.commit()
+    else:
         abort(404)
 
-    print(data)
-    # Process and save data to the database
-    # Return a JSON response
-    return {'success': True}
+    return jsonify({'success': True})
 
 @admin_bp.route('/delete/<tabel_name>', methods=['POST'])
 @login_required
 def delete_data(tabel_name):
     data = request.json
-    if tabel_name not in ['employee', 'blacklist']:
+
+    if tabel_name == 'employee':
+        employee = models.Employee.query.filter_by(lastname=data['lastname'], name=data['name']).first()
+        if employee:
+            db.session.delete(employee)
+            db.session.commit()
+    elif tabel_name == 'blacklist':
+        blacklist_entry = models.Blacklist.query.filter_by(phone=data['phone']).first()
+        if blacklist_entry:
+            db.session.delete(blacklist_entry)
+            db.session.commit()
+    else:
         abort(404)
 
-    print(data)
-    # Process and save data to the database
-    # Return a JSON response
-    return {'success': True}
+    return jsonify({'success': True})
 
 
 # Вспомогательные функции для повышения читаемости и повторного использования

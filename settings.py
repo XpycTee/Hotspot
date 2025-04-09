@@ -51,17 +51,11 @@ class Config:
 
     ADMIN = {'username': admin_username, 'password': admin_password}
 
-    with open("config/blacklist.yaml", "r", encoding="utf-8") as bl_config_file:
-        BLACKLIST = yaml.safe_load(bl_config_file).get('blacklist', [])
-
-    with open("config/employees.yaml", "rb") as emp_config_file:
-        file_contents = emp_config_file.read()
-
     MAX_LOGIN_ATTEMPTS = 5
     LOCKOUT_TIME = 15
 
-    EMPLOYEES = yaml.safe_load(file_contents).get('employees', [])
-    EMP_HASH = hashlib.md5(file_contents).hexdigest()
+    CACHE_TYPE = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT = 300
 
     with open(f"app/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
         LANGUAGE_CONTENT = json.load(lang_file)

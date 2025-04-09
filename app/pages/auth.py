@@ -29,7 +29,6 @@ from flask import (
 
 from app.database import db
 from app.database import models
-from extensions import cache
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -46,22 +45,10 @@ def _octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
-@cache.memoize(timeout=3600)
-def _load_employees(file_path, last_modified):
-    with open(file_path, "r", encoding="utf-8") as employees_file:
-        employees = yaml.safe_load(employees_file)
-    return employees
-
 def _check_employee(phone_number):
-    file_path = "config/employees.yaml"
-    last_modified = os.path.getmtime(file_path)
-
-    # Load employees data with caching
-    employees = _load_employees(file_path, last_modified)
-
-    expression = f"employees[].phone | contains([], '{phone_number}')"
-    in_employees = bool(jmespath.search(expression, employees))
-    return in_employees
+    # Проверка наличия номера телефона в базе данных сотрудников
+    employee_phone = models.EmployeePhone.query.filter_by(phone_number=phone_number).first()
+    return employee_phone is not None
 
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():

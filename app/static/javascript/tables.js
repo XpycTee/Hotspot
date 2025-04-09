@@ -11,7 +11,7 @@ function addRow(button, type) {
             <td data-name><input class="table-input" type="text" name="name" placeholder="Name"></td>
             <td data-phones>
                 <ul>
-                    <li><input class="table-input" type="text" name="phones" placeholder="Phone"></li>
+                    <li><input class="table-input" type="text" name="phone" placeholder="Phone"></li>
                 </ul>
                 <button type="button" class="btn btn-add-phone">+ phone</button>
             </td>
@@ -50,12 +50,28 @@ function deleteRow(button, type) {
     }
 
     const data = {};
+    const inputs = row.querySelectorAll('input');
 
-    if (type === 'employee') {
-        data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
-        data['name'] = row.querySelector('td[data-name]').textContent.trim();
-    } else if (type === 'blacklist') {
-        data['phone'] = row.querySelector('td').textContent.trim();
+    if (inputs.length > 0) {
+        // Если строка в режиме редактирования, используем значения из data-original-value
+        inputs.forEach(input => {
+            const key = input.getAttribute('name');
+            const originalValue = input.dataset.originalValue || '';
+            if (key === 'phone' && type !== 'blacklist') {
+                data[key] = data[key] || [];
+                data[key].push(originalValue);
+            } else {
+                data[key] = originalValue;
+            }
+        });
+    } else {
+        // Если строка не в режиме редактирования, используем текстовое содержимое ячеек
+        if (type === 'employee') {
+            data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
+            data['name'] = row.querySelector('td[data-name]').textContent.trim();
+        } else if (type === 'blacklist') {
+            data['phone'] = row.querySelector('td').textContent.trim();
+        }
     }
 
     fetch(`/admin/delete/${type}`, {
@@ -106,7 +122,7 @@ function saveRow(button, type) {
             hasChanges = true;
         }
 
-        if (key === 'phones') {
+        if (key === 'phone' && type !== 'blacklist') {
             data[key] = data[key] || [];
             data[key].push(currentValue);
         } else {
@@ -178,7 +194,7 @@ function editRow(button, type) {
                 const li = document.createElement('li');
                 const input = document.createElement('input');
                 input.type = 'text';
-                input.name = 'phones';
+                input.name = 'phone';
                 input.classList = 'table-input';
                 input.value = phone;
                 input.setAttribute('data-original-value', phone);
@@ -235,7 +251,7 @@ function addPhoneField(button) {
     const li = document.createElement('li');
     const newInput = document.createElement('input');
     newInput.type = 'text';
-    newInput.name = 'phones';
+    newInput.name = 'phone';
     newInput.placeholder = 'Phone';
     newInput.classList = 'table-input';
 
@@ -270,9 +286,9 @@ function convertInputsToCells(inputs, data, type, row, button) {
         if (input.type !== 'hidden') {
             const td = input.closest('td');
             if (td) {
-                if (input.name === 'phones') {
+                if (input.name === 'phone') {
                     const ul = document.createElement('ul');
-                    data['phones'].forEach(phone => {
+                    data['phone'].forEach(phone => {
                         const li = document.createElement('li');
                         li.textContent = phone;
                         ul.appendChild(li);

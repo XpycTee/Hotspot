@@ -57,6 +57,14 @@ class TestAuthViews(unittest.TestCase):
         with self.app.app_context():
             db.create_all()
 
+            # Добавление номера телефона в таблицу EmployeePhone
+            from app.database.models import EmployeePhone  # Импорт модели EmployeePhone
+            for employee in self.app.config['EMPLOYEES']['employees']:
+                for phone in employee['phone']:
+                    new_phone = EmployeePhone(phone_number=phone, employee_id=1000)
+                    db.session.add(new_phone)
+            db.session.commit()
+
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
@@ -67,10 +75,8 @@ class TestAuthViews(unittest.TestCase):
     def test_octal_string_to_bytes(self):
         self.assertEqual(_octal_string_to_bytes("\\141\\142\\143"), b'abc')
 
-    @patch('app.pages.auth._load_employees')
-    def test_check_employee(self, mock_load_employees):
+    def test_check_employee(self):
         with self.app.app_context():
-            mock_load_employees.return_value = self.app.config.get('EMPLOYEES')
             self.assertTrue(_check_employee('79999999999'))
             self.assertFalse(_check_employee('0987654321'))
 
@@ -101,9 +107,7 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/login')
             self.assertEqual(response.status_code, 200)
 
-    @patch('app.pages.auth._load_employees')
-    def test_sendin_route_guest_chap(self, mock_load_employees):
-        mock_load_employees.return_value = self.app.config.get('EMPLOYEES')
+    def test_sendin_route_guest_chap(self):
         test_init_data = {
             'chap-id': '1', 
             'chap-challenge': 'challenge', 
@@ -119,9 +123,7 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'name="password" value="40df65fa9156a1f0f72e57fe6da3d896"', response.data)
 
-    @patch('app.pages.auth._load_employees')
-    def test_sendin_route_guest_https(self, mock_load_employees):
-        mock_load_employees.return_value = self.app.config.get('EMPLOYEES')
+    def test_sendin_route_guest_https(self):
         test_init_data = {
             'link-login-only': 'link', 
             'link-orig': 'orig', 
@@ -135,9 +137,7 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'name="password" value="guest_pass"', response.data)
 
-    @patch('app.pages.auth._load_employees')
-    def test_sendin_route_employee_chap(self, mock_load_employees):
-        mock_load_employees.return_value = self.app.config.get('EMPLOYEES')
+    def test_sendin_route_employee_chap(self):
         test_init_data = {
             'chap-id': '1', 
             'chap-challenge': 'challenge', 
@@ -153,9 +153,7 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'name="password" value="01cd9223b5c93047a6cb493d71d460f5"', response.data)
 
-    @patch('app.pages.auth._load_employees')
-    def test_sendin_route_employee_https(self, mock_load_employees):
-        mock_load_employees.return_value = self.app.config.get('EMPLOYEES')
+    def test_sendin_route_employee_https(self):
         test_init_data = {
             'link-login-only': 'link', 
             'link-orig': 'orig', 
@@ -194,9 +192,7 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
     
-    @patch('app.pages.auth._load_employees')
-    def test_auth_route(self, mock_load_employees):
-        mock_load_employees.return_value = self.app.config.get('EMPLOYEES')
+    def test_auth_route(self):
         test_init_data = {'code': '1234'}
         with self.client as c:
             with c.session_transaction() as sess:
