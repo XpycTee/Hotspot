@@ -39,14 +39,9 @@ function addRow(button, type) {
         detectPhoneInput(phoneInput)
     }
 
-    addEventListeners(newRow, type);
-}
-
-// Функция для добавления обработчиков событий
-function addEventListeners(row, type) {
-    const addPhoneButton = row.querySelector('.btn-add-phone');
-    const saveButton = row.querySelector('.btn-save');
-    const deleteButton = row.querySelector('.btn-delete');
+    const addPhoneButton = newRow.querySelector('.btn-add-phone');
+    const saveButton = newRow.querySelector('.btn-save');
+    const deleteButton = newRow.querySelector('.btn-delete');
 
     if (addPhoneButton) {
         addPhoneButton.addEventListener('click', () => addPhoneField(addPhoneButton));
@@ -68,7 +63,21 @@ function deleteRow(button, type) {
         return;
     }
 
-    const data = collectRowData(row, type, false);
+    const data = {};
+
+    if (type === 'employee') {
+        const idInput = row.querySelector('input[name="id"]');
+        let originalValue = row.querySelector('td[data-id]').textContent.trim();
+        if (idInput) {
+            originalValue = idInput.dataset.originalValue || '';
+        }
+        data['id'] = Number(originalValue);
+    } else if (type === 'blacklist') {
+        let phone = row.querySelector('td').textContent.trim();
+        phone = phone.replace(/^(\+?7|8)/, '7');
+        data['phone'] = phone;
+    }
+
 
     fetch(`/admin/delete/${type}`, {
         method: 'POST',
@@ -80,7 +89,8 @@ function deleteRow(button, type) {
         if (result.success) {
             row.remove();
         } else {
-            alert('Error saving data\nError message:\n'+result.error);
+            const modal = document.querySelector("#errorModal");
+            triggerModal(modal, 'Error deleting data', 'Error message:\n'+result.error);
         }
     })
     .catch(error => console.error('Error:', error));
@@ -102,7 +112,8 @@ function saveRow(button, type) {
     });
 
     if (hasEmptyFields) {
-        alert('All fields must be filled');
+        const modal = document.querySelector("#errorModal");
+        triggerModal(modal, 'Error', 'All fields must be filled');
         return;
     }
 
@@ -115,9 +126,17 @@ function saveRow(button, type) {
             hasChanges = true;
         }
 
-        if (key === 'phone' && type !== 'blacklist') {
-            data[key] = data[key] || [];
-            data[key].push(currentValue);
+        if (key === 'phone') {
+            // Заменяем префикс +7 или 8 на 7
+            let phone = currentValue.replace(/^(\+?7|8)/, '7');
+            // Удаляем все нецифровые символы
+            phone = phone.replace(/\D/g, '');
+            if (type === 'employee') {
+                data[key] = data[key] || [];
+                data[key].push(phone);
+            } else {
+                data[key] = phone;
+            }
         } else {
             data[key] = input.name === 'id' ? Number(currentValue) : currentValue;
         }
@@ -140,7 +159,8 @@ function saveRow(button, type) {
             convertInputsToCells(inputs, data, type, row, button, result.new_id || null);
             delete row.dataset.new;
         } else {
-            alert('Error saving data\nError message:\n'+result.error);
+            const modal = document.querySelector("#errorModal");
+            triggerModal(modal, 'Error saving data', 'Error message:\n'+result.error);
         }
     })
     .catch(error => console.error('Error:', error));
@@ -296,7 +316,7 @@ function convertInputsToCells(inputs, data, type, row, button, new_id) {
                         const ul = document.createElement('ul');
                         data['phone'].forEach(phone => {
                             const li = document.createElement('li');
-                            li.textContent = phone;
+                            li.textContent = "+"+phone;
                             ul.appendChild(li);
                         });
                         td.innerHTML = '';
@@ -321,39 +341,11 @@ function convertInputsToCells(inputs, data, type, row, button, new_id) {
             if (input.type !== 'hidden') {
                 const td = input.closest('td');
                 if (td) {
-                    td.textContent = input.value;
+                    td.textContent = "+"+data['phone'];
                 }
             }
         });
     }
     
     button.remove();
-}
-
-// Функция для сбора данных строки
-function collectRowData(row, type, isEditing) {
-    const data = {};
-    const inputs = row.querySelectorAll('input');
-
-    if (inputs.length > 0) {
-        inputs.forEach(input => {
-            const key = input.getAttribute('name');
-            const originalValue = input.dataset.originalValue || '';
-            if (key === 'phone' && type !== 'blacklist') {
-                data[key] = data[key] || [];
-                data[key].push(originalValue);
-            } else {
-                data[key] = originalValue;
-            }
-        });
-    } else {
-        if (type === 'employee') {
-            data['lastname'] = row.querySelector('td[data-lastname]').textContent.trim();
-            data['name'] = row.querySelector('td[data-name]').textContent.trim();
-        } else if (type === 'blacklist') {
-            data['phone'] = row.querySelector('td').textContent.trim();
-        }
-    }
-
-    return data;
 }

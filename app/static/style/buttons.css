@@ -8,6 +8,7 @@
     cursor: pointer;
     text-align: center;
     display: block;
+    margin: 0;
 }
 
 .btn:hover {

@@ -16,6 +16,18 @@
 
     <input class="btn btn-submit" type="submit" value="{{ config['LANGUAGE_CONTENT']['html']['login']['submit_button'] }}">
 
-    <label id="modal_trigger" class="text-center mt-2 link-line">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
+    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
 </form>
+{% endblock %}
+
+{% block footer %}
+<div id="modal-overlay" class="modal-overlay"></div>
+
+<div id="privacyPolicyModal" class="modal modal-large">
+    <div class="modal-header">
+        <h2 class="modal-title">Политика конфиденциальности</h2>
+        <span class="modal-close" data-close-button>close</span>
+    </div>
+    <div class="modal-content">{% include "auth/privacy_policy.html" %}</div>
+</div>
 {% endblock %}

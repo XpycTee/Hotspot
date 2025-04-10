@@ -4,17 +4,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/forms.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='style/modal.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/modals.css') }}">
 <script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
-{% endblock %}
-
-{% block footer %}
-<!-- Modal content -->
-<div id="myModal" class="modal">
-    <div class="modal-content">
-        <span class="close">×</span>
-        {% include "auth/privacy_policy.html" %}
-    </div>
-</div>
-<script src="{{ url_for('static', filename='javascript/modal.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/modals.js') }}"></script>
 {% endblock %}

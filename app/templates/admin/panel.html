@@ -56,7 +56,7 @@ Panel
                         <td data-phones class="column-phones">
                             <ul>
                                 {% for phone in employee.get('phones') %}
-                                <li>{{ phone }}</li>
+                                <li>+{{ phone }}</li>
                                 {% endfor %}
                             </ul>
                         </td>
@@ -84,7 +84,7 @@ Panel
                 <tbody>
                     {% for blocked in blacklist %}
                     <tr>
-                        <td class="blocked-phone">{{ blocked }}</td>
+                        <td class="blocked-phone">+{{ blocked }}</td>
                         <td class="column-controls">
                             <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">Delete</button>
                         </td>

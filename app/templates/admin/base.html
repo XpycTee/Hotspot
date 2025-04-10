@@ -6,5 +6,21 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style/tables.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/navigation.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/modals.css') }}">
 <script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/modals.js') }}"></script>
+{% endblock %}
+
+{% block footer %}
+<div id="modal-overlay" class="modal-overlay"></div>
+
+<div id="errorModal" class="modal modal-small">
+    <div class="modal-header">
+        <h2 class="modal-title">Title</h2>
+    </div>
+    <div class="modal-content">Content</div>
+    <div class="modal-footer">
+        <button class="btn btn-modal-close" data-close-button>Close</button>
+    </div>
+</div>
 {% endblock %}

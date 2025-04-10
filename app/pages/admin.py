@@ -192,17 +192,19 @@ def delete_data(tabel_name):
 
     if tabel_name == 'employee':
         emp_id = data.get('id')
-        if emp_id is not None:
-            employee = Employee.query.filter_by(id=emp_id).first()
+        if emp_id is None:
+            return jsonify({'error': 'Employee id is missing'}), 400
+        
+        employee = Employee.query.filter_by(id=emp_id).first()
 
-            if not employee:
-                return jsonify({'error': 'Employee not found'}), 404
+        if not employee:
+            return jsonify({'error': 'Employee not found'}), 404
 
-            # Удаление всех связанных телефонов
-            for phone in employee.phones:
-                db.session.delete(phone)
-            db.session.delete(employee)
-            db.session.commit()
+        # Удаление всех связанных телефонов
+        for phone in employee.phones:
+            db.session.delete(phone)
+        db.session.delete(employee)
+        db.session.commit()
     elif tabel_name == 'blacklist':
         blacklist_entry = Blacklist.query.filter_by(phone_number=data['phone']).first()
         if blacklist_entry:
