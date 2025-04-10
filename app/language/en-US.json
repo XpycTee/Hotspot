@@ -49,6 +49,51 @@
       "label_code": "Please enter the code received in the SMS",
       "placeholder_code": "Code from SMS",
       "submit_button": "Confirm code"
+    },
+    "error": {
+      "retry": "Retry"
+    },
+    "modal": {
+      "close": "Close"
+    },
+    "admin": {
+      "buttons": {
+        "login": "Login",
+        "logout": "Logout",
+        "edit": "Edit",
+        "delete": "Delete",
+        "add": "Add"
+      },
+      "login": {
+        "title": "Authorization",
+        "label": "Admin panel login",
+        "login_placeholder": "Enter login",
+        "password_placeholder": "Enter password"
+      },
+      "panel": {
+        "title": "Admin panel",
+        "tables": {
+          "controls": "Controls",
+          "wifi_clients": {
+            "title": "WiFi Clients",
+            "mac": "MAC Address",
+            "expire": "Access Expiry",
+            "is_employee": "Employee",
+            "phone": "Phone Number"
+          },
+          "employees": {
+            "title": "Employee List",
+            "id": "ID",
+            "lastname": "Last Name",
+            "name": "First Name",
+            "phones": "Phones"
+          },
+          "blacklist": {
+            "title": "Blacklist",
+            "phone": "Phone"
+          }
+        }
+      }
     }
   },
   "sms_code": "{code} your WiFi code"

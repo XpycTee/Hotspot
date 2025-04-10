@@ -1,26 +1,26 @@
 {% extends 'admin/base.html' %}
 
 {% block title %}
-Panel
+{{ get_translate('html.admin.panel.title') }}
 {% endblock %}
 
 {% block content %}
 <div class="admin-dashboard">
-    <a href="{{ url_for('admin.logout') }}" class="btn btn-exit">Выход</a>
+    <a href="{{ url_for('admin.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout') }}</a>
     <ul class="nav-tabs">
-        <li><a href="#wifi_clients">WiFi Clients</a></li>
-        <li><a href="#employees_list">Employees list</a></li>
-        <li><a href="#blacklist">Blacklist</a></li>
+        <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title') }}</a></li>
+        <li><a href="#employees_list">{{ get_translate('html.admin.panel.tables.employees.title') }}</a></li>
+        <li><a href="#blacklist">{{ get_translate('html.admin.panel.tables.blacklist.title') }}</a></li>
     </ul>
     <div class="table-container">
         <div id="wifi_clients" class="content-tab table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Mac Address</th>
-                        <th>Expiration</th>
-                        <th>Is Employee</th>
-                        <th>Phone Number</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.mac') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.expire') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,11 +40,11 @@ Panel
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Lastname</th>
-                        <th>Name</th>
-                        <th class="column-phones">Phones</th>
-                        <th class="column-controls">Controls</th>
+                        <th>{{ get_translate('html.admin.panel.tables.employees.id') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.employees.lastname') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.employees.name') }}</th>
+                        <th class="column-phones">{{ get_translate('html.admin.panel.tables.employees.phones') }}</th>
+                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,13 +61,13 @@ Panel
                             </ul>
                         </td>
                         <td class="column-controls">
-                            <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">Edit</button>
-                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">Delete</button>
+                            <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">{{ get_translate('html.admin.buttons.edit') }}</button>
+                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">{{ get_translate('html.admin.buttons.delete') }}</button>
                         </td>
                     </tr>
                     {% endfor %}
                     <tr>
-                        <td colspan="5"><button class="btn btn-add" onclick="addRow(this, 'employee')">Добавить</button></td>
+                        <td colspan="5"><button class="btn btn-add" onclick="addRow(this, 'employee')">{{ get_translate('html.admin.buttons.add') }}</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -77,8 +77,8 @@ Panel
             <table>
                 <thead>
                     <tr>
-                        <th>Phone</th>
-                        <th class="column-controls">Controls</th>
+                        <th>{{ get_translate('html.admin.panel.tables.blacklist.phone') }}</th>
+                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -86,12 +86,12 @@ Panel
                     <tr>
                         <td class="blocked-phone">+{{ blocked }}</td>
                         <td class="column-controls">
-                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">Delete</button>
+                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.delete') }}</button>
                         </td>
                     </tr>
                     {% endfor %}
                     <tr>
-                        <td colspan="2"><button class="btn btn-add" onclick="addRow(this, 'blacklist')">Добавить</button></td>
+                        <td colspan="2"><button class="btn btn-add" onclick="addRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.add') }}</button></td>
                     </tr>
                 </tbody>
             </table>

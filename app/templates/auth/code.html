@@ -1,22 +1,22 @@
 {% extends 'auth/base.html' %}
 
 {% block title %}
-{{ config['LANGUAGE_CONTENT']['html']['code']['title'] }}
+{{ get_translate('html.code.title') }}
 {% endblock %}
 
 {% block content %}
 <form action="/auth" method="post" id="codeForm">
 
-    <label for="code">{{ config['LANGUAGE_CONTENT']['html']['code']['label_code'] }}</label>
-    <input class="input-auth" type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ config['LANGUAGE_CONTENT']['html']['code']['placeholder_code'] }}">
+    <label for="code">{{ get_translate('html.code.label_code') }}</label>
+    <input class="input-auth" type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ get_translate('html.code.placeholder_code') }}">
 
     {% if error %}
     <div class="error-notify">{{ error }}</div>
     {% endif %}
 
-    <input class="btn btn-submit" type="submit" value="{{ config['LANGUAGE_CONTENT']['html']['code']['submit_button'] }}">
+    <input class="btn btn-submit" type="submit" value="{{ get_translate('html.code.submit_button') }}">
 
-    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ config['LANGUAGE_CONTENT']['html']['privacy_policy_label'] }}</label>
+    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label') }}</label>
 </form>
 <script>
     function checkCodeForm() {
@@ -40,8 +40,8 @@
 
 <div id="privacyPolicyModal" class="modal modal-large">
     <div class="modal-header">
-        <h2 class="modal-title">Политика конфиденциальности</h2>
-        <span class="modal-close" data-close-button>close</span>
+        <h2 class="modal-title">{{ get_translate('html.privacy_policy_label') }}</h2>
+        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close').lower() }}</span>
     </div>
     <div class="modal-content">
       {% include "auth/privacy_policy.html" %}

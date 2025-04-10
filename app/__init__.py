@@ -1,6 +1,8 @@
 import os
 import logging
 
+import jmespath
+
 from app.pages.auth import auth_bp
 from app.pages.admin import admin_bp
 from app.pages.error import error_bp
@@ -30,6 +32,11 @@ def check_required_env(required: list, logger=logging.getLogger()) -> bool:
         return False
 
     return True
+
+
+def get_translate(path):
+    translation = jmespath.search(path, Config.LANGUAGE_CONTENT)
+    return translation if isinstance(translation, str) else path
 
 
 def create_app(config_class=Config):
@@ -63,6 +70,12 @@ def create_app(config_class=Config):
         app.register_blueprint(auth_bp)
         app.register_blueprint(admin_bp)
         app.register_blueprint(error_bp)
+
+        # Добавляем контекстный процессор
+        @app.context_processor
+        def inject_get_translate():
+            return dict(get_translate=get_translate)
+
         # Blueprints add here
         with app.app_context():
             db.create_all()

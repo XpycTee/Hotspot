@@ -8,6 +8,6 @@
 <div class="error-container">
     <div class="error-code">Error {{ code }} - {{ title }}</div>
     <div class="error-message">{{ description }}</div>
-    <a href="{{ session['link-login-only'] }}" class="back-link">Go To Login</a>
+    <a href="{{ session['link-login-only'] }}" class="back-link">{{ get_translate('html.error.retry') }}</a>
 </div>
 {% endblock %}

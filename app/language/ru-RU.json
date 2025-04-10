@@ -50,6 +50,51 @@
       "label_code": "Пожалуйста, введите код полученный в СМС",
       "placeholder_code": "Код из СМС",
       "submit_button": "Подтвердить код"
+    },
+    "error": {
+      "retry": "Повторить"
+    },
+    "modal": {
+      "close": "Закрыть"
+    },
+    "admin": {
+      "buttons": {
+        "login": "Войти",
+        "logout": "Выход",
+        "edit": "Редактировать",
+        "delete": "Удалить",
+        "add": "Добавить"
+      },
+      "login": {
+        "title": "Авторизация",
+        "label": "Вход в админ панель",
+        "login_palceholder": "Введите логин",
+        "password_palceholder": "Введите пароль"
+      },
+      "panel": {
+        "title": "Админ панель",
+        "tables": {
+          "controls": "Управление",
+          "wifi_clients": {
+            "title": "WiFi Клиенты",
+            "mac": "Мак адрес",
+            "expire": "Срок доступа",
+            "is_employee": "Сотрудник",
+            "phone": "Номер телефона"
+          },
+          "employees": {
+            "title": "Список сотрудников",
+            "id": "ID",
+            "lastname": "Фамилия",
+            "name": "Имя",
+            "phones": "Телефоны"
+          },
+          "blacklist": {
+            "title": "Чёрный список",
+            "phone": "Телефон"
+          }
+        }
+      }
     }
   },
   "sms_code": "{code} ваш код WiFi"
