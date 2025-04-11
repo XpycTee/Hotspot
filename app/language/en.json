@@ -1,4 +1,5 @@
 {
+  "language": "English",
   "errors": {
     "http": {
       "400": {
@@ -33,7 +34,19 @@
     "auth": {
       "bad_code_try": "Invalid code, try again",
       "bad_code_all": "Invalid code, ran out of attempts start again",
-      "bad_auth": "If authorization failed contact tech support"
+      "bad_auth": "If authorization failed contact tech support",
+      "missing_code": "Code is missing, please enter the code"
+    },
+    "admin": {
+      "log": "{message} for user {username} from {client_ip}",
+      "user_logged_in": "User {username} logged in from {client_ip}",
+      "wrong_credentials": "Incorrect username or password",
+      "end_tries": "Too many attempts. Try again in {lockout_time} minutes.",
+      "tables": {
+        "missing_request_data": "Request data is missing",
+        "employee_not_found": "Employee not found",
+        "phone_number_exists": "Phone number already exists"
+      }
     }
   },
   "html": {

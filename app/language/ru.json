@@ -1,4 +1,5 @@
-{
+{ 
+  "language": "Русский",
   "errors": {
     "http": {
       "400": {
@@ -35,6 +36,17 @@
       "bad_code_all": "Неверный код, кончились попытки начните заново",
       "bad_auth": "Если авторизация не произошла обратитесь в тех.поддержку",
       "missing_code": "Код отсутствует, пожалуйста, введите код"
+    },
+    "admin": {
+      "log": "{message} для пользователя {username} с {client_ip}",
+      "user_logged_in": "Пользователь {username} вошёл с {client_ip}",
+      "wrong_credentials": "Неверный логин или пароль",
+      "end_tries": "Слишком много попыток. Повторите через {lockout_time} минут.",
+      "tables": {
+        "missing_request_data": "Отсутствуют данные запроса",
+        "employee_not_found": "Сотрудник не найден",
+        "phone_number_exists": "Номер телефона уже существует"
+      }
     }
   },
   "html": {
@@ -68,8 +80,8 @@
       "login": {
         "title": "Авторизация",
         "label": "Вход в админ панель",
-        "login_palceholder": "Введите логин",
-        "password_palceholder": "Введите пароль"
+        "login_placeholder": "Введите логин",
+        "password_placeholder": "Введите пароль"
       },
       "panel": {
         "title": "Админ панель",

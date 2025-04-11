@@ -9,7 +9,7 @@ from flask import (
 )
 from app.database import db
 from app.database.models import WifiClient, Employee, EmployeePhone, Blacklist
-from extensions import cache
+from extensions import cache, get_translate
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -40,13 +40,14 @@ def auth():
     username = request.form.get('username')
     password = request.form.get('password')
     client_ip = request.remote_addr
+    user_lang = request.form.get('language', current_app.config.get('LANGUAGE_DEFAULT'))  # Получаем язык из формы, по умолчанию 'en'
 
     # Проверка блокировки
     lockout_until = cache.get("lockout_until")
     lockout_time = current_app.config.get('LOCKOUT_TIME', 0)  # Установить значение по умолчанию
     if lockout_until and datetime.now().timestamp() < float(lockout_until):
         _set_error_and_log(
-            f"Слишком много попыток. Повторите через {lockout_time} минут.",
+            get_translate('errors.admin.end_tries').format(lockout_time=lockout_time),
             username, client_ip, "warning"
         )
         return redirect(url_for('admin.login'), 302)
@@ -58,8 +59,15 @@ def auth():
             _check_password(password, app_admin.get('password'))
     ):
         _reset_login_attempts()
+
         session['is_authenticated'] = True
-        current_app.logger.info(f'User {username} logged in from {client_ip}')
+        # Сохраняем язык пользователя в кеш
+        session["user_lang"] = user_lang if user_lang != 'auto' else None
+        session.permanent = True  # Устанавливаем сессию как постоянную
+        current_app.permanent_session_lifetime = timedelta(minutes=30)  # Время жизни сессии
+        
+        current_app.logger.info(get_translate('errors.admin.user_logged_in').format(username=username, client_ip=client_ip))
+
         return redirect(url_for('admin.panel'), 302)
 
     _handle_failed_login(username, client_ip)
@@ -117,14 +125,14 @@ def save_data(tabel_name):
     new_id = None
 
     if not data:
-        return jsonify({'error': 'Request data is missing'}), 400
+        return jsonify({'error': get_translate('errors.admin.tables.missing_request_data')}), 400
 
     if tabel_name == 'employee':
         emp_id = data.get('id')
         if emp_id is not None:
             employee = Employee.query.filter_by(id=emp_id).first()
             if not employee:
-                return jsonify({'error': 'Employee not found'}), 404
+                return jsonify({'error': get_translate('errors.admin.tables.employee_not_found')}), 404
 
             # Обновление существующего сотрудника
             employee.lastname = data['lastname']
@@ -159,14 +167,14 @@ def save_data(tabel_name):
                 phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
                 phone_number = re.sub(r'\D', '', phone_number)
                 if EmployeePhone.query.filter_by(phone_number=phone_number).first():
-                    return jsonify({'error': 'Phone number is exist'}), 400
+                    return jsonify({'error': get_translate('errors.admin.tables.phone_number_exists')}), 400
                 new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
                 db.session.add(new_phone)
             new_id = new_employee.id
         db.session.commit()
     elif tabel_name == 'blacklist':
         if Blacklist.query.filter_by(phone_number=data['phone']).first():
-            return jsonify({'error': 'Phone number is exist'}), 400
+            return jsonify({'error': get_translate('errors.admin.tables.phone_number_exists')}), 400
         
         phone_number = re.sub(r'^(\+?7|8)', '7', data['phone'])
         phone_number = re.sub(r'\D', '', phone_number)
@@ -188,17 +196,17 @@ def delete_data(tabel_name):
     data = request.json
 
     if not data:
-        return jsonify({'error': 'Request data is missing'}), 400
+        return jsonify({'error': get_translate('errors.admin.tables.missing_request_data')}), 400
 
     if tabel_name == 'employee':
         emp_id = data.get('id')
         if emp_id is None:
-            return jsonify({'error': 'Employee id is missing'}), 400
+            return jsonify({'error': get_translate('errors.admin.tables.employee_not_found')}), 400
         
         employee = Employee.query.filter_by(id=emp_id).first()
 
         if not employee:
-            return jsonify({'error': 'Employee not found'}), 404
+            return jsonify({'error': get_translate('errors.admin.tables.employee_not_found')}), 404
 
         # Удаление всех связанных телефонов
         for phone in employee.phones:
@@ -240,15 +248,14 @@ def _handle_failed_login(username, client_ip):
     if login_attempts >= max_login_attempts:
         lockout_until = datetime.now() + timedelta(minutes=lockout_time)
         cache.set("lockout_until", lockout_until.timestamp(), timeout=lockout_time * 60)
-        _set_error_and_log(f"Слишком много попыток. Повторите через {lockout_time} минут.",
-                           username, client_ip, "critical")
+        _set_error_and_log(get_translate('errors.admin.end_tries').format(lockout_time=lockout_time), username, client_ip, "critical")
     else:
         cache.set("login_attempts", login_attempts, timeout=lockout_time * 60)
-        _set_error_and_log("Неверный логин или пароль", username, client_ip, "critical")
+        _set_error_and_log(get_translate('errors.admin.wrong_credentials'), username, client_ip, "critical")
 
 
 def _set_error_and_log(message, username, client_ip, log_level):
     """Устанавливает сообщение об ошибке и записывает лог."""
     session['error'] = message
     log_func = getattr(current_app.logger, log_level, current_app.logger.info)
-    log_func(f'{message} for user {username} from {client_ip}')
+    log_func(get_translate('errors.admin.log').format(message=message, username=username, client_ip=client_ip))

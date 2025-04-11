@@ -11,4 +11,4 @@ settings:
     guest:
       delay: 24h
       password: secret
-  language: ru-RU
+  language: ru

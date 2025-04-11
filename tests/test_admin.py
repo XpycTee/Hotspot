@@ -10,6 +10,7 @@ from flask import Flask
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
+from app.database.models import Blacklist, Employee
 from app.pages.admin import (
     admin_bp,
     _check_password,
@@ -18,6 +19,7 @@ from app.pages.admin import (
 )
 
 from app.database import db
+from extensions import get_translate
 
 class TestAdminViews(unittest.TestCase):
     def setUp(self):
@@ -49,9 +51,24 @@ class TestAdminViews(unittest.TestCase):
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
         db.init_app(self.app)
+        @self.app.context_processor
+        def inject_get_translate():
+            return dict(get_translate=get_translate)
+        
         with self.app.app_context():
             db.create_all()
             
+            # Add an employee
+            employee = Employee(lastname='Doe', name='John')
+            db.session.add(employee)
+            
+            # Add a phone number to the blacklist
+            blacklist_entry = Blacklist(phone_number='1234567890')
+            db.session.add(blacklist_entry)
+            
+            # Commit the session to save changes
+            db.session.commit()
+
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
@@ -130,7 +147,7 @@ class TestAdminViews(unittest.TestCase):
 
     def test_save_route(self):
         table_data = {
-            "employee": {"lastname": "Someson", "name": "John", "phone": ["1234567890", "0987654321"]},
+            "employee": {"id": 1},
             "blacklist": {"phone": "1234567890"}
         }
         for table_name, data in table_data.items():
@@ -142,7 +159,7 @@ class TestAdminViews(unittest.TestCase):
 
     def test_delete_route(self):
         table_data = {
-            "employee": {"lastname": "Someson", "name": "John"},
+            "employee": {"id": 1},
             "blacklist": {"phone": "1234567890"}
         }
         for table_name, data in table_data.items():

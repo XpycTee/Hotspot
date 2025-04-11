@@ -1,8 +1,6 @@
 import os
 import logging
 
-import jmespath
-
 from app.pages.auth import auth_bp
 from app.pages.admin import admin_bp
 from app.pages.error import error_bp
@@ -12,7 +10,7 @@ from app.database import db
 from flask import Flask
 
 from settings import Config
-from extensions import cache
+from extensions import cache, get_translate
 
 
 def check_required_env(required: list, logger=logging.getLogger()) -> bool:
@@ -32,11 +30,6 @@ def check_required_env(required: list, logger=logging.getLogger()) -> bool:
         return False
 
     return True
-
-
-def get_translate(path):
-    translation = jmespath.search(path, Config.LANGUAGE_CONTENT)
-    return translation if isinstance(translation, str) else path
 
 
 def create_app(config_class=Config):

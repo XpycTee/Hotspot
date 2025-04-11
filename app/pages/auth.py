@@ -6,9 +6,6 @@ import re
 from hashlib import md5
 from random import randint
 
-import jmespath
-import yaml
-
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint
 
@@ -28,7 +25,8 @@ from flask import (
 )
 
 from app.database import db
-from app.database import models
+from app.database.models import ClientsNumber, Employee, EmployeePhone, WifiClient
+from extensions import get_translate
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -47,7 +45,7 @@ def _octal_string_to_bytes(oct_string):
 
 def _check_employee(phone_number):
     # Проверка наличия номера телефона в базе данных сотрудников
-    employee_phone = models.EmployeePhone.query.filter_by(phone_number=phone_number).first()
+    employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
     return employee_phone is not None
 
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
@@ -118,7 +116,7 @@ def login():
 
     mac = session.get('mac')
 
-    db_client = models.WifiClient.query.filter_by(mac=mac).first()
+    db_client = WifiClient.query.filter_by(mac=mac).first()
     if db_client and datetime.datetime.now() < db_client.expiration:
         phone = db_client.phone
         if not phone:
@@ -150,7 +148,7 @@ def code():
         if not mac:
             abort(400)
 
-        db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        db_client = WifiClient.query.filter_by(mac=mac).first()
 
         if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
             is_employee = _check_employee(phone_number)
@@ -177,7 +175,7 @@ def code():
         session['code'] = gen_code
 
         sender = current_app.config.get('SENDER')
-        sms_error = sender.send_sms(phone_number, current_app.config['LANGUAGE_CONTENT']['sms_code'].format(code=gen_code))
+        sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
 
         if sms_error:
             abort(500)
@@ -195,7 +193,7 @@ def auth():
     user_code = session.get('code')
 
     if form_code is None or user_code is None:
-        session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['missing_code']
+        session['error'] = get_translate('errors.auth.missing_code')
         redirect_url = url_for('auth.code')
         return redirect(redirect_url, 302)
 
@@ -205,17 +203,17 @@ def auth():
     if form_code == user_code:
         now_time = datetime.datetime.now()
 
-        db_phone = models.ClientsNumber.query.filter_by(phone_number=phone_number).first()
+        db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
         if not db_phone:
-            db_phone = models.ClientsNumber(phone_number=phone_number, last_seen=now_time)
+            db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
         
         is_employee = _check_employee(phone_number)
 
-        db_client = models.WifiClient.query.filter_by(mac=mac).first()
+        db_client = WifiClient.query.filter_by(mac=mac).first()
         if not db_client:
-            db_client = models.WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
+            db_client = WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
             db.session.add(db_client)
         else:
             db_client.phone = db_phone
@@ -237,7 +235,7 @@ def auth():
         session['tries'] += 1
 
         if session['tries'] >= 3:
-            session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_all']
+            session['error'] = get_translate('errors.auth.bad_code_all')
             session.pop('code', None)
             session.pop('tries', None)
             session.pop('phone', None)
@@ -245,6 +243,6 @@ def auth():
             redirect_url = url_for('auth.login')
             return redirect(redirect_url, 302)
         else:
-            session['error'] = current_app.config['LANGUAGE_CONTENT']['errors']['auth']['bad_code_try']
+            session['error'] = get_translate('errors.auth.bad_code_try')
             redirect_url = url_for('auth.code')
             return redirect(redirect_url, 307)

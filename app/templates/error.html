@@ -1,4 +1,9 @@
-{% extends 'auth/base.html' %}
+{% extends 'base.html' %}
+
+{% block headers %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
+{% endblock %}
 
 {% block title %}
 {{ code }} - {{ title }}

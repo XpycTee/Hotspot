@@ -57,8 +57,23 @@ class Config:
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300
 
-    with open(f"app/language/{settings.get('language', 'en-US')}.json", "r", encoding='utf-8') as lang_file:
-        LANGUAGE_CONTENT = json.load(lang_file)
+    # Путь к папке с языковыми файлами
+    language_folder = "app/language"
+
+    # Словарь для хранения содержимого всех языковых файлов
+    LANGUAGE_DEFAULT = settings.get('language', 'en')
+    LANGUAGE_CONTENT = {}
+    # Получаем список всех файлов в папке
+    for filename in os.listdir(language_folder):
+        # Проверяем, что файл имеет расширение .json
+        if filename.endswith(".json"):
+            # Определяем полный путь к файлу
+            file_path = os.path.join(language_folder, filename)
+            # Извлекаем имя языка из имени файла (без расширения)
+            language_name = os.path.splitext(filename)[0]
+            # Открываем и загружаем содержимое JSON-файла
+            with open(file_path, "r", encoding='utf-8') as lang_file:
+                LANGUAGE_CONTENT[language_name] = json.load(lang_file)
 
     SQLALCHEMY_DATABASE_URI = settings.get('db_url', f"sqlite:///{os.path.join(basedir, 'config/hotspot.db')}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
