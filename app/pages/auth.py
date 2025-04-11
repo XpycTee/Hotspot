@@ -25,7 +25,7 @@ from flask import (
 )
 
 from app.database import db
-from app.database.models import ClientsNumber, Employee, EmployeePhone, WifiClient
+from app.database.models import Blacklist, ClientsNumber, Employee, EmployeePhone, WifiClient
 from extensions import get_translate
 
 auth_bp = Blueprint('auth', __name__)
@@ -138,8 +138,9 @@ def code():
     if phone_number:
         phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
         phone_number = re.sub(r'\D', '', phone_number)
-
-        if phone_number in current_app.config['BLACKLIST']:
+        
+        
+        if Blacklist.query.filter_by(phone_number=phone_number).first():
             abort(403)
 
         session['phone'] = phone_number

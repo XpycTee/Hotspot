@@ -5,6 +5,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 from flask import Flask, session
 
+from extensions import get_translate
+
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
@@ -23,14 +25,13 @@ class TestAuthViews(unittest.TestCase):
         self.app.register_blueprint(auth_bp)
         self.app.root_path = os.path.join(root_dir, 'app')
         self.app.config['SECRET_KEY'] = 'secret'
-        self.app.config['BLACKLIST'] = []
         self.app.config['HOTSPOT_USERS'] = {
             'employee': {'delay': datetime.timedelta(hours=1), 'password': 'employee_pass'},
             'guest': {'delay': datetime.timedelta(hours=1), 'password': 'guest_pass'}
         }
-        self.app.config['EMPLOYEES'] = {
-            'employees': [{'phone': ['79999999999']}]
-        }
+        mock_sender = MagicMock()
+        mock_sender.send_sms.return_value = None
+        self.app.config['SENDER'] = mock_sender
         self.app.config['LANGUAGE_CONTENT'] = {
             'html': {
                 'login': {
@@ -58,13 +59,15 @@ class TestAuthViews(unittest.TestCase):
             db.create_all()
 
             # Добавление номера телефона в таблицу EmployeePhone
-            from app.database.models import EmployeePhone  # Импорт модели EmployeePhone
-            for employee in self.app.config['EMPLOYEES']['employees']:
-                for phone in employee['phone']:
-                    new_phone = EmployeePhone(phone_number=phone, employee_id=1000)
-                    db.session.add(new_phone)
+            from app.database.models import EmployeePhone, Blacklist  # Импорт модели EmployeePhone
+            new_phone = EmployeePhone(phone_number='79999999999', employee_id=1000)
+            db.session.add(new_phone)
+            new_blocked_phone = Blacklist(phone_number='79999999123')
+            db.session.add(new_blocked_phone)
             db.session.commit()
-
+        @self.app.context_processor
+        def inject_get_translate():
+            return dict(get_translate=get_translate)
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
@@ -167,31 +170,28 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'name="password" value="employee_pass"', response.data)
 
-    @patch('app.pages.auth.current_app', new_callable=MagicMock)
-    def test_code_route(self, mock_current_app):
+    def test_code_route(self):
         test_init_data = {'phone': '71234567890'}
-        mock_sender = MagicMock()
-        mock_sender.send_sms.return_value = None
-        mock_current_app.config.get.return_value = mock_sender
+        test_blocked_init_data = {'phone': '79999999123'}
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
 
-    @patch('app.pages.auth.current_app', new_callable=MagicMock)
-    def test_code_route_session(self, mock_current_app):
+            # Test blocked phone
+            response = c.post('/code', data=test_blocked_init_data)
+            self.assertEqual(response.status_code, 403)
+    
+    def test_code_route_session(self):
         test_init_data = {'phone': '71234567890'}
-        mock_sender = MagicMock()
-        mock_sender.send_sms.return_value = None
-        mock_current_app.config.get.return_value = mock_sender
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['phone'] = '71234567890'
                 sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
-    
+
     def test_auth_route(self):
         test_init_data = {'code': '1234'}
         with self.client as c:
