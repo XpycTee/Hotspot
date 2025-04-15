@@ -102,34 +102,10 @@ settings:
       delay: 30d # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
 ```
 > This YAML configuration file provides settings for the Mikrotik API, company details, and user configurations.
-#### Employees.yaml
-File where you can list your employees.
-```yaml
-employees:
-- lastname: Lastname
-  name: Name
-  phone:
-  - '79999999999'
-  - '79999999998'
-- lastname: AnotherLastname
-  name: AnotherName
-  phone:
-  - '37129999999'
-  - '37129999998'
-```
-> Numbers are recorded with the country code without `+`
-
-#### Blacklist.yaml
-The file in which you can specify the numbers on the blacklist.
-```yaml
-blacklist:
-- '79999999993'  # Example blocked 1
-- '37129999993'  # Example blocked 2
-```
 
 ## License
 
-This project is licensed under the [Apache](./LICENSE).
+This project is licensed under the [MIT License](./LICENSE).
 
 ## Authors
 
