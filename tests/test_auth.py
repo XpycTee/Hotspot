@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from flask import Flask, session
 
-from extensions import get_translate
+from extensions import get_translate, cache
 
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -55,6 +55,7 @@ class TestAuthViews(unittest.TestCase):
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
         db.init_app(self.app)
+        cache.init_app(self.app)
         with self.app.app_context():
             db.create_all()
 
@@ -192,19 +193,22 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
 
-    def test_auth_route(self):
+    @patch('app.pages.auth.cache')
+    def test_auth_route(self, mock_cache):
         test_init_data = {'code': '1234'}
+        mock_cache.get.return_value = '1234'
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['mac'] = '00:00:00:00:00:00'
                 sess['phone'] = '71234567890'
-                sess['code'] = '1234'
             response = c.post('/auth', data=test_init_data)
             self.assertEqual(response.status_code, 302)
             self.assertIn('/sendin', response.location)
 
-    def test_auth_route_failure(self):
+    @patch('app.pages.auth.cache')
+    def test_auth_route_failure(self, mock_cache):
         test_init_data = {'code': '1234'}
+        mock_cache.get.return_value = '5678'
         expected_responses = [
             (307, '/code'),
             (307, '/code'),
@@ -215,7 +219,6 @@ class TestAuthViews(unittest.TestCase):
             with c.session_transaction() as sess:
                 sess['mac'] = '00:00:00:00:00:00'
                 sess['phone'] = '71234567890'
-                sess['code'] = '5678'
 
             for expected_status, expected_location in expected_responses:
                 response = c.post('/auth', data=test_init_data)

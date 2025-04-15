@@ -26,7 +26,7 @@ from flask import (
 
 from app.database import db
 from app.database.models import Blacklist, ClientsNumber, Employee, EmployeePhone, WifiClient
-from extensions import get_translate
+from extensions import get_translate, cache
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -167,13 +167,13 @@ def code():
             return redirect(redirect_url, 302)
 
 
-    if 'code' not in session:
+    if not cache.get(f'code_{phone_number}'):
         phone_number = session.get('phone')
         if not phone_number:
             abort(400)
 
         gen_code = str(randint(0, 9999)).zfill(4)
-        session['code'] = gen_code
+        cache.set(f'code_{phone_number}', gen_code, timeout=300)
 
         sender = current_app.config.get('SENDER')
         sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
@@ -191,7 +191,7 @@ def auth():
     mac = session.get('mac')
     phone_number = session.get('phone')
     form_code = request.form.get('code')
-    user_code = session.get('code')
+    user_code = cache.get(f'code_{phone_number}')
 
     if form_code is None or user_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
