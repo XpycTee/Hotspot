@@ -90,7 +90,7 @@ function deleteRow(button, type) {
             row.remove();
         } else {
             const modal = document.querySelector("#errorModal");
-            triggerModal(modal, 'Error deleting data', 'Error message:\n'+result.error);
+            triggerModal(modal, 'Error deleting data', 'Error message:\n'+result.error.description);
         }
     })
     .catch(error => console.error('Error:', error));
@@ -160,7 +160,7 @@ function saveRow(button, type) {
             delete row.dataset.new;
         } else {
             const modal = document.querySelector("#errorModal");
-            triggerModal(modal, 'Error saving data', 'Error message:\n'+result.error);
+            triggerModal(modal, 'Error saving data', 'Error message:\n'+result.error.description);
         }
     })
     .catch(error => console.error('Error:', error));

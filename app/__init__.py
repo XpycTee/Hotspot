@@ -8,6 +8,7 @@ from app.pages.error import error_bp
 from app.database import db
 
 from flask import Flask
+from flask.json.provider import DefaultJSONProvider
 
 from settings import Config
 from extensions import cache, get_translate
@@ -30,6 +31,9 @@ def check_required_env(required: list, logger=logging.getLogger()) -> bool:
         return False
 
     return True
+
+class CustomJSONProvider(DefaultJSONProvider):
+    ensure_ascii = False
 
 
 def create_app(config_class=Config):
@@ -57,6 +61,8 @@ def create_app(config_class=Config):
         if app.debug:
             app.logger.setLevel(logging.DEBUG)
         
+        app.json = CustomJSONProvider(app)
+
         db.init_app(app)
         cache.init_app(app)
 

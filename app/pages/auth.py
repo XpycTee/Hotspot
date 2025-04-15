@@ -7,7 +7,7 @@ from hashlib import md5
 from random import randint
 
 # Importing Blueprint for creating Flask blueprints
-from flask import Blueprint
+from flask import Blueprint, jsonify
 
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
 from flask import (
@@ -184,6 +184,32 @@ def code():
         current_app.logger.debug(f"{phone_number}'s code: {gen_code}")
 
     return render_template('auth/code.html', error=error)
+
+
+@auth_bp.route('/resend', methods=['POST'])
+def resend():
+    phone_number = session.get('phone')
+    if not phone_number:
+        abort(400)
+
+    user_code = cache.get(f'code_{phone_number}')
+    if not user_code:
+        abort(400)
+
+    if not user_code:
+        resend_code = str(randint(0, 9999)).zfill(4)
+        cache.set(f'code_{phone_number}', resend_code, timeout=300)
+    else:
+        resend_code = user_code
+
+    sender = current_app.config.get('SENDER')
+    sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=resend_code))
+    if sms_error:
+        abort(500)
+
+    current_app.logger.debug(f"Resend {phone_number}'s code: {resend_code}")
+
+    return jsonify({'success': True})
 
 
 @auth_bp.route('/auth', methods=['POST'])

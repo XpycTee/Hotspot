@@ -3,31 +3,31 @@
   "errors": {
     "http": {
       "400": {
-        "title": "Bad Request",
+        "name": "Bad Request",
         "description": "Client error, server cannot process the request. Try reconnecting to the wifi."
       },
       "403": {
-        "title": "Forbidden",
+        "name": "Forbidden",
         "description": "Server refuses to authorize the request."
       },
       "404": {
-        "title": "Not Found",
+        "name": "Not Found",
         "description": "Requested URL was not found on this server."
       },
       "405": {
-        "title": "Method Not Allowed",
+        "name": "Method Not Allowed",
         "description": "The method specified in the request is not allowed for the resource."
       },
       "500": {
-        "title": "Internal Server Error",
+        "name": "Internal Server Error",
         "description": "Server encountered a situation it doesn't know how to handle."
       },
       "502": {
-        "title": "Bad Gateway",
+        "name": "Bad Gateway",
         "description": "Invalid response from the upstream server."
       },
       "503": {
-        "title": "Service Unavailable",
+        "name": "Service Unavailable",
         "description": "Server is currently unable to handle the request."
       }
     },
@@ -61,7 +61,11 @@
       "title": "Code Confirmation",
       "label_code": "Please enter the code received in the SMS",
       "placeholder_code": "Code from SMS",
-      "submit_button": "Confirm code"
+      "submit_button": "Confirm code",
+      "validity_message": "The code is valid for 5 minutes",
+      "resend_message": "You can request a new code in",
+      "seconds": "seconds",
+      "resend_link": "Resend code"
     },
     "error": {
       "retry": "Retry"

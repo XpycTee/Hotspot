@@ -125,14 +125,14 @@ def save_data(tabel_name):
     new_id = None
 
     if not data:
-        return jsonify({'error': get_translate('errors.admin.tables.missing_request_data')}), 400
+        abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
     if tabel_name == 'employee':
         emp_id = data.get('id')
         if emp_id is not None:
             employee = Employee.query.filter_by(id=emp_id).first()
             if not employee:
-                return jsonify({'error': get_translate('errors.admin.tables.employee_not_found')}), 404
+                abort(404, description=get_translate('errors.admin.tables.employee_not_found'))
 
             # Обновление существующего сотрудника
             employee.lastname = data['lastname']
@@ -167,14 +167,14 @@ def save_data(tabel_name):
                 phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
                 phone_number = re.sub(r'\D', '', phone_number)
                 if EmployeePhone.query.filter_by(phone_number=phone_number).first():
-                    return jsonify({'error': get_translate('errors.admin.tables.phone_number_exists')}), 400
+                    abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
                 new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
                 db.session.add(new_phone)
             new_id = new_employee.id
         db.session.commit()
     elif tabel_name == 'blacklist':
         if Blacklist.query.filter_by(phone_number=data['phone']).first():
-            return jsonify({'error': get_translate('errors.admin.tables.phone_number_exists')}), 400
+            abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
         
         phone_number = re.sub(r'^(\+?7|8)', '7', data['phone'])
         phone_number = re.sub(r'\D', '', phone_number)
@@ -196,17 +196,17 @@ def delete_data(tabel_name):
     data = request.json
 
     if not data:
-        return jsonify({'error': get_translate('errors.admin.tables.missing_request_data')}), 400
+        abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
     if tabel_name == 'employee':
         emp_id = data.get('id')
         if emp_id is None:
-            return jsonify({'error': get_translate('errors.admin.tables.employee_not_found')}), 400
+            abort(400, description=get_translate('errors.admin.tables.employee_not_found'))
         
         employee = Employee.query.filter_by(id=emp_id).first()
 
         if not employee:
-            return jsonify({'error': get_translate('errors.admin.tables.employee_not_found')}), 404
+            abort(404, description=get_translate('errors.admin.tables.employee_not_found'))
 
         # Удаление всех связанных телефонов
         for phone in employee.phones:

@@ -6,12 +6,12 @@
 {% endblock %}
 
 {% block title %}
-{{ code }} - {{ title }}
+{{ code }} - {{ name }}
 {% endblock %}
 
 {% block content %}
 <div class="error-container">
-    <div class="error-code">Error {{ code }} - {{ title }}</div>
+    <div class="error-code">Error {{ code }} - {{ name }}</div>
     <div class="error-message">{{ description }}</div>
     <a href="{{ session['link-login-only'] }}" class="back-link">{{ get_translate('html.error.retry') }}</a>
 </div>
