@@ -49,6 +49,7 @@ def create_app(config_class=Config):
     if init:
         app = Flask(__name__)
 
+        config_class.init_app()
         app.config.from_object(config_class)
         
         gunicorn_error_logger = logging.getLogger('gunicorn.error')
@@ -70,5 +71,5 @@ def create_app(config_class=Config):
         def inject_get_translate():
             return dict(get_translate=get_translate)
 
-
         return app
+    return None

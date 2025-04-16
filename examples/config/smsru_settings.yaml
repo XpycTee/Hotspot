@@ -3,7 +3,7 @@ settings:
   language: en
   db_url: sqlite:///path/to/database.db  # OPTIONAL. Url for connect database use SQLAlchemy URL, by default used sqlite db, file created after start in config directory
   # debug: true  # Enable debug mode
-  session_key: OmegaSecret
+  secret_key: OmegaSecret
   admin:
     user:
       username: admin

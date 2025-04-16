@@ -33,21 +33,23 @@ class TestAuthViews(unittest.TestCase):
         mock_sender.send_sms.return_value = None
         self.app.config['SENDER'] = mock_sender
         self.app.config['LANGUAGE_CONTENT'] = {
-            'html': {
-                'login': {
-                    'title': 'Title'
+            'en': {
+                'html': {
+                    'login': {
+                        'title': 'Title'
+                    },
+                    'code': {
+                        'title': 'Title'
+                    }
                 },
-                'code': {
-                    'title': 'Title'
-                }
-            },
-            'sms_code': 'Your code is {code}',
-            'errors': {
-                'auth': {
-                    'missing_code': 'Missing code',
-                    'bad_auth': 'Bad authentication',
-                    'bad_code_all': 'All attempts failed',
-                    'bad_code_try': 'Incorrect code, try again'
+                'sms_code': 'Your code is {code}',
+                'errors': {
+                    'auth': {
+                        'missing_code': 'Missing code',
+                        'bad_auth': 'Bad authentication',
+                        'bad_code_all': 'All attempts failed',
+                        'bad_code_try': 'Incorrect code, try again'
+                    }
                 }
             }
         }

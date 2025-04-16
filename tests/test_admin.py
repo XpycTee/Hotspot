@@ -33,17 +33,19 @@ class TestAdminViews(unittest.TestCase):
         self.app.config['MAX_LOGIN_ATTEMPTS'] = 3
         self.app.config['LOCKOUT_TIME'] = 5
         self.app.config['LANGUAGE_CONTENT'] = {
-            'html': {
-                'login': {
-                    'title': 'Title'
-                }
-            },
-            'errors': {
-                'auth': {
-                    'missing_code': 'Missing code',
-                    'bad_auth': 'Bad authentication',
-                    'bad_code_all': 'All attempts failed',
-                    'bad_code_try': 'Incorrect code, try again'
+            'en': {
+                'html': {
+                    'login': {
+                        'title': 'Title'
+                    }
+                },
+                'errors': {
+                    'auth': {
+                        'missing_code': 'Missing code',
+                        'bad_auth': 'Bad authentication',
+                        'bad_code_all': 'All attempts failed',
+                        'bad_code_try': 'Incorrect code, try again'
+                    }
                 }
             }
         }

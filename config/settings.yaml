@@ -1,13 +1,8 @@
 settings:
   company_name: No-name LTD
   language: ru
-  # db_url: sqlite:///path/to/database.db  # Url for connect database
+  # db_url: "sqlite:///:memory:"  # Url for connect database
   debug: true  # Enable debug mode
-  session_key: OmegaSecret
-  admin:
-    user:
-      username: admin
-      password: admin  # Default password is admin
   hotspot_users:
     guest:
       password: secret
