@@ -20,11 +20,12 @@ RUN apk add --no-cache bash gcc libc-dev linux-headers \
 
 # Копируем остальные файлы проекта
 COPY . .
+RUN chmod +x ./entrypoint.sh
 
 # Указываем порты и монтируемые директории
 EXPOSE 8080
 VOLUME /hotspot/config
 VOLUME /hotspot/logs
 
-# Используем Gunicorn для запуска приложения
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "main:flask_app"]
+# Используем entrypoint.sh для запуска
+ENTRYPOINT ["./entrypoint.sh"]
