@@ -41,12 +41,6 @@ def create_app(config_class=Config):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    file_handeler = logging.FileHandler(os.path.join(log_dir, 'flask.log'))
-
-    formatter = logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s")
-
-    file_handeler.setFormatter(formatter)
-
      # Check for required environment variables
     required_env_vars = []
     
@@ -55,9 +49,10 @@ def create_app(config_class=Config):
     if init:
         app = Flask(__name__)
 
-        app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(30).hex()
         app.config.from_object(config_class)
-        app.logger.addHandler(file_handeler)
+        
+        gunicorn_error_logger = logging.getLogger('gunicorn.error')
+        app.logger.handlers.extend(gunicorn_error_logger.handlers)
         if app.debug:
             app.logger.setLevel(logging.DEBUG)
         
