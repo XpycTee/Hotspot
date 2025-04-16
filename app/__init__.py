@@ -75,8 +75,5 @@ def create_app(config_class=Config):
         def inject_get_translate():
             return dict(get_translate=get_translate)
 
-        # Blueprints add here
-        with app.app_context():
-            db.create_all()
 
         return app
