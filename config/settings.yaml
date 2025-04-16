@@ -1,14 +1,17 @@
 settings:
+  company_name: No-name LTD
+  language: ru
+  # db_url: sqlite:///path/to/database.db  # Url for connect database
+  debug: true  # Enable debug mode
+  session_key: OmegaSecret
   admin:
     user:
-      password: $2b$12$1eCgbtk3pzMX7UhSfs6OTOIYlHe0ifHkiryUnWc2YrlimD8AYY6S.
       username: admin
-  company_name: No-name LTD
+      password: admin  # Default password is admin
   hotspot_users:
-    employee:
-      delay: 30d
-      password: supersecret
     guest:
-      delay: 24h
       password: secret
-  language: ru
+      delay: 24h  # Hours. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.
+    employee:
+      password: supersecret
+      delay: 30d  # Days. You can use suffixes such as: w, d, m, s. Without a suffix, the default is hours.

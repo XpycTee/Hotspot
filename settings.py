@@ -35,20 +35,10 @@ class Config:
     admin_username = admin['user'].get('username')
     admin_password = admin['user'].get('password')
 
-    # Check if the password is already hashed
-    try:
-        bcrypt.checkpw(b"test", admin_password.encode('utf-8'))
-    except ValueError:
-        # If not hashed, hash the password
-        admin_password = bcrypt.hashpw(admin_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    admin_password = bcrypt.hashpw(admin_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    settings['admin']['user']['password'] = admin_password
 
-        # Update the settings with the hashed password
-        settings['admin']['user']['password'] = admin_password
-
-        # Save the updated settings back to the YAML file
-        with open("config/settings.yaml", "w", encoding="utf-8") as settings_file:
-            yaml.dump({'settings': settings}, settings_file, default_flow_style=False, allow_unicode=True)
-
+    SECRET_KEY = settings.get('session_key')
     ADMIN = {'username': admin_username, 'password': admin_password}
 
     MAX_LOGIN_ATTEMPTS = 5
