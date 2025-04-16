@@ -138,8 +138,7 @@ def code():
     if phone_number:
         phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
         phone_number = re.sub(r'\D', '', phone_number)
-        
-        
+
         if Blacklist.query.filter_by(phone_number=phone_number).first():
             abort(403)
 
@@ -159,6 +158,8 @@ def code():
             hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
             expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
+            if expire_time < datetime.datetime.now():
+                expire_time += datetime.timedelta(days=1)
 
             db_client.expiration = expire_time + hotspot_user.get('delay')
             db_client.employee = is_employee
@@ -166,12 +167,13 @@ def code():
             redirect_url = url_for('auth.sendin')
             return redirect(redirect_url, 302)
 
-
-    if not cache.get(f'code_{phone_number}'):
+    # Ensure phone_number is retrieved from session if not provided in the request
+    if not phone_number:
         phone_number = session.get('phone')
         if not phone_number:
             abort(400)
 
+    if not cache.get(f'code_{phone_number}'):
         gen_code = str(randint(0, 9999)).zfill(4)
         cache.set(f'code_{phone_number}', gen_code, timeout=300)
 
@@ -179,11 +181,13 @@ def code():
         sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
 
         if sms_error:
+            current_app.logger.error(f"Failed to send SMS to {phone_number}")
             abort(500)
 
         current_app.logger.debug(f"{phone_number}'s code: {gen_code}")
 
     return render_template('auth/code.html', error=error)
+
 
 
 @auth_bp.route('/resend', methods=['POST'])
