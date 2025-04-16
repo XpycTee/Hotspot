@@ -1,28 +1,25 @@
+# Используем более стабильную версию Python
 FROM python:3.13-alpine
 
-LABEL build_version="Hotspot version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+# Указываем метаданные
 LABEL maintainer="xpyctee"
+LABEL build_version="Hotspot version: ${VERSION} Build-date: ${BUILD_DATE}"
 LABEL version="${VERSION}"
 
-# Устанавливаем системные зависимости
-RUN apk add --no-cache bash gcc libc-dev linux-headers \
-    && apk update \
-    && apk upgrade
-
 # Устанавливаем переменные окружения
-ENV PYTHONUNBUFFERED=True
+ENV PYTHONUNBUFFERED=1
 
 # Устанавливаем рабочую директорию
 WORKDIR /hotspot
 
-# Копируем только requirements.txt для кэширования зависимостей
-COPY requirements.txt /hotspot/requirements.txt
-
-# Устанавливаем зависимости Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Устанавливаем системные и Python зависимости
+# Объединяем команды RUN для уменьшения количества слоёв
+COPY requirements.txt ./
+RUN apk add --no-cache bash gcc libc-dev linux-headers \
+    && pip install --no-cache-dir -r requirements.txt
 
 # Копируем остальные файлы проекта
-COPY . /hotspot
+COPY . .
 
 # Указываем порты и монтируемые директории
 EXPOSE 8080
