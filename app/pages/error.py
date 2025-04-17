@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, current_app, request, jsonify
+from flask import Blueprint, render_template, request, jsonify
 from werkzeug.exceptions import HTTPException
 
 from extensions import get_translate

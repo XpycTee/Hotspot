@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 from unittest.mock import patch, MagicMock
-from flask import Flask, session
+from flask import Flask
 
 from extensions import get_translate, cache
 

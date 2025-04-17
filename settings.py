@@ -1,6 +1,5 @@
 import json
 import os
-import hashlib
 import secrets
 from datetime import timedelta
 
@@ -46,6 +45,7 @@ class Config:
     ADMIN = None
     SECRET_KEY = None
     CACHE_TYPE = "SimpleCache"
+    LANGUAGE_DEFAULT = None
     LANGUAGE_CONTENT = None
     SQLALCHEMY_DATABASE_URI = None
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -59,6 +59,7 @@ class Config:
         cls.settings = cls.load_settings()
         cls.ADMIN = cls.configure_admin()
         cls.SECRET_KEY = cls.get_or_generate_secret_key()
+        cls.LANGUAGE_DEFAULT = cls.settings.get('language', 'en')
         cls.LANGUAGE_CONTENT = cls.load_language_files()
         cls.SQLALCHEMY_DATABASE_URI = cls.settings.get('db_url', cls.DEFAULT_DB_URL)
         cls.HOTSPOT_USERS = cls.configure_hotspot_users()
