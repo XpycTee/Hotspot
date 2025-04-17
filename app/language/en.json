@@ -33,9 +33,10 @@
     },
     "auth": {
       "bad_code_try": "Invalid code, try again",
-      "bad_code_all": "Invalid code, ran out of attempts start again",
-      "bad_auth": "If authorization failed contact tech support",
-      "missing_code": "Code is missing, please enter the code"
+      "bad_code_all": "Invalid code, ran out of attempts, start again",
+      "bad_auth": "If authorization failed, contact tech support",
+      "missing_code": "Code is missing, please enter the code",
+      "expired_code": "Code expired, a new code has been sent to you"
     },
     "admin": {
       "log": "{message} for user {username} from {client_ip}",

@@ -131,7 +131,7 @@ def login():
     return render_template('auth/login.html', error=error)
 
 
-@auth_bp.route('/code', methods=['POST'])
+@auth_bp.route('/code', methods=['POST', 'GET'])
 def code():
     error = session.pop('error', None)
     current_app.logger.debug(f'Session data before code: {[item for item in session.items()]}')
@@ -197,12 +197,12 @@ def code():
 @auth_bp.route('/resend', methods=['POST'])
 def resend():
     phone_number = session.get('phone')
+    current_app.logger.debug(f'Session data before code: {[item for item in session.items()]}')
     if not phone_number:
         abort(400)
 
     user_code = cache.get(f'code_{phone_number}')
-    if not user_code:
-        abort(400)
+    current_app.logger.debug(f'User cached code for {phone_number}: {user_code}')
 
     if not user_code:
         resend_code = str(randint(0, 9999)).zfill(4)
@@ -227,8 +227,12 @@ def auth():
     form_code = request.form.get('code')
     user_code = cache.get(f'code_{phone_number}')
 
-    if form_code is None or user_code is None:
+    if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
+        redirect_url = url_for('auth.code')
+        return redirect(redirect_url, 302)
+    if user_code is None:
+        session['error'] = get_translate('errors.auth.expired_code')
         redirect_url = url_for('auth.code')
         return redirect(redirect_url, 302)
 
