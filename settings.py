@@ -1,6 +1,6 @@
 import json
+import logging
 import os
-import secrets
 from datetime import timedelta
 
 import yaml
@@ -57,13 +57,14 @@ class Config:
     @classmethod
     def init_app(cls):
         cls.settings = cls.load_settings()
+        cls.logger = logging.getLogger('gunicorn.error')
         cls.ADMIN = cls.configure_admin()
-        cls.SECRET_KEY = cls.get_or_generate_secret_key()
-        cls.LANGUAGE_DEFAULT = cls.settings.get('language', 'en')
+        cls.SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', cls.settings.get('flask_secret_key'))
+        cls.LANGUAGE_DEFAULT = os.environ.get('HOTSPOT_LANGUAGE', cls.settings.get('language', 'en'))
         cls.LANGUAGE_CONTENT = cls.load_language_files()
-        cls.SQLALCHEMY_DATABASE_URI = cls.settings.get('db_url', cls.DEFAULT_DB_URL)
+        cls.SQLALCHEMY_DATABASE_URI = os.environ.get('HOTSPOT_DB_URL', cls.settings.get('db_url', cls.DEFAULT_DB_URL))
         cls.HOTSPOT_USERS = cls.configure_hotspot_users()
-        cls.COMPANY_NAME = cls.settings.get('company_name', cls.DEFAULT_COMPANY_NAME)
+        cls.COMPANY_NAME = os.environ.get('HOTSPOT_COMPANY_NAME', cls.settings.get('company_name', cls.DEFAULT_COMPANY_NAME))
         cls.DEBUG = os.environ.get('DEBUG', cls.settings.get('debug', False))
         cls.SENDER = cls.configure_sms_sender()
 
@@ -73,20 +74,10 @@ class Config:
             return yaml.safe_load(settings_file).get('settings', {})
 
     @classmethod
-    def get_or_generate_secret_key(cls):
-        secret_key = os.environ.get('SECRET_KEY')
-        if not secret_key:
-            secret_key = cls.settings.get('secret_key')
-            if not secret_key:
-                secret_key = secrets.token_urlsafe(32)
-            os.environ['SECRET_KEY'] = secret_key
-        return secret_key
-
-    @classmethod
     def configure_admin(cls):
         admin_user = cls.settings.get('admin', {}).get('user', {})
-        username = admin_user.get('username', cls.DEFAULT_ADMIN_USERNAME)
-        password = admin_user.get('password', cls.DEFAULT_ADMIN_PASSWORD)
+        username = os.environ.get('HOTSPOT_ADMIN_USERNAME', admin_user.get('username', cls.DEFAULT_ADMIN_USERNAME))
+        password = os.environ.get('HOTSPOT_ADMIN_PASSWORD', admin_user.get('password', cls.DEFAULT_ADMIN_PASSWORD))
         password_hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         return {'username': username, 'password': password_hashed}
 
@@ -106,11 +97,17 @@ class Config:
         hotspot_users = cls.settings.get('hotspot_users', {})
         for user_type in cls.USER_TYPES:
             if user_type in hotspot_users:
-                hotspot_users[user_type]['delay'] = convert_delay(hotspot_users[user_type].get('delay', '1h'))
+                password_env = os.environ.get(f'HOTSPOT_{user_type.upper()}_PASSWORD')
+                delay_env = os.environ.get(f'HOTSPOT_{user_type.upper()}_DELAY')
+                hotspot_users[user_type]['password'] = password_env or hotspot_users[user_type].get('password')
+                hotspot_users[user_type]['delay'] = convert_delay(delay_env or hotspot_users[user_type].get('delay', '1h'))
         return hotspot_users
 
     @classmethod
     def configure_sms_sender(cls):
         sender_config = cls.settings.get('sender', {})
-        sender_class = cls.SMS_SENDERS.get(sender_config.get('type'), DebugSender)
-        return sender_class(**sender_config) if sender_config else sender_class()
+        sender_type = os.environ.get('HOTSPOT_SENDER_TYPE', sender_config.get('type'))
+        sender_url = os.environ.get('HOTSPOT_SENDER_URL', sender_config.get('url'))
+        sender_class = cls.SMS_SENDERS.get(sender_type, DebugSender)
+        return sender_class(url=sender_url) if sender_url else sender_class()
+    

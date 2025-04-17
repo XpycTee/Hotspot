@@ -94,6 +94,7 @@ def test_login():
         session['link-login-only'] = request.values.get('link-login-only')
         session['link-orig'] = request.values.get('link-orig')
         session['mac'] = request.values.get('mac')
+        current_app.logger.debug(f'Session data in test: {[item for item in session.items()]}')
     return login()
 
 @auth_bp.route('/login', methods=['POST'])
@@ -102,7 +103,8 @@ def login():
 
     required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
 
-    
+    current_app.logger.debug(f'Session data before form: {[item for item in session.items()]}')
+
     if not any(key in set(request.form.keys()) for key in required_keys):
         if not any(key in set(session.keys()) for key in required_keys):
             abort(400)
@@ -113,6 +115,7 @@ def login():
         session['link-orig'] = request.form.get('link-orig')
         session['mac'] = request.form.get('mac')
 
+    current_app.logger.debug(f'Session data after form: {[item for item in session.items()]}')
     mac = session.get('mac')
 
     db_client = WifiClient.query.filter_by(mac=mac).first()
@@ -131,7 +134,7 @@ def login():
 @auth_bp.route('/code', methods=['POST'])
 def code():
     error = session.pop('error', None)
-
+    current_app.logger.debug(f'Session data before code: {[item for item in session.items()]}')
     phone_number = request.form.get('phone')
 
     if phone_number:
@@ -144,6 +147,7 @@ def code():
         session['phone'] = phone_number
 
         mac = session.get('mac')
+        current_app.logger.debug(f'User mac: {mac}')
         if not mac:
             abort(400)
 
@@ -169,6 +173,7 @@ def code():
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
         phone_number = session.get('phone')
+        current_app.logger.debug(f'User phone: {phone_number}')
         if not phone_number:
             abort(400)
 
