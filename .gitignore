@@ -157,3 +157,4 @@ cython_debug/
 /mikrotik/
 /html_examples for template/
 
+.DS_Store
