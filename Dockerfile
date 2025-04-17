@@ -13,7 +13,6 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /hotspot
 
 # Устанавливаем системные и Python зависимости
-# Объединяем команды RUN для уменьшения количества слоёв
 COPY requirements.txt ./
 RUN apk add --no-cache bash gcc libc-dev linux-headers \
     && pip install --no-cache-dir -r requirements.txt
@@ -21,7 +20,6 @@ RUN apk add --no-cache bash gcc libc-dev linux-headers \
 # Копируем остальные файлы проекта
 COPY . .
 RUN chmod +x ./entrypoint.sh
-RUN python ./init_database.py
 
 # Указываем порты и монтируемые директории
 EXPOSE 8080
