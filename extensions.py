@@ -11,9 +11,12 @@ def get_translate(path, replace=None, lang=None):
     supported_languages = list(language_content.keys())
 
     # Определяем язык: сначала из параметра, затем из сессии, затем из заголовка, и, наконец, по умолчанию
-    lang = lang or \
-           session.get("user_lang") or \
-           request.accept_languages.best_match(supported_languages) or 'en'
+    lang = (
+        lang or 
+        session.get("user_lang") or 
+        request.accept_languages.best_match(supported_languages) or 
+        current_app.config.get('LANGUAGE_DEFAULT')
+    )
     
     if not replace:
         replace = path
