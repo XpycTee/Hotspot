@@ -14,7 +14,7 @@ WORKDIR /hotspot
 
 # Устанавливаем системные и Python зависимости
 COPY requirements.txt ./
-RUN apk add --no-cache bash gcc libc-dev linux-headers \
+RUN apk add --no-cache bash gcc libc-dev linux-headers memcached \
     && pip install --no-cache-dir -r requirements.txt
 
 # Копируем остальные файлы проекта

@@ -27,6 +27,10 @@ GUNICORN_LOG_LEVEL=${GUNICORN_LOG_LEVEL:-info}
 GUNICORN_PORT=${GUNICORN_PORT:-8080}
 GUNICORN_ADDR=${GUNICORN_BIND:-0.0.0.0}
 
+CAHCE_SIZE=${CAHCE_SIZE:-1024}
+
+memcached -d -u nobody -m $CAHCE_SIZE -l 127.0.0.1 -p 11211
+
 # Проверяем значение переменной DEBUG
 if [ "$DEBUG" = "true" ]; then
     exec gunicorn -w "$GUNICORN_WORKERS" -b "$GUNICORN_ADDR:$GUNICORN_PORT" --reload --log-level=debug main:flask_app

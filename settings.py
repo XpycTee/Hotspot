@@ -44,7 +44,8 @@ class Config:
     # Переменные класса для хранения конфигурации
     ADMIN = None
     SECRET_KEY = None
-    CACHE_TYPE = "SimpleCache"
+    CACHE_TYPE = "MemcachedCache"
+    CACHE_MEMCACHED_SERVERS = ['127.0.0.1:11211']
     LANGUAGE_DEFAULT = None
     LANGUAGE_CONTENT = None
     SQLALCHEMY_DATABASE_URI = None
@@ -60,6 +61,7 @@ class Config:
         cls.logger = logging.getLogger('gunicorn.error')
         cls.ADMIN = cls.configure_admin()
         cls.SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', cls.settings.get('flask_secret_key'))
+        cls.logger.debug(cls.SECRET_KEY)
         cls.LANGUAGE_DEFAULT = os.environ.get('HOTSPOT_LANGUAGE', cls.settings.get('language', 'en'))
         cls.LANGUAGE_CONTENT = cls.load_language_files()
         cls.SQLALCHEMY_DATABASE_URI = os.environ.get('HOTSPOT_DB_URL', cls.settings.get('db_url', cls.DEFAULT_DB_URL))
