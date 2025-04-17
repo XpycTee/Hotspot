@@ -42,8 +42,13 @@ build_docker_image() {
   local version=$1
   local tags=("-t" "${REGISTRY}/${IMAGE}:${version}")
 
-  # Добавляем тег 'latest', если версия не содержит '-build'
-  [[ $version != *-build* ]] && tags+=("-t" "${REGISTRY}/${IMAGE}:latest")
+  # Добавляем тег 'latest', если версия не содержит '-build',
+  # иначе добавляем тег 'latest-test'
+  if [[ $version != *-build* ]]; then
+    tags+=("-t" "${REGISTRY}/${IMAGE}:latest")
+  else
+    tags+=("-t" "${REGISTRY}/${IMAGE}:latest-test")
+  fi
 
   # Используем массив для передачи аргументов в 'docker build'
   docker build --build-arg VERSION="${version}" --build-arg BUILD_DATE="${DATE}" "${tags[@]}" . | tee logs/build.log
