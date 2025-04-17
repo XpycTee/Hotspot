@@ -32,6 +32,7 @@ class TestAuthViews(unittest.TestCase):
         mock_sender = MagicMock()
         mock_sender.send_sms.return_value = None
         self.app.config['SENDER'] = mock_sender
+        self.app.config['LANGUAGE_DEFAULT'] = 'en'
         self.app.config['LANGUAGE_CONTENT'] = {
             'en': {
                 'html': {

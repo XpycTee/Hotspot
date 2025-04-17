@@ -32,6 +32,7 @@ class TestAdminViews(unittest.TestCase):
         self.app.config['EMPLOYEES'] = {}
         self.app.config['MAX_LOGIN_ATTEMPTS'] = 3
         self.app.config['LOCKOUT_TIME'] = 5
+        self.app.config['LANGUAGE_DEFAULT'] = 'en'
         self.app.config['LANGUAGE_CONTENT'] = {
             'en': {
                 'html': {
