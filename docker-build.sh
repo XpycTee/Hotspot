@@ -7,6 +7,7 @@ set -o pipefail
 # Значения по умолчанию
 REGISTRY="localhost"
 IMAGE="hotspot-mikrotik"
+DB_BACKENDS=("sqlite" "postgres" "mysql") # Список поддерживаемых бэкендов
 
 # Функция для обработки аргументов командной строки
 parse_args() {
@@ -40,18 +41,30 @@ get_version() {
 # Функция для сборки Docker-образа
 build_docker_image() {
   local version=$1
-  local tags=("-t" "${REGISTRY}/${IMAGE}:${version}")
+  local db_backend=$2
+  local backend_tag=$db_backend
 
-  # Добавляем тег 'latest', если версия не содержит '-build',
-  # иначе добавляем тег 'latest-test'
-  if [[ $version != *-build* ]]; then
-    tags+=("-t" "${REGISTRY}/${IMAGE}:latest")
-  else
-    tags+=("-t" "${REGISTRY}/${IMAGE}:latest-test")
-  fi
+  # Формируем базовый тег
+  local tags=("-t" "${REGISTRY}/${IMAGE}:${version}-${backend_tag}")
 
-  # Используем массив для передачи аргументов в 'docker build'
-  docker build --build-arg VERSION="${version}" --build-arg BUILD_DATE="${DATE}" "${tags[@]}" . | tee logs/build.log
+  # Добавляем дополнительные теги
+  case $version in
+    *rc*)
+      [[ $db_backend == "sqlite" ]] && tags+=("-t" "${REGISTRY}/${IMAGE}:test")
+      ;;
+    *)
+      [[ $db_backend == "sqlite" ]] && tags+=("-t" "${REGISTRY}/${IMAGE}:latest")
+      tags+=("-t" "${REGISTRY}/${IMAGE}:${backend_tag}")
+      ;;
+  esac
+
+  # Логируем и выполняем сборку
+  echo "Building Docker image with tags: ${tags[*]}"
+  docker build \
+    --build-arg VERSION="${version}" \
+    --build-arg BUILD_DATE="${DATE}" \
+    --build-arg DB_BACKEND="${db_backend}" \
+    "${tags[@]}" . | tee -a logs/build.log
 }
 
 # Основная функция
@@ -59,7 +72,12 @@ main() {
   parse_args "$@"
   local version
   version=$(get_version)
-  build_docker_image "$version"
+
+  # Сборка образов для каждого бэкенда
+  for db_backend in "${DB_BACKENDS[@]}"; do
+    echo "Building image for database backend: $db_backend"
+    build_docker_image "$version" "$db_backend"
+  done
 
   # Используем 'awk' для более точного поиска
   docker images | awk -v image="$IMAGE" '$1 ~ image'

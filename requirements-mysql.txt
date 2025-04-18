@@ -1,0 +1,3 @@
+pymysql~=1.1.1
+mysqlclient~=2.2.7
+cryptography~=44.0.2
