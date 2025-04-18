@@ -2,6 +2,7 @@ settings:
   company_name: No-name LTD
   language: ru
   # db_url: "sqlite:///:memory:"  # Url for connect database
+  # cache_url: memcached://localhost:11211
   debug: true  # Enable debug mode
   hotspot_users:
     guest:

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from datetime import timedelta
+from urllib.parse import urlparse
 
 import yaml
 
@@ -34,7 +35,14 @@ class Config:
     DEFAULT_ADMIN_PASSWORD = 'admin'
     DEFAULT_COMPANY_NAME = 'Default Company'
     DEFAULT_DB_URL = f"sqlite:///{os.path.join(basedir, 'config/hotspot.db')}"
+    DEFAULT_CAHCE_URL = "memcached://localhost:11211"
     USER_TYPES = ['guest', 'employee']
+    CACHE_TYPES = {
+        'redis': "RedisCache",
+        'memcached': "MemcachedCache",
+        'saslmemcached': "SASLMemcachedCache",
+        'file': "FileSystemCache"
+    }
     SMS_SENDERS = {
         "smsru": SMSRUSender,
         "mikrotik": MikrotikSMSSender,
@@ -44,8 +52,12 @@ class Config:
     # Переменные класса для хранения конфигурации
     ADMIN = None
     SECRET_KEY = None
-    CACHE_TYPE = "MemcachedCache"
-    CACHE_MEMCACHED_SERVERS = ['127.0.0.1:11211']
+    CACHE_TYPE = None
+    CACHE_REDIS_URL = None
+    CACHE_MEMCACHED_USERNAME = None
+    CACHE_MEMCACHED_PASSWORD = None
+    CACHE_MEMCACHED_SERVERS = None
+    CACHE_DIR = None
     LANGUAGE_DEFAULT = None
     LANGUAGE_CONTENT = None
     SQLALCHEMY_DATABASE_URI = None
@@ -64,6 +76,7 @@ class Config:
         cls.logger.debug(cls.SECRET_KEY)
         cls.LANGUAGE_DEFAULT = os.environ.get('HOTSPOT_LANGUAGE', cls.settings.get('language', 'en'))
         cls.LANGUAGE_CONTENT = cls.load_language_files()
+        cls.configure_cache()
         cls.SQLALCHEMY_DATABASE_URI = os.environ.get('HOTSPOT_DB_URL', cls.settings.get('db_url', cls.DEFAULT_DB_URL))
         cls.HOTSPOT_USERS = cls.configure_hotspot_users()
         cls.COMPANY_NAME = os.environ.get('HOTSPOT_COMPANY_NAME', cls.settings.get('company_name', cls.DEFAULT_COMPANY_NAME))
@@ -74,6 +87,29 @@ class Config:
     def load_settings(cls):
         with open(cls.SETTINGS_FILE_PATH, "r", encoding="utf-8") as settings_file:
             return yaml.safe_load(settings_file).get('settings', {})
+
+    @classmethod
+    def configure_cache(cls):
+        url = os.environ.get('CACHE_URL', cls.settings.get('cache_url', cls.DEFAULT_CAHCE_URL))
+        parsed_url = urlparse(url)
+
+        scheme = parsed_url.scheme
+        cls.CACHE_TYPE = cls.CACHE_TYPES.get(scheme)
+
+        if scheme == 'redis':
+            cls.CACHE_REDIS_URL = url
+        elif scheme == 'memcached':
+            server = f"{parsed_url.hostname}:{parsed_url.port}"
+            cls.CACHE_MEMCACHED_SERVERS = [server]
+        elif scheme == 'saslmemcached':
+            cls.CACHE_MEMCACHED_USERNAME = parsed_url.username
+            cls.CACHE_MEMCACHED_PASSWORD = parsed_url.password
+            server = f"{parsed_url.hostname}:{parsed_url.port}"
+            cls.CACHE_MEMCACHED_SERVERS = [server]
+        elif scheme == 'file':
+            cls.CACHE_DIR = parsed_url.path
+        else:
+            raise NotImplementedError(f"Not implemented cache {scheme}")
 
     @classmethod
     def configure_admin(cls):
