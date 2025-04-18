@@ -75,6 +75,28 @@ docker run -d \
     xpyctee/hotspot-mikrotik:latest
 ```
 > This command starts a hotspot backend container named `hotspot-app` with a volume mounted for configuration.
+### Environment Variables
+| Variable                   | Description                                               | Example Value                                            |
+|----------------------------|-----------------------------------------------------------|----------------------------------------------------------|
+| `DEBUG`                    | Enables or disables debug mode.                           | `true`                                                   |
+| `HOTSPOT_COMPANY_NAME`     | The name of the company displayed in the application.     | `"No-name LTD"`                                          |
+| `HOTSPOT_LANGUAGE`         | Language for the application.                             | `"en"`                                                   |
+| `HOTSPOT_DB_URL`           | Database connection URL using SQLAlchemy format.          | `"postgresql://hotspot:password@127.0.0.1:5432/hotspot"` |
+| `HOTSPOT_ADMIN_USERNAME`   | Username for the admin user.                              | `"admin"`                                                |
+| `HOTSPOT_ADMIN_PASSWORD`   | Password for the admin user.                              | `"admin"`                                                |
+| `HOTSPOT_GUEST_PASSWORD`   | Default password for guest users.                         | `"secret"`                                               |
+| `HOTSPOT_GUEST_DELAY`      | Duration for guest user access.                           | `"24h"`                                                  |
+| `HOTSPOT_EMPLOYEE_PASSWORD`| Default password for employee users.                      | `"supersecret"`                                          |
+| `HOTSPOT_EMPLOYEE_DELAY`   | Duration for employee user access.                        | `"30d"`                                                  |
+| `HOTSPOT_SENDER_TYPE`      | Type of SMS sender (e.g., `mikrotik`, `huawei`, `smsru`). | `"mikrotik"`                                             |
+| `HOTSPOT_SENDER_URL`       | URL for the SMS sender API.                               | `"https://admin:@182.168.88.1/"`                         |
+| `FLASK_SECRET_KEY`         | Secret key for Flask application security.                | `"your-secret-key"`                                      |
+| `CACHE_URL`                | URL for the cache server (e.g., Memcached or Redis).      | `"memcached://localhost:11211"`                          |
+| `CACHE_SIZE`               | Cache size in megabytes.                                  | `"1024"`                                                 |
+| `GUNICORN_WORKERS`         | Number of Gunicorn workers for handling requests.         | `"4"`                                                    |
+| `GUNICORN_LOG_LEVEL`       | Log level for Gunicorn (e.g., `debug`, `info`, `warning`).| `"info"`                                                 |
+| `GUNICORN_ADDR`            | Address for Gunicorn to bind to.                          | `"0.0.0.0"`                                              |
+| `GUNICORN_PORT`            | Port for Gunicorn to listen on.                           | `"8080"`                                                 |
 
 ### Config Examples
 Default we have some sms senders:
@@ -88,8 +110,13 @@ For example use mikrotik api configuration file saved in: `config/settings.yaml`
 ```yaml
 settings:
   company_name: No-name LTD
-  language: en-US
+  language: en
   db_url: postgresql://hotspot:OmegaSuperSecret@127.0.0.1:5432/hotspot  # OPTIONAL. Url for connect database use SQLAlchemy URL, by default used sqlite db, file created after start in config directory
+  cache_url: memcached://localhost:11211 # OPTIONAL. Url for connect cache use URL, by default used in-memory cache
+  admin:
+    user:
+      username: admin
+      password: admin  # Default password is admin
   sender:
     type: mikrotik
     url: https://admin:@182.168.88.1/  # Url for REST api of mikrotik RoS Version >=7.9
