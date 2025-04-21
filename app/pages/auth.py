@@ -1,11 +1,14 @@
 # Imports
 import datetime
+import json
 import re
 
 from hashlib import md5
 from random import randint
+import ssl
 
 # Importing Blueprint for creating Flask blueprints
+import certifi
 from flask import Blueprint, jsonify
 
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
@@ -22,6 +25,9 @@ from flask import (
     request,
     current_app
 )
+import urllib
+
+import jmespath
 
 from app.database import db
 from app.database.models import Blacklist, ClientsNumber, Employee, EmployeePhone, WifiClient
@@ -42,10 +48,27 @@ def _octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
+
+@cache.memoize(timeout=1 * 60 * 60)  # Кешируем результат на 1 час
+def _fetch_employees():
+    """Функция для получения данных сотрудников из внешнего ресурса."""
+    context = ssl.create_default_context(cafile=certifi.where())
+    with urllib.request.urlopen('https://is.sova72.ru/documents/employee/phonebook.json', context=context) as response:
+        return json.load(response)
+
+
 def _check_employee(phone_number):
-    # Проверка наличия номера телефона в базе данных сотрудников
-    employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
-    return employee_phone is not None
+    """Проверка, является ли номер телефона сотрудником."""
+    employees = _fetch_employees()  # Используем кешированные данные
+    sova_phone_number = re.sub(r'^(\+?7|8)', '', phone_number)
+    expression = f"employee[].phone[].number | contains([], '{sova_phone_number}')"
+    in_base = bool(jmespath.search(expression, employees))
+    if not in_base:
+        # Проверка наличия номера телефона в базе данных сотрудников
+        employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
+        return employee_phone is not None
+    return in_base
+
 
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():

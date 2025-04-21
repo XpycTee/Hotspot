@@ -4,140 +4,159 @@
 {{ get_translate('html.admin.panel.title') }}
 {% endblock %}
 
-{% block content %}
-<div class="admin-dashboard">
-    <a href="{{ url_for('admin.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout') }}</a>
-    <ul class="nav-tabs">
-        <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title') }}</a></li>
-        <li><a href="#employees_list">{{ get_translate('html.admin.panel.tables.employees.title') }}</a></li>
-        <li><a href="#blacklist">{{ get_translate('html.admin.panel.tables.blacklist.title') }}</a></li>
-    </ul>
-    <div class="table-container">
-        <div id="wifi_clients" class="content-tab table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.mac') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.expire') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for client in wifi_clients %}
-                    <tr>
-                        <td>{{ client.get('mac') }}</td>
-                        <td>{{ client.get('expiration') }}</td>
-                        <td>{{ client.get('employee') }}</td>
-                        <td>{{ client.get('phone') }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+{% block headers %}
+<link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/forms.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/tables.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/navigation.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/modals.css') }}">
+<script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/modals.js') }}"></script>
+{% endblock %}
 
-        <div id="employees_list" class="content-tab table-container" style="display: none;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ get_translate('html.admin.panel.tables.employees.id') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.employees.lastname') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.employees.name') }}</th>
-                        <th class="column-phones">{{ get_translate('html.admin.panel.tables.employees.phones') }}</th>
-                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for employee in employees %}
-                    <tr>
-                        <td data-id>{{ employee.get('id') }}</td>
-                        <td data-lastname>{{ employee.get('lastname') }}</td>
-                        <td data-name>{{ employee.get('name') }}</td>
-                        <td data-phones class="column-phones">
-                            <ul>
-                                {% for phone in employee.get('phones') %}
-                                <li>+{{ phone }}</li>
+{% block layout %}
+<div class="row justify-content-center" style="margin: 0px !important;">
+    <div class="col-xs-auto align-self-center" style="width:80%">
+        <div class="card p-4 shadow" style="border-radius: 7px;">
+            <div class="justify-content-between" style="display: flex;"><div><img src="{{ url_for('static', filename='sova/images/logo_hotspot_01.svg') }}"></div> <!----></div>
+            <div class="admin-dashboard">
+                <a href="{{ url_for('admin.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout') }}</a>
+                <ul class="nav-tabs">
+                    <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title') }}</a></li>
+                    <li><a href="#employees_list">{{ get_translate('html.admin.panel.tables.employees.title') }}</a></li>
+                    <li><a href="#blacklist">{{ get_translate('html.admin.panel.tables.blacklist.title') }}</a></li>
+                </ul>
+                <div class="table-container">
+                    <div id="wifi_clients" class="content-tab table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{{ get_translate('html.admin.panel.tables.wifi_clients.mac') }}</th>
+                                    <th>{{ get_translate('html.admin.panel.tables.wifi_clients.expire') }}</th>
+                                    <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee') }}</th>
+                                    <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for client in wifi_clients %}
+                                <tr>
+                                    <td>{{ client.get('mac') }}</td>
+                                    <td>{{ client.get('expiration') }}</td>
+                                    <td>{{ client.get('employee') }}</td>
+                                    <td>{{ client.get('phone') }}</td>
+                                </tr>
                                 {% endfor %}
-                            </ul>
-                        </td>
-                        <td class="column-controls">
-                            <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">{{ get_translate('html.admin.buttons.edit') }}</button>
-                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">{{ get_translate('html.admin.buttons.delete') }}</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    <tr>
-                        <td colspan="5"><button class="btn btn-add" onclick="addRow(this, 'employee')">{{ get_translate('html.admin.buttons.add') }}</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                            </tbody>
+                        </table>
+                    </div>
 
-        <div id="blacklist" class="content-tab table-container" style="display: none;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ get_translate('html.admin.panel.tables.blacklist.phone') }}</th>
-                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for blocked in blacklist %}
-                    <tr>
-                        <td class="blocked-phone">+{{ blocked }}</td>
-                        <td class="column-controls">
-                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.delete') }}</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    <tr>
-                        <td colspan="2"><button class="btn btn-add" onclick="addRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.add') }}</button></td>
-                    </tr>
-                </tbody>
-            </table>
+                    <div id="employees_list" class="content-tab table-container" style="display: none;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{{ get_translate('html.admin.panel.tables.employees.id') }}</th>
+                                    <th>{{ get_translate('html.admin.panel.tables.employees.lastname') }}</th>
+                                    <th>{{ get_translate('html.admin.panel.tables.employees.name') }}</th>
+                                    <th class="column-phones">{{ get_translate('html.admin.panel.tables.employees.phones') }}</th>
+                                    <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in employees %}
+                                <tr>
+                                    <td data-id>{{ employee.get('id') }}</td>
+                                    <td data-lastname>{{ employee.get('lastname') }}</td>
+                                    <td data-name>{{ employee.get('name') }}</td>
+                                    <td data-phones class="column-phones">
+                                        <ul>
+                                            {% for phone in employee.get('phones') %}
+                                            <li>+{{ phone }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="column-controls">
+                                        <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">{{ get_translate('html.admin.buttons.edit') }}</button>
+                                        <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">{{ get_translate('html.admin.buttons.delete') }}</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td colspan="5"><button class="btn btn-add" onclick="addRow(this, 'employee')">{{ get_translate('html.admin.buttons.add') }}</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="blacklist" class="content-tab table-container" style="display: none;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{{ get_translate('html.admin.panel.tables.blacklist.phone') }}</th>
+                                    <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for blocked in blacklist %}
+                                <tr>
+                                    <td class="blocked-phone">+{{ blocked }}</td>
+                                    <td class="column-controls">
+                                        <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.delete') }}</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td colspan="2"><button class="btn btn-add" onclick="addRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.add') }}</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const tabs = document.querySelectorAll('.nav-tabs a');
+                    const contentTabs = document.querySelectorAll('.content-tab');
+
+                    // Hide all content tabs initially
+                    contentTabs.forEach(content => content.style.display = 'none');
+
+                    // Check localStorage for saved tab
+                    const savedTab = localStorage.getItem('activeTab');
+                    if (savedTab) {
+                        document.querySelector(savedTab).style.display = 'block';
+                        document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
+                    } else {
+                        // Default to first tab if no saved tab
+                        contentTabs[0].style.display = 'block';
+                        tabs[0].classList.add('active');
+                    }
+
+                    tabs.forEach(tab => {
+                        tab.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            const target = this.getAttribute('href');
+
+                            // Hide all content tabs
+                            contentTabs.forEach(content => content.style.display = 'none');
+                            // Show the selected tab content
+                            document.querySelector(target).style.display = 'block';
+
+                            // Remove active class from all tabs
+                            tabs.forEach(link => link.classList.remove('active'));
+                            // Add active class to the clicked tab
+                            this.classList.add('active');
+
+                            // Save the active tab to localStorage
+                            localStorage.setItem('activeTab', target);
+                        });
+                    });
+                });
+            </script>
+            <script src="{{ url_for('static', filename='javascript/tables.js') }}"></script>
         </div>
     </div>
-
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const tabs = document.querySelectorAll('.nav-tabs a');
-        const contentTabs = document.querySelectorAll('.content-tab');
-
-        // Hide all content tabs initially
-        contentTabs.forEach(content => content.style.display = 'none');
-
-        // Check localStorage for saved tab
-        const savedTab = localStorage.getItem('activeTab');
-        if (savedTab) {
-            document.querySelector(savedTab).style.display = 'block';
-            document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
-        } else {
-            // Default to first tab if no saved tab
-            contentTabs[0].style.display = 'block';
-            tabs[0].classList.add('active');
-        }
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = this.getAttribute('href');
-
-                // Hide all content tabs
-                contentTabs.forEach(content => content.style.display = 'none');
-                // Show the selected tab content
-                document.querySelector(target).style.display = 'block';
-
-                // Remove active class from all tabs
-                tabs.forEach(link => link.classList.remove('active'));
-                // Add active class to the clicked tab
-                this.classList.add('active');
-
-                // Save the active tab to localStorage
-                localStorage.setItem('activeTab', target);
-            });
-        });
-    });
-</script>
-<script src="{{ url_for('static', filename='javascript/tables.js') }}"></script>
 {% endblock %}
+

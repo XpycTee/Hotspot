@@ -5,27 +5,12 @@
 {% endblock %}
 
 {% block content %}
-<form action="/code" method="post">
+<form action="/code" method="post" name="login" id="login" style="display: flex; flex-direction: column; flex: 1 1 0%;">
+    <center><p class="mt-1">{{ get_translate('html.login.label_phone') }}</p></center>
+    <input type="tel" id="phone" name="phone" class="login-input" data-tel-input placeholder="{{ get_translate('html.login.placeholder_phone') }}" required>
 
-    <label for="phone">{{ get_translate('html.login.label_phone') }}</label>
-    <input class="input-auth" type="tel" id="phone" name="phone" data-tel-input placeholder="{{ get_translate('html.login.placeholder_phone') }}">
+    <div id="error-message" style="flex: 1 1 0%; {{ 'display:none;' if not error else '' }}">{{ error }}</div>
 
-    <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
-
-    <input class="btn btn-submit" type="submit" value="{{ get_translate('html.login.submit_button') }}">
-
-    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label') }}</label>
+    <input type="submit" class="button login-button mt-2" value="{{ get_translate('html.login.submit_button') }}">
 </form>
-{% endblock %}
-
-{% block footer %}
-<div id="modal-overlay" class="modal-overlay"></div>
-
-<div id="privacyPolicyModal" class="modal modal-large">
-    <div class="modal-header">
-        <h2 class="modal-title">{{ get_translate('html.privacy_policy_label') }}</h2>
-        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close').lower() }}</span>
-    </div>
-    <div class="modal-content">{% include "auth/privacy_policy.html" %}</div>
-</div>
 {% endblock %}

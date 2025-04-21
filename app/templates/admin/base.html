@@ -1,26 +1,14 @@
 {% extends 'base.html' %}
 
-{% block headers %}
-<link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='style/forms.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='style/tables.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='style/navigation.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='style/modals.css') }}">
-<script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
-<script src="{{ url_for('static', filename='javascript/modals.js') }}"></script>
-{% endblock %}
 
-{% block footer %}
-<div id="modal-overlay" class="modal-overlay"></div>
-
-<div id="errorModal" class="modal modal-small">
-    <div class="modal-header">
-        <h2 class="modal-title">Title</h2>
-    </div>
-    <div class="modal-content">Content</div>
-    <div class="modal-footer">
-        <button class="btn btn-modal-close" data-close-button>{{ get_translate('html.modal.close') }}</button>
+{% block layout %}
+<div class="row justify-content-center" style="margin: 0px !important;">
+    <div id="login-form" class="col-xs-auto align-self-center">
+        <div class="card p-4 shadow" style="border-radius: 7px;">
+            <div class="justify-content-between" style="display: flex;"><div><img src="{{ url_for('static', filename='sova/images/logo_hotspot_01.svg') }}"></div> <!----></div>
+            {% block content %}
+            {% endblock %}
+        </div>
     </div>
 </div>
 {% endblock %}

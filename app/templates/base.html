@@ -1,20 +1,25 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="p-0 m-0 h-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{% block title %}{% endblock %}</title>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style/main.css') }}">
-    {% block headers %}
-    {% endblock %}
+    <link rel="icon" href="{{ url_for('static', filename='sova/images/favicon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='sova/app.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='sova/style.css') }}">
+    {% block headers %}{% endblock %}
 </head>
-<body>
-{% block content %}
-{% endblock %}
-
-{% block footer %}
-{% endblock %}
+<body class="p-0 m-0 h-100">
+    <div id="app" class="p-0 m-0 h-100">
+    <main class="p-0 m-0 h-100">
+        <div id="layout" class="h-100">
+            {% block layout %}
+            {% endblock %}
+        </div>
+    </main>
+    </div>
+    {% block footer %}
+    {% endblock %}
 </body>
 </html>
