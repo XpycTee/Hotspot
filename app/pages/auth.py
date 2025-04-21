@@ -213,9 +213,9 @@ def resend():
     if not user_code:
         resend_code = str(randint(0, 9999)).zfill(4)
         cache.set(f'code_{phone_number}', resend_code, timeout=5 * 60)
-        cache.set(f'dont_resend_{phone_number}', "true", timeout=60)
     else:
         resend_code = user_code
+    cache.set(f'dont_resend_{phone_number}', "true", timeout=60)
 
     sender = current_app.config.get('SENDER')
     sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=resend_code))
