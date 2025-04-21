@@ -41,7 +41,8 @@ class Config:
         'redis': "RedisCache",
         'memcached': "MemcachedCache",
         'saslmemcached': "SASLMemcachedCache",
-        'file': "FileSystemCache"
+        'file': "FileSystemCache",
+        'simple': "SimpleCache"
     }
     SMS_SENDERS = {
         "smsru": SMSRUSender,
@@ -91,6 +92,10 @@ class Config:
     @classmethod
     def configure_cache(cls):
         url = os.environ.get('CACHE_URL', cls.settings.get('cache_url', cls.DEFAULT_CAHCE_URL))
+        if url == 'simple':
+            cls.CACHE_TYPE = cls.CACHE_TYPES.get(url)
+            return
+
         parsed_url = urlparse(url)
 
         scheme = parsed_url.scheme
