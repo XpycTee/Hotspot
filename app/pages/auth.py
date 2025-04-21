@@ -24,7 +24,7 @@ from flask import (
 )
 
 from app.database import db
-from app.database.models import Blacklist, ClientsNumber, Employee, EmployeePhone, WifiClient
+from app.database.models import Blacklist, ClientsNumber, EmployeePhone, WifiClient
 from extensions import get_translate, cache
 
 auth_bp = Blueprint('auth', __name__)
@@ -72,6 +72,9 @@ def sendin():
         chap_challenge = _octal_string_to_bytes(chap_challenge)
         link_login_only = link_login_only.replace('https', 'http')
         password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+
+    cache.delete(f'code_{phone_number}')
+    session.clear()
 
     return render_template(
         'auth/sendin.html',
@@ -179,7 +182,8 @@ def code():
 
     if not cache.get(f'code_{phone_number}'):
         gen_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'code_{phone_number}', gen_code, timeout=300)
+        cache.set(f'code_{phone_number}', gen_code, timeout=5 * 60)
+        cache.set(f'dont_resend_{phone_number}', "true", timeout=60)
 
         sender = current_app.config.get('SENDER')
         sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
@@ -200,13 +204,16 @@ def resend():
     current_app.logger.debug(f'Session data before code: {[item for item in session.items()]}')
     if not phone_number:
         abort(400)
+    if cache.get(f'dont_resend_{phone_number}'):
+        abort(400, description=get_translate('errors.auth.code_alredy_sended'))
 
     user_code = cache.get(f'code_{phone_number}')
     current_app.logger.debug(f'User cached code for {phone_number}: {user_code}')
 
     if not user_code:
         resend_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'code_{phone_number}', resend_code, timeout=300)
+        cache.set(f'code_{phone_number}', resend_code, timeout=5 * 60)
+        cache.set(f'dont_resend_{phone_number}', "true", timeout=60)
     else:
         resend_code = user_code
 
@@ -275,9 +282,9 @@ def auth():
 
         if session['tries'] >= 3:
             session['error'] = get_translate('errors.auth.bad_code_all')
-            session.pop('code', None)
             session.pop('tries', None)
             session.pop('phone', None)
+            cache.delete(f'code_{phone_number}')
 
             redirect_url = url_for('auth.login')
             return redirect(redirect_url, 302)
