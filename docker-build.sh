@@ -5,7 +5,7 @@ set -e
 set -o pipefail
 
 # Значения по умолчанию
-REGISTRY="localhost"
+REGISTRY="xpyctee"
 IMAGE="hotspot-mikrotik"
 DB_BACKENDS=("sqlite" "postgres" "mysql") # Список поддерживаемых бэкендов
 
