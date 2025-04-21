@@ -49,8 +49,7 @@ def create_app(config_class=Config):
     if init:
         app = Flask(__name__)
 
-        config_class.init_app()
-        app.config.from_object(config_class)
+        config_class.init_app(app)
         
         gunicorn_error_logger = logging.getLogger('gunicorn.error')
         app.logger.handlers.extend(gunicorn_error_logger.handlers)
@@ -65,6 +64,9 @@ def create_app(config_class=Config):
         app.register_blueprint(auth_bp)
         app.register_blueprint(admin_bp)
         app.register_blueprint(error_bp)
+
+        with app.app_context():
+            db.create_all()
 
         # Добавляем контекстный процессор
         @app.context_processor

@@ -69,7 +69,7 @@ class Config:
     SENDER = None
 
     @classmethod
-    def init_app(cls):
+    def init_app(cls, app):
         cls.settings = cls.load_settings()
         cls.logger = logging.getLogger('gunicorn.error')
         cls.ADMIN = cls.configure_admin()
@@ -83,6 +83,8 @@ class Config:
         cls.COMPANY_NAME = os.environ.get('HOTSPOT_COMPANY_NAME', cls.settings.get('company_name', cls.DEFAULT_COMPANY_NAME))
         cls.DEBUG = os.environ.get('DEBUG', cls.settings.get('debug', False))
         cls.SENDER = cls.configure_sms_sender()
+
+        app.config.from_object(cls)
 
     @classmethod
     def load_settings(cls):
