@@ -52,9 +52,9 @@
             timer--;
             timerElement.textContent = timer;
             if (timer <= 0) {
-                clearInterval(interval);
                 resendMessage.style.display = 'none';
                 resendLink.style.display = 'block';
+                timerElement.textContent = '60';
             }
         }, 1000);
     };
