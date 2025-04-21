@@ -13,8 +13,8 @@ def error_handler(err):
         response = {
             'status_code': err.code,
             'error': {
-                'name': get_translate(f'errors.http."{str(err.code)}".name', err.name),
-                'description': get_translate(f'errors.http."{str(err.code)}".description', err.description)
+                'name': err.name,
+                'description': err.description
             }
         }
         return jsonify(response), err.code
@@ -23,6 +23,6 @@ def error_handler(err):
         return render_template(
             'error.html',
             code=err.code,
-            name=get_translate(f'errors.http."{str(err.code)}".name'),
-            description=get_translate(f'errors.http."{str(err.code)}".description')
+            name=get_translate(f'errors.http."{str(err.code)}".name', err.name),
+            description=get_translate(f'errors.http."{str(err.code)}".description', err.description)
         ), err.code
