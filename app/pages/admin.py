@@ -243,9 +243,9 @@ def _handle_failed_login(username, client_ip):
     """Обрабатывает неудачную попытку входа."""
     login_attempts = cache.get("login_attempts") or 0
     login_attempts += 1
-
-    max_login_attempts = current_app.config.get('MAX_LOGIN_ATTEMPTS')
-    lockout_time = current_app.config.get('LOCKOUT_TIME')
+    admin_settings = current_app.config.get('ADMIN')
+    max_login_attempts = admin_settings.get('max_login_attempts')
+    lockout_time = admin_settings.get('lockout_time')
     if login_attempts >= max_login_attempts:
         lockout_until = datetime.now() + timedelta(minutes=lockout_time)
         cache.set("lockout_until", lockout_until.timestamp(), timeout=lockout_time * 60)
