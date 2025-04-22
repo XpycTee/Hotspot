@@ -33,6 +33,8 @@ class Config:
     LANGUAGE_FOLDER = "app/language"
     DEFAULT_ADMIN_USERNAME = 'admin'
     DEFAULT_ADMIN_PASSWORD = 'admin'
+    DEFAULT_ADMIN_MAX_LOGIN_ATTEMPTS = 3
+    DEFAULT_ADMIN_LOCKOUT_TIME = 5
     DEFAULT_COMPANY_NAME = 'Default Company'
     DEFAULT_DB_URL = f"sqlite:///{os.path.join(basedir, 'config/hotspot.db')}"
     DEFAULT_CAHCE_URL = "memcached://localhost:11211"
@@ -120,11 +122,19 @@ class Config:
 
     @classmethod
     def configure_admin(cls):
-        admin_user = cls.settings.get('admin', {}).get('user', {})
+        admin_settings = cls.settings.get('admin', {})
+        admin_user = admin_settings.get('user', {})
         username = os.environ.get('HOTSPOT_ADMIN_USERNAME', admin_user.get('username', cls.DEFAULT_ADMIN_USERNAME))
         password = os.environ.get('HOTSPOT_ADMIN_PASSWORD', admin_user.get('password', cls.DEFAULT_ADMIN_PASSWORD))
+        max_login_attempts = os.environ.get('HOTSPOT_ADMIN_MAX_LOGIN_ATTEMPTS', admin_settings.get('max_login_attempts', cls.DEFAULT_ADMIN_MAX_LOGIN_ATTEMPTS))
+        lockout_time = os.environ.get('HOTSPOT_ADMIN_LOCKOUT_TIME', admin_settings.get('lockout_time', cls.DEFAULT_ADMIN_LOCKOUT_TIME))
         password_hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        return {'username': username, 'password': password_hashed}
+        return {
+            'username': username, 
+            'password': password_hashed, 
+            'max_login_attempts': int(max_login_attempts), 
+            'lockout_time': int(lockout_time)
+        }
 
     @classmethod
     def load_language_files(cls):
