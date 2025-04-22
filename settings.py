@@ -152,7 +152,15 @@ class Config:
     def configure_sms_sender(cls):
         sender_config = cls.settings.get('sender', {})
         sender_type = os.environ.get('HOTSPOT_SENDER_TYPE', sender_config.get('type'))
-        sender_url = os.environ.get('HOTSPOT_SENDER_URL', sender_config.get('url'))
         sender_class = cls.SMS_SENDERS.get(sender_type, DebugSender)
-        return sender_class(url=sender_url) if sender_url else sender_class()
-    
+
+        # Собираем все параметры из переменных окружения и конфигурации
+        sender_params = {**sender_config}
+        for key, value in os.environ.items():
+            if key.startswith('HOTSPOT_SENDER_'):
+                param_name = key[len('HOTSPOT_SENDER_'):].lower()
+                sender_params[param_name] = value
+
+        # Инициализация отправителя с универсальными параметрами
+        return sender_class(**sender_params)
+        
