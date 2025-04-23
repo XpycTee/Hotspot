@@ -11,6 +11,7 @@ def error_handler(err):
     # Check if the request expects a JSON response
     if request.accept_mimetypes.best_match(['application/json', 'text/html']) == 'application/json':
         response = {
+            'success': False,
             'status_code': err.code,
             'error': {
                 'name': err.name,

@@ -47,7 +47,9 @@
       "tables": {
         "missing_request_data": "Request data is missing",
         "employee_not_found": "Employee not found",
-        "phone_number_exists": "Phone number already exists"
+        "phone_number_exists": "Phone number already exists",
+        "mac_is_missing": "MAC address is missing",
+        "mac_not_flound": "MAC address not found"
       }
     }
   },
