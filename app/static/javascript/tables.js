@@ -1,9 +1,9 @@
-const rowsPerPage = 10; // Количество строк на странице
+const rowsPerPage = 15; // Количество строк на странице
 const tableData = {}; // Хранилище данных для таблиц (пагинация и поиск)
 
 // Инициализация таблиц
 document.addEventListener('DOMContentLoaded', function () {
-    const tables = ['wifi_clients', 'employees_list', 'blacklist'];
+    const tables = ['wifi_clients', 'employee', 'blacklist'];
 
     tables.forEach(tableId => {
         tableData[tableId] = { currentPage: 1, searchQuery: '' };
@@ -60,12 +60,12 @@ function generateRowHTML(tableId, row) {
                 <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">Deauth</button>
             </td>
         `;
-    } else if (tableId === 'employees_list') {
+    } else if (tableId === 'employee') {
         return `
-            <td>${row.id}</td>
-            <td>${row.lastname}</td>
-            <td>${row.name}</td>
-            <td>
+            <td data-id>${row.id}</td>
+            <td data-lastname>${row.lastname}</td>
+            <td data-name>${row.name}</td>
+            <td data-phones class="column-phones">
                 <ul>${row.phones.map(phone => `<li>+${phone}</li>`).join('')}</ul>
             </td>
             <td class="column-controls">
@@ -75,7 +75,7 @@ function generateRowHTML(tableId, row) {
         `;
     } else if (tableId === 'blacklist') {
         return `
-            <td>+${row.phone}</td>
+            <td class="blocked-phone">+${row.phone}</td>
             <td class="column-controls">
                 <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">Delete</button>
             </td>
@@ -152,60 +152,84 @@ function setupSearch(tableId) {
     });
 }
 
-// Функция для добавления строки в таблицу
-function addRow(button, type) {
-    const tableBody = button.closest('table').querySelector('tbody');
-    const addButtonRow = button.closest('tr');
-    const newRow = document.createElement('tr');
-    newRow.dataset.new = "true";
 
+function addRowModal(button, type) {
+    const modal = document.getElementById('addRowModal')
+
+    // Генерация HTML формы для модального окна
     const templates = {
         employee: `
-            <td data-id><input type="hidden" name="id" value="#">#</td>
-            <td data-lastname><input class="table-input" type="text" name="lastname" placeholder="Lastname"></td>
-            <td data-name><input class="table-input" type="text" name="name" placeholder="Name"></td>
-            <td data-phones>
-                <ul>
-                    <li><input class="table-input" type="tel" name="phone" data-tel-input placeholder="Phone"></li>
-                </ul>
-                <button type="button" class="btn btn-add-phone">+ phone</button>
-            </td>
-            <td class="column-controls">
-                <button class="btn btn-save btn-controls">Save</button>
-                <button class="btn btn-delete btn-controls">Delete</button>
-            </td>
+            <form class="form form-modal" id="addRowForm">
+                <input class="input modal-input" type="text" name="lastname" placeholder="Lastname" required>
+                <input class="input modal-input" type="text" name="name" placeholder="Name" required>
+                <label>
+                    Phones:
+                    <ul id="phoneList">
+                        <li>
+                            <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="Phone" required>
+                        </li>
+                    </ul>
+                    <button type="button" class="btn btn-add-phone" onclick="addPhoneField(this, true)">+ Add Phone</button>
+                </label>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-save" data-close-button>Save</button>
+                    <button type="button" class="btn btn-modal-close" data-close-button>Cancel</button>
+                </div>
+            </form>
         `,
         blacklist: `
-            <td><input class="table-input" type="tel" data-tel-input name="phone" placeholder="Phone"></td>
-            <td class="column-controls">
-                <button class="btn btn-save btn-controls">Save</button>
-                <button class="btn btn-delete btn-controls">Delete</button>
-            </td>
+            <form class="form form-modal" id="addRowForm">
+                <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="Phone" required>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-save" data-close-button>Save</button>
+                    <button type="button" class="btn btn-modal-close" data-close-button>Cancel</button>
+                </div>
+            </form>
         `
     };
 
-    newRow.innerHTML = templates[type] || '';
-    tableBody.insertBefore(newRow, addButtonRow);
+    triggerModalHtml(modal, `Add New ${type}`, templates[type] || '<p>Invalid type</p>');
 
     // Добавляем обработчики событий после вставки строки
-    const phoneInputs = newRow.querySelectorAll('input[data-tel-input]');
+    const phoneInputs = modal.querySelectorAll('input[data-tel-input]');
     for (var phoneInput of phoneInputs) {
         detectPhoneInput(phoneInput)
     }
 
-    const addPhoneButton = newRow.querySelector('.btn-add-phone');
-    const saveButton = newRow.querySelector('.btn-save');
-    const deleteButton = newRow.querySelector('.btn-delete');
+    // Обработчик отправки формы
+    const form = modal.querySelector('#addRowForm');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
 
-    if (addPhoneButton) {
-        addPhoneButton.addEventListener('click', () => addPhoneField(addPhoneButton));
-    }
-    if (saveButton) {
-        saveButton.addEventListener('click', () => saveRow(saveButton, type));
-    }
-    if (deleteButton) {
-        deleteButton.addEventListener('click', () => deleteRow(deleteButton, type));
-    }
+        const formData = new FormData(form);
+        const data = {};
+
+        // Преобразуем данные формы в объект
+        formData.forEach((value, key) => {
+            if (key === 'phone') {
+                data[key] = data[key] || [];
+                data[key].push(value.replace(/\D/g, '').replace(/^(\+?7|8)/, '7')); // Преобразуем телефон
+            } else {
+                data[key] = value.trim();
+            }
+        });
+
+        // Отправляем запрос на сервер
+        fetch(`/admin/save/${type}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    loadTableData(type); // Обновляем таблицу
+                } else {
+                    alert(`Error: ${result.error.description}`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
 }
 
 // Функция для удаления строки
@@ -461,14 +485,18 @@ function updateControlButtons(row, type) {
 }
 
 // Функция для добавления поля телефона
-function addPhoneField(button) {
+function addPhoneField(button, isModal=false) {
     const ul = button.previousElementSibling;
     const li = document.createElement('li');
     const newInput = document.createElement('input');
     newInput.type = 'tel';
     newInput.name = 'phone';
     newInput.placeholder = 'Phone';
-    newInput.classList = 'table-input';
+    if (isModal) {
+        newInput.classList = 'input modal-input';
+    } else {
+        newInput.classList = 'input table-input';
+    }
     detectPhoneInput(newInput)
 
     const deleteButton = createDeleteButton(li, ul);

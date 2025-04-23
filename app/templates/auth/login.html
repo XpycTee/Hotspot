@@ -5,10 +5,10 @@
 {% endblock %}
 
 {% block content %}
-<form action="/code" method="post">
+<form class="form form-login" action="/code" method="post">
 
     <label for="phone">{{ get_translate('html.login.label_phone') }}</label>
-    <input class="input-auth" type="tel" id="phone" name="phone" data-tel-input placeholder="{{ get_translate('html.login.placeholder_phone') }}">
+    <input class="input input-auth" type="tel" id="phone" name="phone" data-tel-input placeholder="{{ get_translate('html.login.placeholder_phone') }}">
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 

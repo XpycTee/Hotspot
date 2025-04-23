@@ -244,7 +244,7 @@ def get_tabel(tabel_name):
             }
             for client in clients
         ]
-    elif tabel_name == 'employees_list':
+    elif tabel_name == 'employee':
         query = Employee.query
 
         if search_query:

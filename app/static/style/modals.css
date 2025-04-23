@@ -27,6 +27,14 @@
     top: 30vh;
 }
 
+.modal-medium {
+    top: 20px;
+    width: 50%;
+    max-height: 90vh;
+    max-width: 500px;
+    overflow-y: auto;
+}
+
 .modal-large {
     top: 20px;
     width: 80%;

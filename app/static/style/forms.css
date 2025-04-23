@@ -1,13 +1,16 @@
-form {
+.form {
     background-color: #fff;
     padding: 20px;
+}
+
+.form-login {
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     max-width: 300px;
     margin: 20vh 0 0;
 }
 
-.input-auth {
+.input {
     width: 100%;
     padding: 10px;
     box-sizing: border-box;
@@ -24,9 +27,7 @@ form {
     margin-top: 10px;
 }
 
-
 .table-input {
-    width: 100%;
     border: none;
     border-bottom: 1px solid #ccc;
     box-sizing: border-box;

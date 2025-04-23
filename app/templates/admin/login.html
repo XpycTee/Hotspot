@@ -5,13 +5,13 @@
 {% endblock %}
 
 {% block content %}
-<form action="/admin/auth" method="post">
+<form class="form form-login" action="/admin/auth" method="post">
 
     <h2>{{ get_translate('html.admin.login.label') }}</h2>
     <div>
-        <input class="input-auth" type="text" id="username" name="username" placeholder="{{ get_translate('html.admin.login.login_placeholder') }}" required>
-        <input class="input-auth" type="password" id="password" name="password" placeholder="{{ get_translate('html.admin.login.password_placeholder') }}" required>
-        <select class="input-auth" id="language" name="language">
+        <input class="input input-auth" type="text" id="username" name="username" placeholder="{{ get_translate('html.admin.login.login_placeholder') }}" required>
+        <input class="input input-auth" type="password" id="password" name="password" placeholder="{{ get_translate('html.admin.login.password_placeholder') }}" required>
+        <select class="input input-auth" id="language" name="language">
             <option value="auto">Auto</option>
             {% for key, language in config["LANGUAGE_CONTENT"].items() %}
             <option value="{{ key }}">{{ language.get('language') }}</option>

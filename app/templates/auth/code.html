@@ -5,13 +5,13 @@
 {% endblock %}
 
 {% block content %}
-<form action="/auth" method="post" id="codeForm">
+<form class="form form-login" action="/auth" method="post" id="codeForm">
 
     <label for="code">
         {{ get_translate('html.code.label_code') }}<br><br>
         {{ get_translate('html.code.validity_message') }}
     </label>
-    <input class="input-auth" type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ get_translate('html.code.placeholder_code') }}">
+    <input class="input input-auth" type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ get_translate('html.code.placeholder_code') }}">
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
