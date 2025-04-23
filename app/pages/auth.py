@@ -126,6 +126,10 @@ def login():
         phone = db_client.phone
         if not phone:
             abort(500)
+
+        if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
+            abort(403)
+            
         session['phone'] = phone.phone_number
 
         redirect_url = url_for('auth.sendin')

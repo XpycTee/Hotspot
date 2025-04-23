@@ -58,6 +58,7 @@ function generateRowHTML(tableId, row) {
             <td>${row.phone}</td>
             <td class="column-controls">
                 <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">Deauth</button>
+                <button class="btn btn-delete btn-controls" onclick="blockRow(this)">Block</button>
             </td>
         `;
     } else if (tableId === 'employee') {
@@ -75,7 +76,7 @@ function generateRowHTML(tableId, row) {
         `;
     } else if (tableId === 'blacklist') {
         return `
-            <td class="blocked-phone">+${row.phone}</td>
+            <td class="blocked-phone">+${row}</td>
             <td class="column-controls">
                 <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">Delete</button>
             </td>
@@ -252,7 +253,7 @@ function deleteRow(button, type) {
         data['id'] = Number(originalValue);
     } else if (type === 'blacklist') {
         let phone = row.querySelector('td').textContent.trim();
-        phone = phone.replace(/^(\+?7|8)/, '7');
+        phone = phone.replace(/\D/g, '').replace(/^(\+?7|8)/, '7');
         data['phone'] = phone;
     }
 
@@ -387,6 +388,34 @@ function deauthRow(button) {
     })
     .catch(error => console.error('Error:', error));
 }
+
+
+// Функция для блокировки клиента
+function blockRow(button) {
+    const row = button.closest('tr');
+    const macAddress = row.querySelector('td:first-child').textContent.trim();
+
+    if (!macAddress) {
+        const modal = document.querySelector("#errorModal");
+        triggerModal(modal, 'Error', 'MAC address is missing');
+        return;
+    }
+
+    fetch(`/admin/block`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mac: macAddress })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (!result.success) {
+            const modal = document.querySelector("#errorModal");
+            triggerModal(modal, 'Error deauthenticating client', 'Error message:\n' + result.error.description);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
 
 // Функция для создания скрытого инпута
 function createHiddenInput(cell, name) {
