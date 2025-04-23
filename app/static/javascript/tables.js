@@ -57,8 +57,8 @@ function generateRowHTML(tableId, row) {
             <td>${row.employee}</td>
             <td>${row.phone}</td>
             <td class="column-controls">
-                <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">Deauth</button>
-                <button class="btn btn-delete btn-controls" onclick="blockRow(this)">Block</button>
+                <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('html.admin.buttons.deauth')}</button>
+                <button class="btn btn-delete btn-controls" onclick="blockRow(this)">${getTranslate('html.admin.buttons.block')}</button>
             </td>
         `;
     } else if (tableId === 'employee') {
@@ -70,26 +70,30 @@ function generateRowHTML(tableId, row) {
                 <ul>${row.phones.map(phone => `<li>+${phone}</li>`).join('')}</ul>
             </td>
             <td class="column-controls">
-                <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">Edit</button>
-                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">Delete</button>
+                <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">${getTranslate('html.admin.buttons.edit')}</button>
+                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">${getTranslate('html.admin.buttons.delete')}</button>
             </td>
         `;
     } else if (tableId === 'blacklist') {
         return `
             <td class="blocked-phone">+${row}</td>
             <td class="column-controls">
-                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">Delete</button>
+                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">${getTranslate('html.admin.buttons.delete')}</button>
             </td>
         `;
     }
     return '';
 }
 
+
 // Функция для обновления пагинации
 function updatePagination(tableId, currentPage, totalPages) {
     const paginationContainer = document.querySelector(`#${tableId} .page_numbers`);
     const pageInfo = document.getElementById(`${tableId}_page_info`);
-    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    pageInfo.textContent = getTranslate(
+        'html.admin.panel.tables.page_counter', 
+        { current_page: currentPage, total_pages: totalPages }
+    );
 
     // Очистка текущих кнопок пагинации
     paginationContainer.innerHTML = '';
@@ -161,35 +165,35 @@ function addRowModal(button, type) {
     const templates = {
         employee: `
             <form class="form form-modal" id="addRowForm">
-                <input class="input modal-input" type="text" name="lastname" placeholder="Lastname" required>
-                <input class="input modal-input" type="text" name="name" placeholder="Name" required>
+                <input class="input modal-input" type="text" name="lastname" placeholder="${getTranslate('html.admin.panel.edit.lastname_palceholder')}" required>
+                <input class="input modal-input" type="text" name="name" placeholder="${getTranslate('html.admin.panel.edit.name_palceholder')}" required>
                 <label>
-                    Phones:
+                    ${getTranslate('html.admin.panel.edit.phones_label')}:
                     <ul id="phoneList">
                         <li>
-                            <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="Phone" required>
+                            <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="${getTranslate('html.admin.panel.edit.phone_palceholder')}" required>
                         </li>
                     </ul>
-                    <button type="button" class="btn btn-add-phone" onclick="addPhoneField(this, true)">+ Add Phone</button>
+                    <button type="button" class="btn btn-add-phone" onclick="addPhoneField(this, true)">${getTranslate('html.admin.panel.edit.add_phone_btn')}</button>
                 </label>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-save" data-close-button>Save</button>
-                    <button type="button" class="btn btn-modal-close" data-close-button>Cancel</button>
+                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('html.admin.buttons.save')}</button>
+                    <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('html.admin.buttons.cancel')}</button>
                 </div>
             </form>
         `,
         blacklist: `
             <form class="form form-modal" id="addRowForm">
-                <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="Phone" required>
+                <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="${getTranslate('html.admin.panel.edit.phone_palceholder')}" required>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-save" data-close-button>Save</button>
-                    <button type="button" class="btn btn-modal-close" data-close-button>Cancel</button>
+                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('html.admin.buttons.save')}</button>
+                    <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('html.admin.buttons.cancel')}</button>
                 </div>
             </form>
         `
     };
 
-    triggerModalHtml(modal, `Add New ${type}`, templates[type] || '<p>Invalid type</p>');
+    triggerModalHtml(modal, getTranslate(`html.admin.panel.edit.title.${type}`), templates[type] || '<p>Invalid type</p>');
 
     // Добавляем обработчики событий после вставки строки
     const phoneInputs = modal.querySelectorAll('input[data-tel-input]');
@@ -269,7 +273,7 @@ function deleteRow(button, type) {
             row.remove();
         } else {
             const modal = document.querySelector("#errorModal");
-            triggerModal(modal, 'Error deleting data', 'Error message:\n'+result.error.description);
+            triggerModal(modal, getTranslate('errors.admin.modals.delete'), getTranslate('errors.admin.modals.header') + result.error.description);
         }
     })
     .catch(error => console.error('Error:', error));
@@ -292,7 +296,7 @@ function saveRow(button, type) {
 
     if (hasEmptyFields) {
         const modal = document.querySelector("#errorModal");
-        triggerModal(modal, 'Error', 'All fields must be filled');
+        triggerModal(modal, 'Error', getTranslate('errors.must_be_filled'));
         return;
     }
 
@@ -339,7 +343,7 @@ function saveRow(button, type) {
             delete row.dataset.new;
         } else {
             const modal = document.querySelector("#errorModal");
-            triggerModal(modal, 'Error saving data', 'Error message:\n'+result.error.description);
+            triggerModal(modal, getTranslate('errors.admin.modals.save'), getTranslate('errors.admin.modals.header') + result.error.description);
         }
     })
     .catch(error => console.error('Error:', error));
@@ -370,7 +374,7 @@ function deauthRow(button) {
 
     if (!macAddress) {
         const modal = document.querySelector("#errorModal");
-        triggerModal(modal, 'Error', 'MAC address is missing');
+        triggerModal(modal, 'Error', getTranslate('errors.admin.tabels.mac_is_missing'));
         return;
     }
 
@@ -385,7 +389,7 @@ function deauthRow(button) {
             loadTableData('wifi_clients'); // Обновляем таблицу
         } else {
             const modal = document.querySelector("#errorModal");
-            triggerModal(modal, 'Error deauthenticating client', 'Error message:\n' + result.error.description);
+            triggerModal(modal, getTranslate('errors.admin.modals.deauth'), getTranslate('errors.admin.modals.header') + result.error.description); 
         }
     })
     .catch(error => console.error('Error:', error));
@@ -399,7 +403,7 @@ function blockRow(button) {
 
     if (!macAddress) {
         const modal = document.querySelector("#errorModal");
-        triggerModal(modal, 'Error', 'MAC address is missing');
+        triggerModal(modal, 'Error', getTranslate('errors.admin.tabels.mac_is_missing'));
         return;
     }
 
@@ -415,7 +419,7 @@ function blockRow(button) {
             loadTableData('blacklist'); // Обновляем таблицу
         } else {
             const modal = document.querySelector("#errorModal");
-            triggerModal(modal, 'Error deauthenticating client', 'Error message:\n' + result.error.description);
+            triggerModal(modal, getTranslate('errors.admin.modals.block'), getTranslate('errors.admin.modals.header') + result.error.description);
         }
     })
     .catch(error => console.error('Error:', error));
@@ -478,7 +482,7 @@ function editPhoneList(cell) {
     const addPhoneButton = document.createElement('button');
     addPhoneButton.type = 'button';
     addPhoneButton.className = 'btn btn-add-phone';
-    addPhoneButton.textContent = '+ phone';
+    addPhoneButton.textContent = getTranslate('html.admin.panel.edit.add_phone_btn');
     addPhoneButton.onclick = () => addPhoneField(addPhoneButton);
     cell.appendChild(addPhoneButton);
 }
@@ -506,13 +510,13 @@ function updateControlButtons(row, type) {
         controlsTd.innerHTML = '';
         const saveButton = document.createElement('button');
         saveButton.className = 'btn btn-save btn-controls';
-        saveButton.textContent = 'Save';
+        saveButton.textContent = getTranslate('html.admin.buttons.save');
         saveButton.onclick = () => saveRow(saveButton, type);
         controlsTd.appendChild(saveButton);
 
         const deleteButton = document.createElement('button');
         deleteButton.className = 'btn btn-delete btn-controls';
-        deleteButton.textContent = 'Delete';
+        deleteButton.textContent = getTranslate('html.admin.buttons.delete');
         deleteButton.onclick = () => deleteRow(deleteButton, type);
         controlsTd.appendChild(deleteButton);
     }
@@ -525,7 +529,7 @@ function addPhoneField(button, isModal=false) {
     const newInput = document.createElement('input');
     newInput.type = 'tel';
     newInput.name = 'phone';
-    newInput.placeholder = 'Phone';
+    newInput.placeholder = getTranslate('html.admin.panel.edit.phone_palceholder');
     if (isModal) {
         newInput.classList = 'input modal-input';
     } else {
@@ -574,7 +578,7 @@ function convertInputsToCells(inputs, data, type, row, button, new_id) {
         if (controlsTd) {
             const editButton = document.createElement('button');
             editButton.className = 'btn btn-edit btn-controls';
-            editButton.textContent = 'Edit';
+            editButton.textContent = getTranslate('html.admin.buttons.edit');
             editButton.onclick = () => editRow(editButton, type);
             controlsTd.insertBefore(editButton, controlsTd.firstChild);
         }

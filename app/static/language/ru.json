@@ -1,6 +1,7 @@
 { 
   "language": "Русский",
   "errors": {
+    "must_be_filled": "Все поля должны быть заполнены",
     "http": {
       "400": {
         "name": "Неверный запрос",
@@ -49,7 +50,14 @@
         "employee_not_found": "Сотрудник не найден",
         "phone_number_exists": "Номер телефона уже существует",
         "mac_is_missing": "MAC адрес отсутствует",
-        "mac_not_flound": "MAC адрес не найден"
+        "mac_not_found": "MAC адрес не найден"
+      },
+      "modals": {
+        "header": "Сообщение об ошибке:\n",
+        "delete": "Ошибка при удалении данных",
+        "save": "Ошибка при сохранении данных",
+        "deauth": "Ошибка при деавторизации клиента",
+        "block": "Ошибка при блокировке клиента"
       }
     }
   },
@@ -86,7 +94,9 @@
         "delete": "Удалить",
         "add": "Добавить",
         "prev": "Назад",
-        "next": "Далее"
+        "next": "Далее",
+        "save": "Сохранить",
+        "cancel": "Отмена"
       },
       "login": {
         "title": "Авторизация",
@@ -99,6 +109,7 @@
         "tables": {
           "controls": "Управление",
           "search": "Поиск...",
+          "page_counter": "Страница {current_page} из {total_pages}",
           "wifi_clients": {
             "title": "WiFi Клиенты",
             "mac": "Мак адрес",
@@ -117,6 +128,17 @@
             "title": "Чёрный список",
             "phone": "Телефон"
           }
+        },
+        "edit": {
+          "title": {
+            "employee": "Добавить нового сотрудника",
+            "blacklist": "Заблокировть"
+          },
+          "lastname_palceholder": "Фамилия",
+          "name_palceholder": "Имя",
+          "phones_label": "Телефоны",
+          "phone_palceholder": "Телефон",
+          "add_phone_btn": "+ номер"
         }
       }
     }
