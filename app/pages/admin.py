@@ -14,6 +14,11 @@ from extensions import cache, get_translate
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
+def _phone_clear(phone_number):
+    """Очищает и нормализует номер телефона."""
+    return re.sub(r'\D', '', re.sub(r'^(\+?7|8)', '7', phone_number))
+    
+
 def login_required(f):
     """Декоратор для проверки авторизации."""
     @wraps(f)
@@ -114,8 +119,7 @@ def save_data(tabel_name):
             new_phones = set()
 
             for phone_number in data['phone']:
-                phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
-                phone_number = re.sub(r'\D', '', phone_number)
+                phone_number = _phone_clear(phone_number)
                 new_phones.add(phone_number)
 
             # Удаление старых телефонов
@@ -135,8 +139,7 @@ def save_data(tabel_name):
 
             # Добавление телефонов
             for phone_number in data['phone']:
-                phone_number = re.sub(r'^(\+?7|8)', '7', phone_number)
-                phone_number = re.sub(r'\D', '', phone_number)
+                phone_number = _phone_clear(phone_number)
                 if EmployeePhone.query.filter_by(phone_number=phone_number).first():
                     abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
                 new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
@@ -147,8 +150,7 @@ def save_data(tabel_name):
         if Blacklist.query.filter_by(phone_number=data['phone']).first():
             abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
         
-        phone_number = re.sub(r'^(\+?7|8)', '7', data['phone'])
-        phone_number = re.sub(r'\D', '', phone_number)
+        phone_number = _phone_clear(data['phone'])
 
         new_blacklist_entry = Blacklist(phone_number=phone_number)
         db.session.add(new_blacklist_entry)
