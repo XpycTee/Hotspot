@@ -381,7 +381,9 @@ function deauthRow(button) {
     })
     .then(response => response.json())
     .then(result => {
-        if (!result.success) {
+        if (result.success) {
+            loadTableData('wifi_clients'); // Обновляем таблицу
+        } else {
             const modal = document.querySelector("#errorModal");
             triggerModal(modal, 'Error deauthenticating client', 'Error message:\n' + result.error.description);
         }
@@ -408,7 +410,10 @@ function blockRow(button) {
     })
     .then(response => response.json())
     .then(result => {
-        if (!result.success) {
+        if (result.success) {
+            loadTableData('wifi_clients'); // Обновляем таблицу
+            loadTableData('blacklist'); // Обновляем таблицу
+        } else {
             const modal = document.querySelector("#errorModal");
             triggerModal(modal, 'Error deauthenticating client', 'Error message:\n' + result.error.description);
         }
