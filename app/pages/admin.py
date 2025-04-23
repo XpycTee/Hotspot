@@ -219,6 +219,36 @@ def deauth():
     return jsonify({'success': True, 'message': 'Client deauthorized successfully'})
 
 
+@admin_bp.route('/block', methods=['POST'])
+@login_required
+def block():
+    data = request.json
+    if not data or 'mac' not in data:
+        return jsonify({'success': False, 'error': 'MAC address is missing'}), 400
+
+    mac_address = data['mac']
+
+    # Проверяем наличие клиента с указанным MAC-адресом
+    wifi_client = WifiClient.query.filter_by(mac=mac_address).first()
+    if not wifi_client:
+        return jsonify({'success': False, 'error': 'MAC address not found'}), 404
+
+    phone_number = wifi_client.phone.phone_number
+    
+    if Blacklist.query.filter_by(phone_number=phone_number).first():
+        abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
+        
+    new_blacklist_entry = Blacklist(phone_number=phone_number)
+    db.session.add(new_blacklist_entry)
+    db.session.commit()
+
+    # Устанавливаем срок истечения равным началу отсчета времени
+    wifi_client.expiration = datetime(1970, 1, 1)  # Unix epoch start
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Client block successfully'})
+
+
 @admin_bp.route('/table/<tabel_name>', methods=['GET'])
 @login_required
 def get_tabel(tabel_name):
