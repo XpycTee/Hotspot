@@ -25,6 +25,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
 @admin_bp.route('/', methods=['POST', 'GET'])
 @login_required
 def admin():
@@ -191,6 +192,7 @@ def save_data(tabel_name):
         response.update({'new_id': new_id})
     return jsonify(response)
 
+
 @admin_bp.route('/delete/<tabel_name>', methods=['POST'])
 @login_required
 def delete_data(tabel_name):
@@ -223,6 +225,27 @@ def delete_data(tabel_name):
         abort(404)
 
     return jsonify({'success': True})
+
+
+@admin_bp.route('/deauth', methods=['POST'])
+@login_required
+def deauth():
+    data = request.json
+    if not data or 'mac' not in data:
+        return jsonify({'success': False, 'error': 'MAC address is missing'}), 400
+
+    mac_address = data['mac']
+
+    # Проверяем наличие клиента с указанным MAC-адресом
+    wifi_client = WifiClient.query.filter_by(mac=mac_address).first()
+    if not wifi_client:
+        return jsonify({'success': False, 'error': 'MAC address not found'}), 404
+
+    # Устанавливаем срок истечения равным началу отсчета времени
+    wifi_client.expiration = datetime(1970, 1, 1)  # Unix epoch start
+    db.session.commit()
+
+    return jsonify({'success': True, 'message': 'Client deauthorized successfully'})
 
 
 # Вспомогательные функции для повышения читаемости и повторного использования

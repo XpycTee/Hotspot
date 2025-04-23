@@ -80,6 +80,7 @@
         "login": "Login",
         "logout": "Logout",
         "edit": "Edit",
+        "deauth": "Deauth",
         "delete": "Delete",
         "add": "Add"
       },

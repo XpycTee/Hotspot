@@ -184,6 +184,32 @@ function editRow(button, type) {
     updateControlButtons(row, type);
 }
 
+// Функция для деавторизации клиента
+function deauthRow(button) {
+    const row = button.closest('tr');
+    const macAddress = row.querySelector('td:first-child').textContent.trim();
+
+    if (!macAddress) {
+        const modal = document.querySelector("#errorModal");
+        triggerModal(modal, 'Error', 'MAC address is missing');
+        return;
+    }
+
+    fetch(`/admin/deauth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mac: macAddress })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (!result.success) {
+            const modal = document.querySelector("#errorModal");
+            triggerModal(modal, 'Error deauthenticating client', 'Error message:\n' + result.error.description);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
 // Функция для создания скрытого инпута
 function createHiddenInput(cell, name) {
     const text = cell.textContent.trim();
