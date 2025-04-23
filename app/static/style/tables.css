@@ -52,3 +52,53 @@
 .column-phones {
     width: 200px;
 }
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    flex-wrap: wrap; /* Позволяет перенос элементов на новую строку */
+}
+
+.page_numbers {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pagination span {
+    width: 100%; /* Занимает всю ширину строки */
+    text-align: center; /* Центрирует текст внутри span */
+    margin-top: 10px; /* Отступ сверху для разделения с кнопками */
+}
+
+.pagination .btn {
+    width: auto;
+    padding: 5px 10px;
+    margin: 0 5px;
+    font-size: 14px;
+    border-radius: 4px;
+}
+
+.pagination .btn-number {
+    background-color: #f4f4f4;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.pagination .btn-number.active {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
+
+.table-search {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}

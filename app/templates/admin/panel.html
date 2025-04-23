@@ -14,6 +14,7 @@
     </ul>
     <div class="table-container">
         <div id="wifi_clients" class="content-tab table-container">
+            <input type="text" id="wifi_clients_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
             <table>
                 <thead>
                     <tr>
@@ -24,7 +25,7 @@
                         <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="wifi_clients_body">
                     {% for client in wifi_clients %}
                     <tr>
                         <td>{{ client.get('mac') }}</td>
@@ -38,9 +39,19 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="pagination">
+                <button class="btn btn-prev" onclick="changePage('wifi_clients', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                <div class="page_numbers">
+                    <!--button class="btn btn-number" onclick="changePageTo('wifi_clients', X)">X</button-->
+                </div>
+                <button class="btn btn-next" onclick="changePage('wifi_clients', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                <span id="wifi_clients_page_info"></span>
+            </div>
         </div>
 
         <div id="employees_list" class="content-tab table-container" style="display: none;">
+            <input type="text" id="employees_list_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
+
             <table>
                 <thead>
                     <tr>
@@ -51,7 +62,7 @@
                         <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="employees_list_body">
                     {% for employee in employees %}
                     <tr>
                         <td data-id>{{ employee.get('id') }}</td>
@@ -70,14 +81,23 @@
                         </td>
                     </tr>
                     {% endfor %}
-                    <tr>
+                    <tr class="add_row_button">
                         <td colspan="5"><button class="btn btn-add" onclick="addRow(this, 'employee')">{{ get_translate('html.admin.buttons.add') }}</button></td>
                     </tr>
                 </tbody>
             </table>
+            <div class="pagination">
+                <button class="btn btn-prev" onclick="changePage('employees_list', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                <div class="page_numbers">
+                    <!--button class="btn btn-number" onclick="changePageTo('employees_list', X)">X</button-->
+                </div>
+                <button class="btn btn-next" onclick="changePage('employees_list', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                <span id="employees_list_page_info"></span>
+            </div>
         </div>
 
         <div id="blacklist" class="content-tab table-container" style="display: none;">
+            <input type="text" id="blacklist_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
             <table>
                 <thead>
                     <tr>
@@ -85,7 +105,7 @@
                         <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="blacklist_body">
                     {% for blocked in blacklist %}
                     <tr>
                         <td class="blocked-phone">+{{ blocked }}</td>
@@ -94,11 +114,19 @@
                         </td>
                     </tr>
                     {% endfor %}
-                    <tr>
+                    <tr class="add_row_button">
                         <td colspan="2"><button class="btn btn-add" onclick="addRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.add') }}</button></td>
                     </tr>
                 </tbody>
             </table>
+            <div class="pagination">
+                <button class="btn btn-prev" onclick="changePage('blacklist', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                <div class="page_numbers">
+                    <!--button class="btn btn-number" onclick="changePageTo('blacklist', X)">X</button-->
+                </div>
+                <button class="btn btn-next" onclick="changePage('blacklist', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                <span id="blacklist_page_info"></span>
+            </div>
         </div>
     </div>
 

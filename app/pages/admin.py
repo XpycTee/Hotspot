@@ -8,7 +8,7 @@ from flask import (
     session, request, current_app, jsonify
 )
 from app.database import db
-from app.database.models import WifiClient, Employee, EmployeePhone, Blacklist
+from app.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
 from extensions import cache, get_translate
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -80,38 +80,7 @@ def auth():
 @login_required
 def panel():
     error = session.pop('error', None)
-    wifi_clients = WifiClient.query.all()
-    employees = Employee.query.all()
-    blacklist = Blacklist.query.all()
-
-    wifi_clients_data = [
-        {
-            'mac': client.mac,
-            'expiration': client.expiration,
-            'employee': client.employee,
-            'phone': client.phone.phone_number
-        }
-        for client in wifi_clients
-    ]
-
-    employees_data = [
-        {
-            'id': emp.id,
-            'lastname': emp.lastname,
-            'name': emp.name,
-            'phones': [phone.phone_number for phone in emp.phones]
-        }
-        for emp in employees
-    ]
-    blacklist_data = [entry.phone_number for entry in blacklist]
-
-    return render_template(
-        'admin/panel.html',
-        wifi_clients=wifi_clients_data,
-        employees=employees_data,
-        blacklist=blacklist_data,
-        error=error
-    )
+    return render_template('admin/panel.html',error=error)
 
 
 @admin_bp.route('/logout', methods=['POST', 'GET'])
@@ -246,6 +215,76 @@ def deauth():
     db.session.commit()
 
     return jsonify({'success': True, 'message': 'Client deauthorized successfully'})
+
+
+@admin_bp.route('/table/<tabel_name>', methods=['GET'])
+@login_required
+def get_tabel(tabel_name):
+    search_query = request.args.get('search', '').lower()
+    page = int(request.args.get('page', 1))
+    rows_per_page = int(request.args.get('rows_per_page', 10))
+
+    if tabel_name == 'wifi_clients':
+        query = WifiClient.query
+        if search_query:
+            query = query.filter(
+                WifiClient.mac.ilike(f'%{search_query}%') |
+                WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{search_query}%'))
+            )
+
+        total_rows = query.count()
+        clients = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
+
+        data = [
+            {
+                'mac': client.mac,
+                'expiration': client.expiration,
+                'employee': client.employee,
+                'phone': client.phone.phone_number if client.phone else None
+            }
+            for client in clients
+        ]
+    elif tabel_name == 'employees_list':
+        query = Employee.query
+
+        if search_query:
+            query = query.filter(
+                Employee.lastname.ilike(f'%{search_query}%') |
+                Employee.name.ilike(f'%{search_query}%') |
+                Employee.phones.any(EmployeePhone.phone_number.ilike(f'%{search_query}%'))
+            )
+
+        total_rows = query.count()
+        employees = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
+
+        data = [
+        {
+            'id': emp.id,
+            'lastname': emp.lastname,
+            'name': emp.name,
+            'phones': [phone.phone_number for phone in emp.phones]
+        }
+        for emp in employees
+    ]
+    elif tabel_name == 'blacklist':
+        query = Blacklist.query
+
+        if search_query:
+            query = query.filter(Blacklist.phone_number.ilike(f'%{search_query}%'))
+
+        total_rows = query.count()
+        blacklist = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
+
+        data = [entry.phone_number for entry in blacklist]
+    else:
+        abort(404)
+
+    return jsonify({
+        'data': data,
+        'total_rows': total_rows,
+        'current_page': page,
+        'rows_per_page': rows_per_page
+    })
 
 
 # Вспомогательные функции для повышения читаемости и повторного использования

@@ -1,3 +1,157 @@
+const rowsPerPage = 10; // Количество строк на странице
+const tableData = {}; // Хранилище данных для таблиц (пагинация и поиск)
+
+// Инициализация таблиц
+document.addEventListener('DOMContentLoaded', function () {
+    const tables = ['wifi_clients', 'employees_list', 'blacklist'];
+
+    tables.forEach(tableId => {
+        tableData[tableId] = { currentPage: 1, searchQuery: '' };
+        loadTableData(tableId);
+        setupSearch(tableId);
+    });
+});
+
+function changePageTo(tableId, pageNumber) {
+    tableData[tableId].currentPage = pageNumber;
+    loadTableData(tableId);
+}
+
+// Функция для загрузки данных с сервера
+function loadTableData(tableId) {
+    const { currentPage, searchQuery } = tableData[tableId];
+
+    fetch(`/admin/table/${tableId}?page=${currentPage}&search=${encodeURIComponent(searchQuery)}&rows_per_page=${rowsPerPage}`)
+        .then(response => response.json())
+        .then(data => {
+            updateTable(tableId, data.data);
+            updatePagination(tableId, data.current_page, Math.ceil(data.total_rows / rowsPerPage));
+        })
+        .catch(error => console.error('Error loading table data:', error));
+}
+
+// Функция для обновления таблицы
+function updateTable(tableId, rows) {
+    const tableBody = document.getElementById(`${tableId}_body`);
+    const addRowButton = tableBody.querySelector('.add_row_button'); // Сохраняем строку с кнопкой добавления
+
+    tableBody.innerHTML = ''; // Очищаем таблицу
+
+    rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = generateRowHTML(tableId, row);
+        tableBody.appendChild(tr);
+    });
+
+    if (addRowButton) {
+        tableBody.appendChild(addRowButton); // Возвращаем строку с кнопкой добавления
+    }
+}
+
+// Генерация HTML для строки таблицы
+function generateRowHTML(tableId, row) {
+    if (tableId === 'wifi_clients') {
+        return `
+            <td>${row.mac}</td>
+            <td>${row.expiration}</td>
+            <td>${row.employee}</td>
+            <td>${row.phone}</td>
+            <td class="column-controls">
+                <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">Deauth</button>
+            </td>
+        `;
+    } else if (tableId === 'employees_list') {
+        return `
+            <td>${row.id}</td>
+            <td>${row.lastname}</td>
+            <td>${row.name}</td>
+            <td>
+                <ul>${row.phones.map(phone => `<li>+${phone}</li>`).join('')}</ul>
+            </td>
+            <td class="column-controls">
+                <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">Edit</button>
+                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">Delete</button>
+            </td>
+        `;
+    } else if (tableId === 'blacklist') {
+        return `
+            <td>+${row.phone}</td>
+            <td class="column-controls">
+                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">Delete</button>
+            </td>
+        `;
+    }
+    return '';
+}
+
+// Функция для обновления пагинации
+function updatePagination(tableId, currentPage, totalPages) {
+    const paginationContainer = document.querySelector(`#${tableId} .page_numbers`);
+    const pageInfo = document.getElementById(`${tableId}_page_info`);
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    // Очистка текущих кнопок пагинации
+    paginationContainer.innerHTML = '';
+
+    // Генерация кнопок страниц
+    const createPageButton = (page) => {
+        const button = document.createElement('button');
+        button.className = 'btn btn-number';
+        if (page === currentPage) {
+            button.classList.add('active');
+        }
+        button.textContent = page;
+        button.onclick = () => changePageTo(tableId, page);
+        return button;
+    };
+
+    // Добавление первой страницы
+    if (currentPage > 3) {
+        paginationContainer.appendChild(createPageButton(1));
+        if (currentPage > 4) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            paginationContainer.appendChild(dots);
+        }
+    }
+
+    // Добавление кнопок для текущей страницы и соседних
+    for (let page = Math.max(1, currentPage - 2); page <= Math.min(totalPages, currentPage + 4); page++) {
+        paginationContainer.appendChild(createPageButton(page));
+    }
+
+    // Добавление последней страницы
+    if (currentPage < totalPages - 3) {
+        if (currentPage < totalPages - 4) {
+            const dots = document.createElement('span');
+            dots.textContent = '...';
+            paginationContainer.appendChild(dots);
+        }
+        paginationContainer.appendChild(createPageButton(totalPages));
+    }
+}
+
+// Функция для изменения страницы
+function changePage(tableId, direction) {
+    const { currentPage } = tableData[tableId];
+    const newPage = currentPage + direction;
+
+    if (newPage < 1) return;
+
+    tableData[tableId].currentPage = newPage;
+    loadTableData(tableId);
+}
+
+// Функция для поиска
+function setupSearch(tableId) {
+    const searchInput = document.getElementById(`${tableId}_search`);
+    searchInput.addEventListener('input', () => {
+        tableData[tableId].searchQuery = searchInput.value;
+        tableData[tableId].currentPage = 1; // Сброс на первую страницу
+        loadTableData(tableId);
+    });
+}
+
 // Функция для добавления строки в таблицу
 function addRow(button, type) {
     const tableBody = button.closest('table').querySelector('tbody');

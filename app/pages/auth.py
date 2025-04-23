@@ -254,6 +254,8 @@ def auth():
             db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
+        else:
+            db_phone.last_seen = now_time
         
         is_employee = _check_employee(phone_number)
 

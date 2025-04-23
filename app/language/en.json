@@ -82,7 +82,9 @@
         "edit": "Edit",
         "deauth": "Deauth",
         "delete": "Delete",
-        "add": "Add"
+        "add": "Add",
+        "prev": "Previous",
+        "next": "Next"
       },
       "login": {
         "title": "Authorization",
@@ -94,6 +96,7 @@
         "title": "Admin panel",
         "tables": {
           "controls": "Controls",
+          "search": "Search...",
           "wifi_clients": {
             "title": "WiFi Clients",
             "mac": "MAC Address",
