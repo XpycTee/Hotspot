@@ -179,7 +179,7 @@ def code():
 
         db_client = WifiClient.query.filter_by(mac=mac).first()
 
-        if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
+        if db_client and db_client.phone and (db_client.phone.phone_number == phone_number or db_client.phone.phone_number == phone_number[1:]):
             is_employee = _check_employee(phone_number)
 
             users_config = current_app.config['HOTSPOT_USERS']
