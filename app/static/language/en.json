@@ -116,7 +116,9 @@
             "mac": "MAC Address",
             "expire": "Access Expiry",
             "is_employee": "Employee",
-            "phone": "Phone Number"
+            "phone": "Phone Number",
+            "is_employee_yes": "Yes",
+            "is_employee_no": "No"
           },
           "employees": {
             "title": "Employee List",
