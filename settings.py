@@ -30,7 +30,7 @@ def convert_delay(delay):
 
 class Config:
     SETTINGS_FILE_PATH = "config/settings.yaml"
-    LANGUAGE_FOLDER = "app/language"
+    LANGUAGE_FOLDER = "app/static/language"
     DEFAULT_ADMIN_USERNAME = 'admin'
     DEFAULT_ADMIN_PASSWORD = 'admin'
     DEFAULT_ADMIN_MAX_LOGIN_ATTEMPTS = 3

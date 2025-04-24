@@ -149,6 +149,10 @@ def login():
         phone = db_client.phone
         if not phone:
             abort(500)
+
+        if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
+            abort(403)
+            
         session['phone'] = phone.phone_number
 
         redirect_url = url_for('auth.sendin')
@@ -277,6 +281,8 @@ def auth():
             db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
+        else:
+            db_phone.last_seen = now_time
         
         is_employee = _check_employee(phone_number)
 

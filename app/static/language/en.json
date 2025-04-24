@@ -1,6 +1,7 @@
 {
   "language": "English",
   "errors": {
+    "must_be_filled": "All fields must be filled",
     "http": {
       "400": {
         "name": "Bad Request",
@@ -47,7 +48,16 @@
       "tables": {
         "missing_request_data": "Request data is missing",
         "employee_not_found": "Employee not found",
-        "phone_number_exists": "Phone number already exists"
+        "phone_number_exists": "Phone number already exists",
+        "mac_is_missing": "MAC address is missing",
+        "mac_not_flound": "MAC address not found"
+      },
+      "modals": {
+        "header": "Error message:\n",
+        "delete": "Error deleting data",
+        "save": "Error saving data",
+        "deauth": "Error deauthenticating client",
+        "block": "Error blocking client"
       }
     }
   },
@@ -80,8 +90,13 @@
         "login": "Login",
         "logout": "Logout",
         "edit": "Edit",
+        "deauth": "Deauth",
         "delete": "Delete",
-        "add": "Add"
+        "add": "Add",
+        "prev": "Previous",
+        "next": "Next",
+        "save": "Save",
+        "cancel": "Cancel"
       },
       "login": {
         "title": "Authorization",
@@ -93,6 +108,8 @@
         "title": "Admin panel",
         "tables": {
           "controls": "Controls",
+          "search": "Search...",
+          "page_counter": "Page {current_page} of {total_pages}",
           "wifi_clients": {
             "title": "WiFi Clients",
             "mac": "MAC Address",
@@ -111,6 +128,17 @@
             "title": "Blacklist",
             "phone": "Phone"
           }
+        },
+        "edit": {
+          "title": {
+            "employee": "Add new employee",
+            "blacklist": "Block"
+          },
+          "lastname_palceholder": "lastname",
+          "name_palceholder": "Name",
+          "phones_label": "Phones",
+          "phone_palceholder": "Phone",
+          "add_phone_btn": "+ phone"
         }
       }
     }

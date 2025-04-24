@@ -19,16 +19,16 @@ class WifiClient(db.Model):
     phone = db.relationship(ClientsNumber, backref='phones')
 
 
+class EmployeePhone(db.Model):
+    phone_number = Column(String(20), primary_key=True)
+    employee_id = Column(Integer, ForeignKey('employee.id'), nullable=False)
+
+
 class Employee(db.Model):
     id = Column(Integer, primary_key=True)
     lastname = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
-    phones = db.relationship('EmployeePhone', backref='employee')
-
-
-class EmployeePhone(db.Model):
-    phone_number = Column(String(20), primary_key=True)
-    employee_id = Column(Integer, ForeignKey('employee.id'), nullable=False)
+    phones = db.relationship(EmployeePhone, backref='employee')
 
 
 class Blacklist(db.Model):
