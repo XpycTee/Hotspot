@@ -1,5 +1,5 @@
 let localizationData = {};
-let defaultLanguage = 'en'; // Язык по умолчанию
+let userLanguage = 'en';
 
 // Функция для загрузки файла локализации
 async function loadLocalization(filePath) {
@@ -38,7 +38,8 @@ function getTranslate(query, placeholders = null, replace = null) {
 
 (async () => {
     const html = document.getElementsByTagName('html')[0];
-    
-    await loadLocalization(`/static/language/${html.lang}.json`);
+    userLanguage = html.lang;
+
+    await loadLocalization(`/static/language/${userLanguage}.json`);
     console.log(getTranslate('language', 'Err'));
 })();
