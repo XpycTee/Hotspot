@@ -6,7 +6,7 @@
 
 {% block content %}
 <form action="/code" method="post" name="login" id="login" style="display: flex; flex-direction: column; flex: 1 1 0%;">
-    <center><p class="mt-1">{{ get_translate('html.login.label_phone') }}</p></center>
+    <p class="mt-1" style="text-align: center;">{{ get_translate('html.login.label_phone') }}</p>
     <input type="tel" id="phone" name="phone" class="login-input" data-tel-input placeholder="{{ get_translate('html.login.placeholder_phone') }}" required>
 
     <div id="error-message" style="flex: 1 1 0%; {{ 'display:none;' if not error else '' }}">{{ error }}</div>

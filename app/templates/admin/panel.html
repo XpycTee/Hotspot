@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style/navigation.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/modals.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/jmespath@0.15.0/jmespath.min.js"></script>
+<script src="{{ url_for('static', filename='javascript/localization.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/modals.js') }}"></script>
 {% endblock %}
@@ -30,7 +32,7 @@
                 <div class="table-container">
                     <div id="wifi_clients" class="content-tab table-container">
                         <input type="text" id="wifi_clients_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
-            <table>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>{{ get_translate('html.admin.panel.tables.wifi_clients.mac') }}</th>
@@ -38,36 +40,35 @@
                                     <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee') }}</th>
                                     <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone') }}</th>
                                 <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
-                    </tr>
+                                </tr>
                             </thead>
-                            <tbodyid="wifi_clients_body">
+                            <tbody id="wifi_clients_body">
                                 {% for client in wifi_clients %}
                                 <tr>
                                     <td>{{ client.get('mac') }}</td>
                                     <td>{{ client.get('expiration') }}</td>
                                     <td>{{ client.get('employee') }}</td>
                                     <td>{{ client.get('phone') }}</td>
-                                <td class="column-controls">
-                            <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">{{ get_translate('html.admin.buttons.deauth') }}</button>
-                        </td>
-                    </tr>
+                                    <td class="column-controls">
+                                        <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">{{ get_translate('html.admin.buttons.deauth') }}</button>
+                                    </td>
+                                </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
-                    <div class="pagination">
-                <button class="btn btn-prev" onclick="changePage('wifi_clients', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
-                <div class="page_numbers">
-                    <!--button class="btn btn-number" onclick="changePageTo('wifi_clients', X)">X</button-->
-                </div>
-                <button class="btn btn-next" onclick="changePage('wifi_clients', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
-                <span id="wifi_clients_page_info"></span>
-            </div>
-        </div>
+                        <div class="pagination">
+                            <button class="btn btn-prev" onclick="changePage('wifi_clients', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                            <div class="page_numbers">
+                                <!--button class="btn btn-number" onclick="changePageTo('wifi_clients', X)">X</button-->
+                            </div>
+                            <button class="btn btn-next" onclick="changePage('wifi_clients', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                            <span id="wifi_clients_page_info"></span>
+                        </div>
+                    </div>
 
                     <div id="employee" class="content-tab table-container" style="display: none;">
                         <input type="text" id="employee_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
-
-            <table>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>{{ get_translate('html.admin.panel.tables.employees.id') }}</th>
@@ -77,7 +78,7 @@
                                     <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
                                 </tr>
                             </thead>
-                            <tbodyid="employee_body">
+                            <tbody id="employee_body">
                                 {% for employee in employees %}
                                 <tr>
                                     <td data-id>{{ employee.get('id') }}</td>
@@ -101,19 +102,19 @@
                                 </tr>
                             </tbody>
                         </table>
-                    <div class="pagination">
-                <button class="btn btn-prev" onclick="changePage('employee', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
-                <div class="page_numbers">
-                    <!--button class="btn btn-number" onclick="changePageTo('employee', X)">X</button-->
-                </div>
-                <button class="btn btn-next" onclick="changePage('employee', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
-                <span id="employee_page_info"></span>
-            </div>
-        </div>
+                        <div class="pagination">
+                            <button class="btn btn-prev" onclick="changePage('employee', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                            <div class="page_numbers">
+                                <!--button class="btn btn-number" onclick="changePageTo('employee', X)">X</button-->
+                            </div>
+                            <button class="btn btn-next" onclick="changePage('employee', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                            <span id="employee_page_info"></span>
+                        </div>
+                    </div>
 
                     <div id="blacklist" class="content-tab table-container" style="display: none;">
                         <input type="text" id="blacklist_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
-            <table>
+                        <table>
                             <thead>
                                 <tr>
                                     <th>{{ get_translate('html.admin.panel.tables.blacklist.phone') }}</th>
@@ -134,17 +135,16 @@
                                 </tr>
                             </tbody>
                         </table>
-            <div class="pagination">
-                <button class="btn btn-prev" onclick="changePage('blacklist', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
-                <div class="page_numbers">
-                    <!--button class="btn btn-number" onclick="changePageTo('blacklist', X)">X</button-->
-                </div>
-                <button class="btn btn-next" onclick="changePage('blacklist', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
-                <span id="blacklist_page_info"></span>
-            </div>
+                        <div class="pagination">
+                            <button class="btn btn-prev" onclick="changePage('blacklist', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                            <div class="page_numbers">
+                                <!--button class="btn btn-number" onclick="changePageTo('blacklist', X)">X</button-->
+                            </div>
+                            <button class="btn btn-next" onclick="changePage('blacklist', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                            <span id="blacklist_page_info"></span>
+                        </div>
                     </div>
                 </div>
-
             </div>
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
@@ -192,3 +192,15 @@
 </div>
 {% endblock %}
 
+{% block footer %}
+<div id="modal-overlay" class="modal-overlay"></div>
+
+<div id="addRowModal" class="modal modal-medium">
+    <div class="modal-header">
+        <h2 class="modal-title"></h2>
+        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close').lower() }}</span>
+    </div>
+    <div class="modal-content">
+    </div>
+</div>
+{% endblock %}

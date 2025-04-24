@@ -6,10 +6,10 @@
 
 {% block content %}
 <form action="/auth" method="post" id="codeForm" style="display: flex; flex-direction: column; flex: 1 1 0%;">
-    <center>
+    <div style="text-align: center;">
         <p class="mt-1">{{ get_translate('html.code.label_code') }}</p>
         <p class="mt-1">{{ get_translate('html.code.validity_message') }}</p>
-    </center>
+    </div>
     <input type="tel" id="code" name="code" maxlength="4" class="login-input" oninput="checkCodeForm()" placeholder="{{ get_translate('html.code.placeholder_code') }}" required>
 
     <div id="error-message" style="flex: 1 1 0%; {{ 'display:none;' if not error else '' }}">{{ error }}</div>

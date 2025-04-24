@@ -6,7 +6,7 @@
 
 {% block content %}
 <form action="/admin/auth" method="post" name="login" id="login" style="display: flex; flex-direction: column; flex: 1 1 0%;">
-    <center><p class="mt-1">{{ get_translate('html.admin.login.label') }}</p></center>
+    <p class="mt-1" style="text-align: center;">{{ get_translate('html.admin.login.label') }}</p>
     <input type="text" id="username" name="username" class="login-input" placeholder="{{ get_translate('html.admin.login.login_placeholder') }}" required>
     <input type="password" id="password" name="password" class="login-input" placeholder="{{ get_translate('html.admin.login.password_placeholder') }}" required>
     <select class="input-auth" id="language" name="language">
