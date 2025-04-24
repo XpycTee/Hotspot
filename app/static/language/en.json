@@ -96,7 +96,8 @@
         "prev": "Previous",
         "next": "Next",
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "block": "Block"
       },
       "login": {
         "title": "Authorization",
