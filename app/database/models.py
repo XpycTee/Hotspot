@@ -6,13 +6,13 @@ from app.database import db
 
 class ClientsNumber(db.Model):
     id = Column(Integer, primary_key=True)
-    phone_number = Column(String(20))
+    phone_number = Column(String(20), unique=True)
     last_seen = Column(DateTime)
 
 
 class WifiClient(db.Model):
     id = Column(Integer, primary_key=True)
-    mac = Column(String(17))
+    mac = Column(String(17), unique=True)
     expiration = Column(DateTime)
     employee = Column(Boolean)
     phone_id = Column(Integer, ForeignKey(ClientsNumber.id))
