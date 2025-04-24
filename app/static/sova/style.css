@@ -57,6 +57,7 @@ input[type=number] {
 	border: solid 1px;
 	border-color: lightgray;
 	padding-left: 10px;
+	margin-bottom: 20px;
 }
 .login-input:focus
 {

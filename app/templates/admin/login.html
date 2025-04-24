@@ -9,10 +9,9 @@
     <p class="mt-1" style="text-align: center;">{{ get_translate('html.admin.login.label') }}</p>
     <input type="text" id="username" name="username" class="login-input" placeholder="{{ get_translate('html.admin.login.login_placeholder') }}" required>
     <input type="password" id="password" name="password" class="login-input" placeholder="{{ get_translate('html.admin.login.password_placeholder') }}" required>
-    <select class="input-auth" id="language" name="language">
-        <option value="auto">Auto</option>
+    <select class="login-input" id="language" name="language">
         {% for key, language in config["LANGUAGE_CONTENT"].items() %}
-        <option value="{{ key }}">{{ language.get('language') }}</option>
+        <option value="{{ key }}" {{ 'selected' if language.get('language')==get_translate('language') else '' }}>{{ language.get('language') }}</option>
         {% endfor %}
     </select>
     <div id="error-message" style="flex: 1 1 0%; {{ 'display:none;' if not error else '' }}">{{ error }}</div>
