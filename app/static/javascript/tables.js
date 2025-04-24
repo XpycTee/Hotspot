@@ -51,10 +51,17 @@ function updateTable(tableId, rows) {
 // Генерация HTML для строки таблицы
 function generateRowHTML(tableId, row) {
     if (tableId === 'wifi_clients') {
+        // Определяем формат даты на основе userLanguage
+        const formattedExpiration = new Date(row.expiration).toLocaleDateString(userLanguage, {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+
         return `
             <td>${row.mac}</td>
-            <td>${row.expiration}</td>
-            <td>${row.employee}</td>
+            <td>${formattedExpiration}</td>
+            <td>${row.employee ? getTranslate('html.admin.panel.tables.wifi_clients.is_employee_yes') : getTranslate('html.admin.panel.tables.wifi_clients.is_employee_no') }</td>
             <td>${row.phone}</td>
             <td class="column-controls">
                 <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('html.admin.buttons.deauth')}</button>

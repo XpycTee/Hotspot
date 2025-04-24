@@ -257,12 +257,14 @@ def get_tabel(tabel_name):
     rows_per_page = int(request.args.get('rows_per_page', 10))
 
     if tabel_name == 'wifi_clients':
-        query = WifiClient.query
+        query = WifiClient.query.join(ClientsNumber, WifiClient.phone_id == ClientsNumber.id)
         if search_query:
             query = query.filter(
                 WifiClient.mac.ilike(f'%{search_query}%') |
                 WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{search_query}%'))
             )
+
+        query = query.order_by(ClientsNumber.last_seen.desc())
 
         total_rows = query.count()
         clients = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()

@@ -116,7 +116,9 @@
             "mac": "Мак адрес",
             "expire": "Срок доступа",
             "is_employee": "Сотрудник",
-            "phone": "Номер телефона"
+            "phone": "Номер телефона",
+            "is_employee_yes": "Да",
+            "is_employee_no": "Нет"
           },
           "employees": {
             "title": "Список сотрудников",
