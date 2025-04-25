@@ -264,7 +264,7 @@ def get_tabel(tabel_name):
                 WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{search_query}%'))
             )
 
-        query = query.order_by(ClientsNumber.last_seen.desc(), WifiClient.expiration.desc())
+        query = query.order_by(WifiClient.expiration.desc(), ClientsNumber.last_seen.desc())
 
         total_rows = query.count()
         clients = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
