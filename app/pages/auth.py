@@ -242,6 +242,7 @@ def _get_or_create_client(phone_number, now_time):
             db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
+            current_app.logger.debug(f"Create new number {phone_number} by time {now_time}")
         except IntegrityError:
             db.session.rollback()
             db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
@@ -250,6 +251,7 @@ def _get_or_create_client(phone_number, now_time):
         try:
             db_phone.last_seen = now_time
             db.session.commit()
+            current_app.logger.debug(f"Update time {now_time} for number {phone_number}")
         except IntegrityError:
             db.session.rollback()
             current_app.logger.error("Failed to update last_seen for phone number: %s", phone_number)
