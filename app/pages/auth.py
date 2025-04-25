@@ -245,6 +245,14 @@ def _get_or_create_client(phone_number, now_time):
         except IntegrityError:
             db.session.rollback()
             db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
+    else:
+        # Обновляем поле last_seen, если запись уже существует
+        try:
+            db_phone.last_seen = now_time
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            current_app.logger.error("Failed to update last_seen for phone number: %s", phone_number)
     return db_phone
 
 
