@@ -8,6 +8,9 @@ from random import randint
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify
 
+from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
+
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
 from flask import (
     render_template,
@@ -255,30 +258,48 @@ def auth():
 
         db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
         if not db_phone:
-            db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
-            db.session.add(db_phone)
-            db.session.commit()
-        else:
-            db_phone.last_seen = now_time
+            try:
+                db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
+                db.session.add(db_phone)
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
         
         is_employee = _check_employee(phone_number)
 
-        db_client = WifiClient.query.filter_by(mac=mac).first()
+        db_client = db.session.execute(
+            select(WifiClient).where(WifiClient.mac == mac).with_for_update()
+        ).scalar_one_or_none()
+        
         if not db_client:
-            db_client = WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
-            db.session.add(db_client)
-        else:
-            db_client.phone = db_phone
-            db_client.employee = is_employee
+            try:
+                db_client = WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
+                db.session.add(db_client)
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+                db_client = WifiClient.query.filter_by(mac=mac).first()
 
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
         delay = hotspot_user.get('delay')
         expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
-        db_client.expiration = expire_time + delay
+        
+        # Update expiration atomically
+        try:
+            db.session.execute(
+                update(WifiClient)
+                .where(WifiClient.mac == mac)
+                .values(expiration=expire_time + delay)
+            )
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            current_app.logger.error("Failed to update expiration for MAC: %s", mac)
 
-        db.session.commit()
+        cache.delete(f'code_{phone_number}')
 
         redirect_url = url_for('auth.sendin')
         return redirect(redirect_url, 302)
