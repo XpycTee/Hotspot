@@ -51,8 +51,11 @@ def create_app(config_class=Config):
 
         config_class.init_app(app)
         
+        # Настройка логгирования для устранения дублирования
         gunicorn_error_logger = logging.getLogger('gunicorn.error')
-        app.logger.handlers.extend(gunicorn_error_logger.handlers)
+        app.logger.handlers = gunicorn_error_logger.handlers  # Используем только обработчики gunicorn
+        app.logger.setLevel(gunicorn_error_logger.level)  # Устанавливаем уровень логирования gunicorn
+
         if app.debug:
             app.logger.setLevel(logging.DEBUG)
         

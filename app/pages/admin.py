@@ -264,9 +264,21 @@ def get_tabel(tabel_name):
                 WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{search_query}%'))
             )
 
-        query = query.order_by(ClientsNumber.last_seen.desc())
+        employee_delay = current_app.config['HOTSPOT_USERS']['employee']['delay']
+        guest_delay = current_app.config['HOTSPOT_USERS']['guest']['delay']
+
+        # Сортируем по вычисляемому выражению
+        query = query.order_by(
+            db.desc(
+                WifiClient.expiration - db.case(
+                    (WifiClient.employee == True, employee_delay),
+                    else_=guest_delay
+                )
+            )
+        )   
 
         total_rows = query.count()
+        current_app.logger.debug(query.statement.compile())
         clients = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
 
         data = [
