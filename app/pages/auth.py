@@ -234,6 +234,50 @@ def resend():
     return jsonify({'success': True})
 
 
+def _get_or_create_client(phone_number, now_time):
+    """Получить или создать запись клиента по номеру телефона."""
+    db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
+    if not db_phone:
+        try:
+            db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
+            db.session.add(db_phone)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
+    return db_phone
+
+
+def _create_wifi_client_if_not_exitst(mac, now_time, is_employee, db_phone):
+    """Создать запись WiFi клиента по MAC-адресу, если нету."""
+    db_client = db.session.execute(
+        select(WifiClient).where(WifiClient.mac == mac).with_for_update()
+    ).scalar_one_or_none()
+
+    if not db_client:
+        try:
+            db_client = WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
+            db.session.add(db_client)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+
+
+def _update_expiration(mac, delay):
+    """Обновить время истечения для WiFi клиента."""
+    expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
+    try:
+        db.session.execute(
+            update(WifiClient)
+            .where(WifiClient.mac == mac)
+            .values(expiration=expire_time + delay)
+        )
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        current_app.logger.error("Failed to update expiration for MAC: %s", mac)
+
+
 @auth_bp.route('/auth', methods=['POST'])
 def auth():
     mac = session.get('mac')
@@ -243,66 +287,31 @@ def auth():
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
-        redirect_url = url_for('auth.code')
-        return redirect(redirect_url, 302)
+        return redirect(url_for('auth.code'), 302)
     if user_code is None:
         session['error'] = get_translate('errors.auth.expired_code')
-        redirect_url = url_for('auth.code')
-        return redirect(redirect_url, 302)
+        return redirect(url_for('auth.code'), 302)
 
-    form_code = int(form_code)
-    user_code = int(user_code)
-
-    if form_code == user_code:
+    if int(form_code) == int(user_code):
         now_time = datetime.datetime.now()
 
-        db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
-        if not db_phone:
-            try:
-                db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
-                db.session.add(db_phone)
-                db.session.commit()
-            except IntegrityError:
-                db.session.rollback()
-                db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
-        
+        # Получение или создание записи клиента
+        db_phone = _get_or_create_client(phone_number, now_time)
+
+        # Проверка, является ли пользователь сотрудником
         is_employee = _check_employee(phone_number)
 
-        db_client = db.session.execute(
-            select(WifiClient).where(WifiClient.mac == mac).with_for_update()
-        ).scalar_one_or_none()
-        
-        if not db_client:
-            try:
-                db_client = WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
-                db.session.add(db_client)
-                db.session.commit()
-            except IntegrityError:
-                db.session.rollback()
-                db_client = WifiClient.query.filter_by(mac=mac).first()
+        # Получение или создание записи WiFi клиента
+        _create_wifi_client_if_not_exitst(mac, now_time, is_employee, db_phone)
 
+        # Обновление времени истечения
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+        _update_expiration(mac, hotspot_user.get('delay'))
 
-        delay = hotspot_user.get('delay')
-        expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
-        
-        # Update expiration atomically
-        try:
-            db.session.execute(
-                update(WifiClient)
-                .where(WifiClient.mac == mac)
-                .values(expiration=expire_time + delay)
-            )
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-            current_app.logger.error("Failed to update expiration for MAC: %s", mac)
-
+        # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
-
-        redirect_url = url_for('auth.sendin')
-        return redirect(redirect_url, 302)
+        return redirect(url_for('auth.sendin'), 302)
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
@@ -312,10 +321,7 @@ def auth():
             session.pop('tries', None)
             session.pop('phone', None)
             cache.delete(f'code_{phone_number}')
-
-            redirect_url = url_for('auth.login')
-            return redirect(redirect_url, 302)
+            return redirect(url_for('auth.login'), 302)
         else:
             session['error'] = get_translate('errors.auth.bad_code_try')
-            redirect_url = url_for('auth.code')
-            return redirect(redirect_url, 307)
+            return redirect(url_for('auth.code'), 307)
