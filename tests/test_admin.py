@@ -28,7 +28,12 @@ class TestAdminViews(unittest.TestCase):
         self.app.root_path = os.path.join(root_dir, 'app')
         self.app.config['SECRET_KEY'] = 'secret'
         self.app.config['BLACKLIST'] = []
-        self.app.config['ADMIN'] = {'username': 'admin', 'password': bcrypt.hashpw('admin_pass'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')}
+        self.app.config['ADMIN'] = {
+            'username': 'admin', 
+            'password': bcrypt.hashpw('admin_pass'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), 
+            'max_login_attempts': int(3), 
+            'lockout_time': int(5)
+            }
         self.app.config['EMPLOYEES'] = {}
         self.app.config['MAX_LOGIN_ATTEMPTS'] = 3
         self.app.config['LOCKOUT_TIME'] = 5
