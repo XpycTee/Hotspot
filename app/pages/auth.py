@@ -89,14 +89,19 @@ def sendin():
     except IntegrityError:
         db.session.rollback()
         current_app.logger.error("Failed to update last_seen for phone number: %s", phone_number)
-    
-    return render_template(
-        'auth/sendin.html',
-        username=username,
-        password=password,
-        link_login_only=link_login_only,
-        link_orig=link_orig
-    )
+    return f"""
+    <html>
+        <body onload="document.forms[0].submit()">
+            <form action="{link_login_only}" method="post">
+                <input type="hidden" name="username" value="{username}">
+                <input type="hidden" name="password" value="{password}">
+                <input type="hidden" name="dst" value="{link_orig}">
+                <input type="hidden" name="popup" value="true">
+            </form>
+        </body>
+    </html>
+    """
+
 
 @auth_bp.route('/test_login', methods=['GET'])
 def test_login():
