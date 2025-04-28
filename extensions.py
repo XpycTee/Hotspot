@@ -25,8 +25,11 @@ def get_translate(path, replace=None, lang=None):
     if lang not in language_content:
         lang = language_content
 
+    expression = f"{lang}.{path}"
+    current_app.logger.debug(f"Full expression: '{expression}'")
+
     # Выполняем поиск перевода
-    translation = jmespath.search(f"{lang}.{path}", language_content)
+    translation = jmespath.search(expression, language_content)
 
     # Возвращаем перевод, если он найден, иначе возвращаем исходный путь
     return translation if isinstance(translation, str) else replace
