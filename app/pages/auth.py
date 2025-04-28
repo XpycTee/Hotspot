@@ -45,10 +45,25 @@ def _octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
+
 def _check_employee(phone_number):
     # Проверка наличия номера телефона в базе данных сотрудников
     employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
     return employee_phone is not None
+
+
+@auth_bp.route('/', methods=['POST', 'GET'])
+def index():
+    required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
+    if not any(key in set(request.form.keys()) for key in required_keys) or \
+        not any(key in set(session.keys()) for key in required_keys):
+            if 'link-orig' not in session.keys():
+                abort(400)
+            else:
+                redirect(session.get('link-orig'), 302)
+    else:
+        return redirect(url_for('auth.login'), 302)
+
 
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():
@@ -78,6 +93,7 @@ def sendin():
 
     cache.delete(f'code_{phone_number}')
     session.clear()
+    session['link-orig'] = link_orig
 
     db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
     now_time = datetime.datetime.now()
@@ -118,6 +134,7 @@ def test_login():
         session['mac'] = request.values.get('mac')
         current_app.logger.debug(f'Session data in test: {[item for item in session.items()]}')
     return login()
+
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -218,7 +235,6 @@ def code():
         current_app.logger.debug(f"{phone_number}'s code: {gen_code}")
 
     return render_template('auth/code.html', error=error)
-
 
 
 @auth_bp.route('/resend', methods=['POST'])
