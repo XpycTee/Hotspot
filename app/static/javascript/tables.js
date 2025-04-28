@@ -61,7 +61,7 @@ function generateRowHTML(tableId, row) {
         return `
             <td>${row.mac}</td>
             <td>${formattedExpiration}</td>
-            <td>${row.employee ? getTranslate('html.admin.panel.tables.wifi_clients.is_employee_yes') : getTranslate('html.admin.panel.tables.wifi_clients.is_employee_no') }</td>
+            <td>${row.employee ? (row.base_url!==null ? `<a href="${row.base_url}" target="_blank">${row.name}</a>` : row.name) : getTranslate('html.admin.panel.tables.wifi_clients.is_employee_no') }</td>
             <td>+${row.phone}</td>
             <td class="column-controls">
                 <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('html.admin.buttons.deauth')}</button>

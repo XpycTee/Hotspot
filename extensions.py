@@ -1,9 +1,21 @@
+import json
+import ssl
+import certifi
 import jmespath
 from flask import session, request, current_app
 from flask_caching import Cache
+import urllib
 
 
 cache = Cache()
+
+
+@cache.memoize(timeout=1 * 60 * 60)  # Кешируем результат на 1 час
+def fetch_employees():
+    """Функция для получения данных сотрудников из внешнего ресурса."""
+    context = ssl.create_default_context(cafile=certifi.where())
+    with urllib.request.urlopen('https://is.sova72.ru/documents/employee/phonebook.json', context=context) as response:
+        return json.load(response)
 
 
 def get_translate(path, replace=None, lang=None):

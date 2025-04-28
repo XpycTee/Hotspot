@@ -7,9 +7,10 @@ from flask import (
     Blueprint, abort, render_template, redirect, url_for,
     session, request, current_app, jsonify
 )
+import jmespath
 from app.database import db
 from app.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
-from extensions import cache, get_translate
+from extensions import cache, fetch_employees, get_translate
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -249,6 +250,20 @@ def block():
     return jsonify({'success': True})
 
 
+def _get_employee(phone_number):
+    employees = fetch_employees()
+    sova_phone_number = re.sub(r'^(\+?7|8)', '', phone_number)
+    expression = f"employee[?phone[?number=='{sova_phone_number}']] | [0]"
+    employee = jmespath.search(expression, employees)
+    if not employee:
+        # Проверка наличия номера телефона в базе данных сотрудников
+        employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
+        if employee_phone:
+            employee = employee_phone.employee
+            return {'surname': employee.lastname, 'name': employee.name}
+    return employee
+
+
 @admin_bp.route('/table/<tabel_name>', methods=['GET'])
 @login_required
 def get_tabel(tabel_name):
@@ -281,15 +296,33 @@ def get_tabel(tabel_name):
         current_app.logger.debug(query.statement.compile())
         clients = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
 
-        data = [
-            {
+        data = []
+        for client in clients:
+            phone_number = client.phone.phone_number if client.phone else None
+
+            # Избегаем повторного вызова _get_employee, если phone_number отсутствует
+            employee = _get_employee(phone_number) if phone_number else None
+
+            # Используем тернарные операторы для упрощения логики
+            base_url = (
+                f"https://is.sova72.ru/user/edit/index/id/{employee.get('employee_ID')}"
+                if employee and employee.get('employee_ID') else None
+            )
+            base_name = (
+                f"{employee['surname']} {employee['name']}"
+                if employee else None
+            )
+
+            # Формируем словарь данных клиента
+            data.append({
                 'mac': client.mac,
                 'expiration': client.expiration,
                 'employee': client.employee,
-                'phone': client.phone.phone_number if client.phone else None
-            }
-            for client in clients
-        ]
+                'phone': phone_number,
+                'base_url': base_url,
+                'name': base_name
+            })
+        
     elif tabel_name == 'employee':
         query = Employee.query
 

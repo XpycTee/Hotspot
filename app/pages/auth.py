@@ -34,7 +34,7 @@ import jmespath
 
 from app.database import db
 from app.database.models import Blacklist, ClientsNumber, EmployeePhone, WifiClient
-from extensions import get_translate, cache
+from extensions import fetch_employees, get_translate, cache
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -52,17 +52,9 @@ def _octal_string_to_bytes(oct_string):
     return bytes(byte_nums)
 
 
-@cache.memoize(timeout=1 * 60 * 60)  # Кешируем результат на 1 час
-def _fetch_employees():
-    """Функция для получения данных сотрудников из внешнего ресурса."""
-    context = ssl.create_default_context(cafile=certifi.where())
-    with urllib.request.urlopen('https://is.sova72.ru/documents/employee/phonebook.json', context=context) as response:
-        return json.load(response)
-
-
 def _check_employee(phone_number):
     """Проверка, является ли номер телефона сотрудником."""
-    employees = _fetch_employees()  # Используем кешированные данные
+    employees = fetch_employees()  # Используем кешированные данные
     sova_phone_number = re.sub(r'^(\+?7|8)', '', phone_number)
     expression = f"employee[].phone[].number | contains([], '{sova_phone_number}')"
     in_base = bool(jmespath.search(expression, employees))
