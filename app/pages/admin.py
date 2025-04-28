@@ -251,17 +251,28 @@ def block():
 
 
 def _get_employee(phone_number):
-    employees = fetch_employees()
+    """Получает информацию о сотруднике по номеру телефона."""
+    if not phone_number:
+        return None
+
+    # Нормализуем номер телефона
     sova_phone_number = re.sub(r'^(\+?7|8)', '', phone_number)
+
+    # Ищем сотрудника в кэше сотрудников
+    employees = fetch_employees()
     expression = f"employee[?phone[?number=='{sova_phone_number}']] | [0]"
     employee = jmespath.search(expression, employees)
-    if not employee:
-        # Проверка наличия номера телефона в базе данных сотрудников
-        employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
-        if employee_phone:
-            employee = employee_phone.employee
-            return {'surname': employee.lastname, 'name': employee.name}
-    return employee
+
+    if employee:
+        return employee
+
+    # Если сотрудник не найден, проверяем в базе данных
+    employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
+    if employee_phone:
+        employee = employee_phone.employee
+        return {'surname': employee.lastname, 'name': employee.name}
+
+    return None
 
 
 @admin_bp.route('/table/<tabel_name>', methods=['GET'])

@@ -65,7 +65,6 @@ def _check_employee(phone_number):
     return in_base
 
 
-
 @auth_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
