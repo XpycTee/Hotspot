@@ -284,10 +284,11 @@ def get_tabel(tabel_name):
 
     if tabel_name == 'wifi_clients':
         query = WifiClient.query.join(ClientsNumber, WifiClient.phone_id == ClientsNumber.id)
+        sova_phone_number_search = re.sub(r'\D', '', re.sub(r'^(\+?7|8)', '', search_query))
         if search_query:
             query = query.filter(
                 WifiClient.mac.ilike(f'%{search_query}%') |
-                WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{search_query}%'))
+                WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{sova_phone_number_search}%'))
             )
 
         employee_delay = current_app.config['HOTSPOT_USERS']['employee']['delay']
