@@ -124,14 +124,11 @@ def test_login():
     if not current_app.debug:
         abort(404)
     required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
-    if not any(key in set(request.values.keys()) for key in required_keys):
+    result = [key in set(request.values.keys()) for key in required_keys]
+    if not any(result):
         abort(400)
     else:
-        session['chap-id'] = request.values.get('chap-id')
-        session['chap-challenge'] = request.values.get('chap-challenge')
-        session['link-login-only'] = request.values.get('link-login-only')
-        session['link-orig'] = request.values.get('link-orig')
-        session['mac'] = request.values.get('mac')
+        [session.update({k: v}) for k, v in request.values.items()]
         current_app.logger.debug(f'Session data in test: {[item for item in session.items()]}')
     return login()
 
@@ -148,11 +145,7 @@ def login():
         if not any(key in set(session.keys()) for key in required_keys):
             abort(400)
     else:
-        session['chap-id'] = request.form.get('chap-id')
-        session['chap-challenge'] = request.form.get('chap-challenge')
-        session['link-login-only'] = request.form.get('link-login-only')
-        session['link-orig'] = request.form.get('link-orig')
-        session['mac'] = request.form.get('mac')
+        [session.update({k: v}) for k, v in request.values.items()]
 
     current_app.logger.debug(f'Session data after form: {[item for item in session.items()]}')
     mac = session.get('mac')
