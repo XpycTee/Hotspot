@@ -23,7 +23,7 @@ def get_translate(path, replace=None, lang=None):
 
     # Проверяем, поддерживается ли язык, иначе используем язык по умолчанию
     if lang not in language_content:
-        lang = language_content
+        lang = current_app.config.get('LANGUAGE_DEFAULT')
 
     expression = f"{lang}.{path}"
     current_app.logger.debug(f"Full expression: '{expression}'")
