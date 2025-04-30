@@ -219,8 +219,14 @@ function addRowModal(button, type) {
         // Преобразуем данные формы в объект
         formData.forEach((value, key) => {
             if (key === 'phone') {
-                data[key] = data[key] || [];
-                data[key].push(value.replace(/\D/g, '').replace(/^(\+?7|8)/, '7')); // Преобразуем телефон
+                // Заменяем префикс +7 или 8 на 7 и удаляем все нецифровые символы
+                let phone = value.replace(/\D/g, '').replace(/^(\+?7|8)/, '7');
+                if (type === 'employee') {
+                    data[key] = data[key] || [];
+                    data[key].push(phone);
+                } else {
+                    data[key] = phone;
+                }
             } else {
                 data[key] = value.trim();
             }
@@ -317,10 +323,8 @@ function saveRow(button, type) {
         }
 
         if (key === 'phone') {
-            // Заменяем префикс +7 или 8 на 7
-            let phone = currentValue.replace(/^(\+?7|8)/, '7');
-            // Удаляем все нецифровые символы
-            phone = phone.replace(/\D/g, '');
+            // Заменяем префикс +7 или 8 на 7 и удаляем все нецифровые символы
+            let phone = currentValue.replace(/\D/g, '').replace(/^(\+?7|8)/, '7');
             if (type === 'employee') {
                 data[key] = data[key] || [];
                 data[key].push(phone);
