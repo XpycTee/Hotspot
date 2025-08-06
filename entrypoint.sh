@@ -1,5 +1,7 @@
 #!/bin/sh
 
+DEBUG=${DEBUG:-false}
+
 # Путь к файлу-маркеру
 INIT_FLAG="/hotspot/.db_initialized"
 
