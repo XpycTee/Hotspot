@@ -17,15 +17,24 @@ jobs:
       run: |
         ls -la
 
+    - name: VENV Create
+      run: |
+        python3 -m venv .venv
+        . .venv/bin/activate
+
     - name: Install dependencies
       run: |
-        python3 -m pip install pytest
+        . .venv/bin/activate
+        python -m pip install --upgrade pip
+        python -m pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Test auth with pytest
       run: |
+        . .venv/bin/activate
         pytest tests/test_auth.py
     
     - name: Test admin with pytest
       run: |
+        . .venv/bin/activate
         pytest tests/test_admin.py
