@@ -5,8 +5,6 @@ import unittest
 from unittest.mock import patch, MagicMock
 from flask import Flask
 
-from extensions import get_translate, cache
-
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
@@ -16,6 +14,7 @@ from app.pages.auth import (
     _check_employee,
 )
 
+from extensions import get_translate, cache
 from app.database import db
 
 class TestAuthViews(unittest.TestCase):
