@@ -32,9 +32,9 @@ jobs:
     - name: Test auth with pytest
       run: |
         . .venv/bin/activate
-        pytest tests/test_auth.py
+        pytest --rootdir={{ github.workspace }} tests/test_auth.py
     
     - name: Test admin with pytest
       run: |
         . .venv/bin/activate
-        pytest tests/test_admin.py
+        pytest --rootdir={{ github.workspace }} tests/test_admin.py
