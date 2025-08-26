@@ -63,11 +63,16 @@ class TestAuthViews(unittest.TestCase):
             db.create_all()
 
             # Добавление номера телефона в таблицу EmployeePhone
-            from app.database.models import EmployeePhone, Blacklist  # Импорт модели EmployeePhone
-            new_phone = EmployeePhone(phone_number='79999999999', employee_id=1000)
+            from app.database.models import ClientsNumber, EmployeePhone, Blacklist  # Импорт модели EmployeePhone
+            new_emp_client = ClientsNumber(phone_number='79999999999', last_seen=datetime.datetime.now())
+            db.session.add(new_emp_client)
+            db.session.commit()
+            new_phone = EmployeePhone(phone_number='79999999999', employee_id=new_emp_client.id)
             db.session.add(new_phone)
             new_blocked_phone = Blacklist(phone_number='79999999123')
             db.session.add(new_blocked_phone)
+            new_guest_client = ClientsNumber(phone_number='79999999321', last_seen=datetime.datetime.now())
+            db.session.add(new_guest_client)
             db.session.commit()
         @self.app.context_processor
         def inject_get_translate():
@@ -120,7 +125,7 @@ class TestAuthViews(unittest.TestCase):
             'chap-challenge': 'challenge', 
             'link-login-only': 'link', 
             'link-orig': 'orig', 
-            'phone': '71234567890'
+            'phone': '79999999321'
         }
         with self.client as c:
             with c.session_transaction() as sess:
@@ -134,7 +139,7 @@ class TestAuthViews(unittest.TestCase):
         test_init_data = {
             'link-login-only': 'link', 
             'link-orig': 'orig', 
-            'phone': '71234567890'
+            'phone': '79999999321'
         }
         with self.client as c:
             with c.session_transaction() as sess:
