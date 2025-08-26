@@ -18,11 +18,14 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    
+    - name: Show ls
+      run: |
+        ls -la
+        
     - name: Test auth with pytest
       run: |
-        pytest tests/test_auth.py
+        pytest ./tests/test_auth.py
     
     - name: Test admin with pytest
       run: |
-        pytest tests/test_admin.py
+        pytest ./tests/test_admin.py
