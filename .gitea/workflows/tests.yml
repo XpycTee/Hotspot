@@ -15,12 +15,11 @@ jobs:
 
     - name: Show ls
       run: |
-        ls -la '{{ github.workspace }}'
+        ls -la ${{ github.workspace }}
 
-    - name: VENV Create
+    - name: Create venv 
       run: |
         python3 -m venv .venv
-        . .venv/bin/activate
 
     - name: Install dependencies
       run: |
@@ -32,9 +31,9 @@ jobs:
     - name: Test auth with pytest
       run: |
         . .venv/bin/activate
-        pytest --rootdir={{ github.workspace }} tests/test_auth.py
+        pytest --rootdir=${{ github.workspace }} tests/test_auth.py
     
     - name: Test admin with pytest
       run: |
         . .venv/bin/activate
-        pytest --rootdir={{ github.workspace }} tests/test_admin.py
+        pytest --rootdir=${{ github.workspace }} tests/test_admin.py
