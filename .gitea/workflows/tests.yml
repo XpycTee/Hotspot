@@ -7,9 +7,7 @@ on:
   
 jobs:
   test:
-    runs-on: podman
-    container:
-      image: catthehacker/ubuntu:act-22.04
+    runs-on: runner
 
     steps:
     - name: Checkout code
@@ -32,8 +30,8 @@ jobs:
 
     - name: Test auth with pytest
       run: |
-        pytest ./tests/test_auth.py
+        pytest tests/test_auth.py
     
     - name: Test admin with pytest
       run: |
-        pytest ./tests/test_admin.py
+        pytest tests/test_admin.py
