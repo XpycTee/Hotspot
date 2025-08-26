@@ -9,15 +9,19 @@ jobs:
   test:
     runs-on: podman
     container:
-      image: python:3.13
+      image: catthehacker/ubuntu:act-22.04
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Show ls
       run: |
         ls -la
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      python-version: '3.13'
 
     - name: Install dependencies
       run: |
