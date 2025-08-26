@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:    # ручной запуск из Actions UI
+  
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Test auth with pytest
+      run: |
+        pytest tests/test_auth.py
+    
+    - name: Test admin with pytest
+      run: |
+        pytest tests/test_admin.py
