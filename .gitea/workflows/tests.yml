@@ -9,7 +9,7 @@ jobs:
   test:
     runs-on: podman
     container:
-      image: python:3.13-slim
+      image: python:3.13
 
     steps:
     - name: Checkout
