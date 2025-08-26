@@ -5,7 +5,7 @@ Flask-SQLAlchemy~=3.1.1
 Flask-Caching~=2.3.1
 python-memcached
 SQLAlchemy~=2.0.27
-smsru-api~=1.1.2
+smsru-api~=1.2
 huawei-lte-api~=1.8.1
 gunicorn~=23.0.0
 bcrypt~=4.3.0
