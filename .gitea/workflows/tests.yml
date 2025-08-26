@@ -15,7 +15,7 @@ jobs:
 
     - name: Show ls
       run: |
-        ls -la {{ github.workspace }}
+        ls -la '{{ github.workspace }}'
 
     - name: VENV Create
       run: |
