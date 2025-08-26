@@ -20,20 +20,18 @@ jobs:
     - name: Create venv 
       run: |
         python3 -m venv .venv
+        . .venv/bin/activate
 
     - name: Install dependencies
       run: |
-        . .venv/bin/activate
         python -m pip install --upgrade pip
         python -m pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Test auth with pytest
       run: |
-        . .venv/bin/activate
         pytest --rootdir=${{ github.workspace }} tests/test_auth.py
     
     - name: Test admin with pytest
       run: |
-        . .venv/bin/activate
         pytest --rootdir=${{ github.workspace }} tests/test_admin.py
