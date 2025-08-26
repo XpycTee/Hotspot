@@ -7,6 +7,9 @@ from unittest.mock import patch
 import bcrypt
 from flask import Flask
 
+from app.database import db
+from extensions import get_translate
+
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
@@ -18,8 +21,7 @@ from app.pages.admin import (
     _handle_failed_login
 )
 
-from app.database import db
-from extensions import get_translate
+
 
 class TestAdminViews(unittest.TestCase):
     def setUp(self):
