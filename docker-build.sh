@@ -5,8 +5,8 @@ set -e
 set -o pipefail
 
 # Значения по умолчанию
-REGISTRY="registry.service.sova/xpyctee"
-IMAGE="hotspot-mikrotik"
+REGISTRY=${BUILD_REGISTRY:-registry.service.sova/xpyctee}
+IMAGE_NAME=${BUILD_IMAGE_NAME:-hotspot-mikrotik}
 DB_BACKENDS=("sqlite" "postgres" "mysql") # Список поддерживаемых бэкендов
 
 # Функция для обработки аргументов командной строки
@@ -17,7 +17,7 @@ parse_args() {
         REGISTRY=$OPTARG
         ;;
       i )
-        IMAGE=$OPTARG
+        IMAGE_NAME=$OPTARG
         ;;
       \? )
         echo "Usage: cmd [-r registry] [-i image]"
@@ -45,16 +45,16 @@ build_docker_image() {
   local backend_tag=$db_backend
 
   # Формируем базовый тег
-  local tags=("-t" "${REGISTRY}/${IMAGE}:${version}-${backend_tag}")
+  local tags=("-t" "${REGISTRY}/${IMAGE_NAME}:${version}-${backend_tag}")
 
   # Добавляем дополнительные теги
   case $version in
     *rc*)
-      [[ $db_backend == "sqlite" ]] && tags+=("-t" "${REGISTRY}/${IMAGE}:test")
+      [[ $db_backend == "sqlite" ]] && tags+=("-t" "${REGISTRY}/${IMAGE_NAME}:test")
       ;;
     *)
-      [[ $db_backend == "sqlite" ]] && tags+=("-t" "${REGISTRY}/${IMAGE}:latest")
-      tags+=("-t" "${REGISTRY}/${IMAGE}:${backend_tag}")
+      [[ $db_backend == "sqlite" ]] && tags+=("-t" "${REGISTRY}/${IMAGE_NAME}:latest")
+      tags+=("-t" "${REGISTRY}/${IMAGE_NAME}:${backend_tag}")
       ;;
   esac
 
@@ -80,7 +80,7 @@ main() {
   done
 
   # Используем 'awk' для более точного поиска
-  docker images | awk -v image="$IMAGE" '$1 ~ image'
+  docker images | awk -v image="$IMAGE_NAME" '$1 ~ image'
 }
 
 main "$@"

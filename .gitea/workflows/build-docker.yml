@@ -1,0 +1,58 @@
+name: Docker Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # сработает при git push origin vX.Y.Z
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: ''
+        required: false
+        default: 'registry.service.sova/xpyctee'
+      image_name:
+        description: ''
+        required: false
+        default: 'hotspot-mikrotik'
+
+jobs:
+  tests:
+    runs-on: runner
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create venv 
+      run: |
+        python3 -m venv .venv
+
+    - name: Install dependencies
+      run: |
+        . .venv/bin/activate
+        python -m pip install --upgrade pip
+        python -m pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Test admin with pytest
+      run: |
+        . .venv/bin/activate
+        pytest tests/test_admin.py
+
+    - name: Test auth with pytest
+      run: |
+        . .venv/bin/activate
+        pytest tests/test_auth.py
+
+  build:
+    runs-on: runner
+    env:
+      BUILD_REGISTRY: ${{ inputs.registry }}
+      BUILD_IMAGE_NAME: ${{ inputs.image_name }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Build
+      uses: bash ./docker-build.sh
