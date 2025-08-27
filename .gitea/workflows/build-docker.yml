@@ -24,8 +24,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Create venv 
-      run: |
-        python3 -m venv .venv
+      run: python3 -m venv .venv
 
     - name: Install dependencies
       run: |
@@ -55,7 +54,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Run Build
-      uses: bash ./docker-build.sh
+      run: bash ./docker-build.sh
 
     - name: Registry Push
-      uses: echo "Pseudo PUSH!!!!"
+      run: echo "Pseudo PUSH!!!!"
