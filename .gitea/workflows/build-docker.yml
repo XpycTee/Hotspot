@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
     inputs:
       registry:
-        description: ''
-        required: false
+        description: 'Docker registry to push the built image'
+        required: true
         default: 'registry.service.sova/xpyctee'
       image_name:
-        description: ''
-        required: false
+        description: 'Name of the Docker image to build and push'
+        required: true
         default: 'hotspot-mikrotik'
 
 jobs:
@@ -56,3 +56,6 @@ jobs:
 
     - name: Run Build
       uses: bash ./docker-build.sh
+
+    - name: Registry Push
+      uses: echo "Pseudo PUSH!!!!"
