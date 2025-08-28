@@ -15,7 +15,7 @@ on:
       image_name:
         description: 'Name of the Docker image to build and push'
         required: true
-        default: 'SOVA/hotspot-mikrotik'
+        default: 'sova/hotspot-mikrotik'
 
 jobs:
   build:
@@ -35,21 +35,17 @@ jobs:
         fetch-depth: 0
         tags: true
 
-    - name: Set Docker tag and prerelease flag
-      id: meta
+    - name: Get latest tag
+      id: get_version
+      run: echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+
+    - name: Set LATEST_TAG variable
+      id: set_latest_tag
       run: |
-        if [[ "${GITEA_REF:-}" == refs/tags/* ]]; then
-          TAG="${GITEA_REF#refs/tags/}"
-        elif [[ -n "${{ github.event.inputs.tag }}" ]]; then
-          TAG="${{ github.event.inputs.tag }}"
+        if [[ "${{ env.VERSION }}" =~ (beta|alpha|rc) ]]; then
+          echo "LATEST_TAG=" >> $GITHUB_ENV
         else
-          TAG="latest"
-        fi
-        echo "tag=$TAG" >> $GITHUB_OUTPUT
-        if [[ "$TAG" =~ (beta|alpha|rc) ]]; then
-          echo "is_prerelease=true" >> $GITHUB_OUTPUT
-        else
-          echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          echo "LATEST_TAG=latest" >> $GITHUB_ENV
         fi
 
     - name: Log in to the Container registry
@@ -67,8 +63,8 @@ jobs:
         build-args: |
           DB_BACKEND=${{ matrix.db-backend }}
         labels: |
-          VERSION=${{ steps.meta.outputs.tag }}
+          VERSION=${{ env.VERSION }}
           DB_BACKEND=${{ matrix.db-backend }}
         tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}-${{ matrix.db-backend }}
-          ${{ steps.meta.outputs.is_prerelease == 'false' && format('{0}/{1}:latest-{2}', env.REGISTRY, env.IMAGE_NAME, matrix.db-backend) || '' }}
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-${{ matrix.db-backend }}
+          ${{ matrix.db-backend == 'sqlite' && env.LATEST_TAG && format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
