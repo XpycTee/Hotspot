@@ -1,0 +1,68 @@
+name: Docker Build
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: 'Docker registry to push the built image'
+        required: true
+        default: 'docker.io'
+      image_name:
+        description: 'Name of the Docker image to build and push'
+        required: true
+        default: 'xpyctee/hotspot-mikrotik'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db-backend: ['sqlite', 'postgres', 'mysql']
+    env:
+      REGISTRY: ${{ inputs.registry || vars.REGISTRY }}
+      IMAGE_NAME: ${{ inputs.image_name || vars.IMAGE_NAME }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        tags: true
+
+    - name: Get latest tag
+      id: get_version
+      run: echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+
+    - name: Set LATEST_TAG variable
+      id: set_latest_tag
+      run: |
+        if [[ "${{ env.VERSION }}" =~ (beta|alpha|rc) ]]; then
+          echo "LATEST_TAG=" >> $GITHUB_ENV
+        else
+          echo "LATEST_TAG=latest" >> $GITHUB_ENV
+        fi
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASS }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        build-args: |
+          DB_BACKEND=${{ matrix.db-backend }}
+        labels: |
+          VERSION=${{ env.VERSION }}
+          DB_BACKEND=${{ matrix.db-backend }}
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-${{ matrix.db-backend }}
+          ${{ env.LATEST_TAG && format('{0}/{1}:latest-{2}', env.REGISTRY, env.IMAGE_NAME, matrix.db-backend) || '' }}
+          ${{ matrix.db-backend == 'sqlite' && env.LATEST_TAG && format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
