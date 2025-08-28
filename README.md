@@ -72,7 +72,7 @@ Start a hotspot backend web-interface container as follows:
 docker run -d \
     --name hotspot-app \
     -v /path/to/config:/hotspot/config \
-    xpyctee/hotspot-mikrotik:latest
+    xpyctee/hotspot-mikrotik:latest-postgres
 ```
 > This command starts a hotspot backend container named `hotspot-app` with a volume mounted for configuration.
 ### Environment Variables
@@ -95,7 +95,7 @@ docker run -d \
 | `CACHE_SIZE`               | Cache size in megabytes.                                  | `"1024"`                                                 |
 | `GUNICORN_WORKERS`         | Number of Gunicorn workers for handling requests.         | `"4"`                                                    |
 | `GUNICORN_LOG_LEVEL`       | Log level for Gunicorn (e.g., `debug`, `info`, `warning`).| `"info"`                                                 |
-| `GUNICORN_ADDR`            | Address for Gunicorn to bind to.                          | `"0.0.0.0"`                                              |
+| `GUNICORN_ADDR`            | Address for Gunicorn to bind to.                          | `"[::]"`                                              |
 | `GUNICORN_PORT`            | Port for Gunicorn to listen on.                           | `"8080"`                                                 |
 
 ### Config Examples
