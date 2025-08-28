@@ -1,34 +1,44 @@
-name: Tests
+name: Hotspot Tests
 
 on:
   push:
     branches: [ "master" ]
-  workflow_dispatch:    # ручной запуск из Actions UI
+  pull_request:
+  workflow_dispatch:
   
 jobs:
   test:
-    runs-on: runner
+    runs-on: ubuntu-act-22.04
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Create venv 
-      run: python3 -m venv .venv
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
-        . .venv/bin/activate
         python -m pip install --upgrade pip
-        python -m pip install pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    
-    - name: Test admin with pytest
-      run: |
-        . .venv/bin/activate
-        pytest tests/test_admin.py
+        pip install pytest pytest-cov
 
-    - name: Test auth with pytest
+    - name: Run all tests with coverage
       run: |
-        . .venv/bin/activate
-        pytest tests/test_auth.py
+        pytest --cov=. --cov-report=xml --cov-report=term
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage.xml
