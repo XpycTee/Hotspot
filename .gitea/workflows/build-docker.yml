@@ -10,11 +10,11 @@ on:
       registry:
         description: 'Docker registry to push the built image'
         required: true
-        default: ${{ vars.REGISTRY }}
+        default: 'registry.service.sova'
       image_name:
         description: 'Name of the Docker image to build and push'
         required: true
-        default: ${{ vars.IMAGE_NAME }}
+        default: 'sova/hotspot-mikrotik'
 
 jobs:
   build:
