@@ -11,15 +11,19 @@ on:
       registry:
         description: 'Docker registry to push the built image'
         required: true
-        default: 'registry.service.sova/xpyctee'
+        default: 'registry.service.sova'
       image_name:
         description: 'Name of the Docker image to build and push'
         required: true
-        default: 'hotspot-mikrotik'
+        default: 'SOVA/hotspot-mikrotik'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        db-backend: ['sqlite', 'postgres', 'mysql']
     env:
       REGISTRY: ${{ inputs.registry }}
       IMAGE_NAME: ${{ inputs.image_name }}
@@ -56,10 +60,15 @@ jobs:
         password: ${{ secrets.SOVA_REGISTRY_PASS }}
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: false
+        build-args: |
+          DB_BACKEND=${{ matrix.db-backend }}
+        labels: |
+          VERSION=${{ steps.meta.outputs.tag }}
+          DB_BACKEND=${{ matrix.db-backend }}
         tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
-          ${{ steps.meta.outputs.is_prerelease == 'false' && format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}-${{ matrix.db-backend }}
+          ${{ steps.meta.outputs.is_prerelease == 'false' && format('{0}/{1}:latest-{2}', env.REGISTRY, env.IMAGE_NAME, matrix.db-backend) || '' }}
