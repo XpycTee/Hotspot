@@ -58,7 +58,7 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         context: .
-        push: false
+        push: true
         build-args: |
           DB_BACKEND=${{ matrix.db-backend }}
         labels: |
