@@ -3,8 +3,6 @@ FROM python:3.13-alpine
 
 # Указываем метаданные
 LABEL maintainer="xpyctee"
-LABEL build_version="Hotspot version: ${VERSION} Build-date: ${BUILD_DATE}"
-LABEL version="${VERSION}"
 
 # Устанавливаем переменные окружения
 ENV PYTHONUNBUFFERED=1
