@@ -66,4 +66,5 @@ jobs:
           DB_BACKEND=${{ matrix.db-backend }}
         tags: |
           ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}-${{ matrix.db-backend }}
+          ${{ env.LATEST_TAG && format('{0}/{1}:latest-{2}', env.REGISTRY, env.IMAGE_NAME, matrix.db-backend) || '' }}
           ${{ matrix.db-backend == 'sqlite' && env.LATEST_TAG && format('{0}/{1}:latest', env.REGISTRY, env.IMAGE_NAME) || '' }}
