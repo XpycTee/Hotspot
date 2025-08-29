@@ -4,30 +4,26 @@
 This project provides a backend hotspot web application deployed in a Docker container and a web template for the Mikrotik hotspot.
 </p>
 
-<!--
-#### Docker
-![Downloads](https://img.shields.io/github/downloads/XpycTee/Hotspot/total) ![Contributors](https://img.shields.io/github/contributors/XpycTee/Hotspot?color=dark-green) ![Issues](https://img.shields.io/github/issues/XpycTee/Hotspot) ![License](https://img.shields.io/github/license/XpycTee/Hotspot)
-#### Github
-![Downloads](https://img.shields.io/github/downloads/XpycTee/Hotspot/total) ![Contributors](https://img.shields.io/github/contributors/XpycTee/Hotspot?color=dark-green) ![Issues](https://img.shields.io/github/issues/XpycTee/Hotspot) ![License](https://img.shields.io/github/license/XpycTee/Hotspot)
--->
 
 ## Installation
 
 ### Installing the Template in Mikrotik
-1. Download the Mikrotik web template files from the repository in `examples/mikrotik_redirect`.
-2. Edit the hostname `hotspot.server.url` in the action of the redirect form to your server IP or DNS name.
+1. Download the Mikrotik web template files from the repository in [`examples/mikrotik_redirect`](https://github.com/XpycTee/Hotspot/tree/0c35e4254300943825c4fe18d898d2b076228788/examples/mikrotik_redirect).
+2. Edit the hostname `hotspot.server.url` in the action of the redirect form to your Hotspot server IP or DNS name.
 
 > If you want to edit the template, refer to the Mikrotik [Hotspot Customization Documentation](https://help.mikrotik.com/docs/display/ROS/Hotspot+customisation).
 
 3. For working with the backend, save the required inputs:
 ```html
-<!-- These are required inputs, do not remove -->
-<input type="hidden" name="mac" value="$(mac)">
-<input type="hidden" name="link-orig" value="$(link-orig)">
-<input type="hidden" name="chap-id" value="$(chap-id)">
-<input type="hidden" name="chap-challenge" value="$(chap-challenge)">
-<input type="hidden" name="link-login-only" value="$(link-login-only)">
-<!-- These are required inputs, do not remove -->
+<form name="redirect" action="https://hotspot.server.url/login" method="post">
+  <!-- These are required inputs, do not remove -->
+  <input type="hidden" name="mac" value="$(mac)">
+  <input type="hidden" name="link-orig" value="$(link-orig)">
+  <input type="hidden" name="chap-id" value="$(chap-id)">
+  <input type="hidden" name="chap-challenge" value="$(chap-challenge)">
+  <input type="hidden" name="link-login-only" value="$(link-login-only)">
+  <!-- These are required inputs, do not remove -->
+</form>
 ```
 
 4. Upload the template folder mikrotik_redirect to your Mikrotik files.
@@ -95,7 +91,7 @@ docker run -d \
 | `CACHE_SIZE`               | Cache size in megabytes.                                  | `"1024"`                                                 |
 | `GUNICORN_WORKERS`         | Number of Gunicorn workers for handling requests.         | `"4"`                                                    |
 | `GUNICORN_LOG_LEVEL`       | Log level for Gunicorn (e.g., `debug`, `info`, `warning`).| `"info"`                                                 |
-| `GUNICORN_ADDR`            | Address for Gunicorn to bind to.                          | `"[::]"`                                              |
+| `GUNICORN_ADDR`            | Address for Gunicorn to bind to.                          | `"[::]"`                                                 |
 | `GUNICORN_PORT`            | Port for Gunicorn to listen on.                           | `"8080"`                                                 |
 
 ### Config Examples
