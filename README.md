@@ -8,7 +8,7 @@ This project provides a backend hotspot web application deployed in a Docker con
 ## Installation
 
 ### Installing the Template in Mikrotik
-1. Download the Mikrotik web template files from the repository in [`examples/mikrotik_redirect`](https://github.com/XpycTee/Hotspot/tree/0c35e4254300943825c4fe18d898d2b076228788/examples/mikrotik_redirect).
+1. Download the Mikrotik web template files from the repository in [`examples/mikrotik_redirect`](https://github.com/XpycTee/Hotspot/tree/0c35e4254300943825c4fe18d898d2b076228788/examples/mikrotik_redirect.zip).
 2. Edit the hostname `hotspot.server.url` in the action of the redirect form to your Hotspot server IP or DNS name.
 
 > If you want to edit the template, refer to the Mikrotik [Hotspot Customization Documentation](https://help.mikrotik.com/docs/display/ROS/Hotspot+customisation).
