@@ -39,7 +39,7 @@ This project provides a backend hotspot web application deployed in a Docker con
 - Create hotspot users and profiles for employees and guests.
 
 ##### Configurations:
-1. Hotspot profile, using macc-cookie and http-chap is required:
+1. Hotspot profile, using mac-cookie and http-chap is required:
 ```
 /ip hotspot profile add html-directory=flash/mikrotik_redirect login-by=mac-cookie,http-chap[,https ssl-certificate=hotspot-certificate] ...
 ```
