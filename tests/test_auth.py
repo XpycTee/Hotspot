@@ -62,17 +62,24 @@ class TestAuthViews(unittest.TestCase):
             db.create_all()
 
             # Добавление номера телефона в таблицу EmployeePhone
-            from app.database.models import ClientsNumber, EmployeePhone, Blacklist  # Импорт модели EmployeePhone
+            from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Blacklist  # Импорт модели EmployeePhone
+
             new_emp_client = ClientsNumber(phone_number='79999999999', last_seen=datetime.datetime.now())
             db.session.add(new_emp_client)
             db.session.commit()
             new_phone = EmployeePhone(phone_number='79999999999', employee_id=new_emp_client.id)
             db.session.add(new_phone)
+            new_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=new_emp_client)
+            db.session.add(new_wifi_client)
+            db.session.commit()
+
             new_blocked_phone = Blacklist(phone_number='79999999123')
             db.session.add(new_blocked_phone)
+
             new_guest_client = ClientsNumber(phone_number='79999999321', last_seen=datetime.datetime.now())
             db.session.add(new_guest_client)
             db.session.commit()
+
         @self.app.context_processor
         def inject_get_translate():
             return dict(get_translate=get_translate)
@@ -116,6 +123,20 @@ class TestAuthViews(unittest.TestCase):
                 for key, value in test_init_data.items():
                     sess[key] = value
             response = c.post('/login')
+            self.assertEqual(response.status_code, 200)
+
+    @patch('app.pages.auth._check_employee')
+    def test_login_route_bad_emp(self, mock_chck):
+        mock_chck.return_value = False
+        test_init_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '12:34:56:78:9A:BC'
+        }
+        with self.client as c:
+            response = c.post('/login', data=test_init_data)
             self.assertEqual(response.status_code, 200)
 
     def test_sendin_route_guest_chap(self):
