@@ -158,11 +158,12 @@ def login():
 
         if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
             abort(403)
-            
-        session['phone'] = phone.phone_number
+        
+        if _check_employee(phone.phone_number) == db_client.employee:
+            session['phone'] = phone.phone_number
 
-        redirect_url = url_for('auth.sendin')
-        return redirect(redirect_url, 302)
+            redirect_url = url_for('auth.sendin')
+            return redirect(redirect_url, 302)
 
     return render_template('auth/login.html', error=error)
 
