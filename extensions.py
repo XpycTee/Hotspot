@@ -1,3 +1,4 @@
+import re
 import jmespath
 from flask import session, request, current_app
 from flask_caching import Cache
@@ -33,3 +34,14 @@ def get_translate(path, replace=None, lang=None):
 
     # Возвращаем перевод, если он найден, иначе возвращаем исходный путь
     return translation if isinstance(translation, str) else replace
+
+
+def normalize_phone(phone_number: str) -> str:
+    """Normalize phone to digits, leading 7 for Russia-style numbers."""
+    if not phone_number:
+        return ''
+    num = re.sub(r'\D', '', phone_number)
+    num = re.sub(r'^8', '7', num)
+    if num.startswith('07'):  # guard: if weird leading zero
+        num = '7' + num[2:]
+    return num
