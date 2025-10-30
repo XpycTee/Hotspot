@@ -36,6 +36,36 @@ class CustomJSONProvider(DefaultJSONProvider):
     ensure_ascii = False
 
 
+def configure_logging(app: Flask):
+    """
+    Настраивает логирование один раз: добавляет root handler (если нет),
+    переводит werkzeug и flask.app в передачу логов в root (propagate=True).
+    """
+    root = logging.getLogger()
+    # Устанавливаем уровень root (если уже стоит - перезаписываем на нужный)
+    level = logging.DEBUG if app.debug else logging.INFO
+    root.setLevel(level)
+
+    # Если у root нет обработчиков — добавляем StreamHandler с форматтером.
+    if not root.handlers:
+        fmt = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter(fmt))
+        handler.setLevel(level)
+        root.addHandler(handler)
+
+    # Принудительно заставляем werkzeug и flask.app пропагировать к root
+    werk = logging.getLogger("werkzeug")
+    werk.setLevel(level)
+    werk.propagate = True
+
+    # Очищаем специфичные handlers у app.logger и включаем propagate,
+    # чтобы сообщения из app.logger шел через root handlers.
+    app.logger.handlers = []
+    app.logger.propagate = True
+    app.logger.setLevel(level)
+
+
 def create_app(config_class=Config):
     log_dir = 'logs'
     if not os.path.exists(log_dir):
@@ -50,14 +80,7 @@ def create_app(config_class=Config):
         app = Flask(__name__)
 
         config_class.init_app(app)
-        
-        # Настройка логгирования для устранения дублирования
-        gunicorn_error_logger = logging.getLogger('gunicorn.error')
-        app.logger.handlers = gunicorn_error_logger.handlers  # Используем только обработчики gunicorn
-        app.logger.setLevel(gunicorn_error_logger.level)  # Устанавливаем уровень логирования gunicorn
-
-        if app.debug:
-            app.logger.setLevel(logging.DEBUG)
+        configure_logging(app)
         
         app.json = CustomJSONProvider(app)
 
