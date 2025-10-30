@@ -112,6 +112,16 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/login', data=test_init_data)
             self.assertEqual(response.status_code, 200)
 
+    def test_login_route_nochap(self):
+        test_init_data = {
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '00:00:00:00:00:00'
+        }
+        with self.client as c:
+            response = c.post('/login', data=test_init_data)
+            self.assertEqual(response.status_code, 200)
+
     def test_login_route_session(self):
         test_init_data = {
             'chap-id': '1', 

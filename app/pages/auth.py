@@ -54,9 +54,9 @@ def _check_employee(phone_number):
 
 @auth_bp.route('/', methods=['POST', 'GET'])
 def index():
-    required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
-    if not any(key in set(request.form.keys()) for key in required_keys) or \
-        not any(key in set(session.keys()) for key in required_keys):
+    required_keys = ['link-login-only', 'link-orig', 'mac']
+    if not all(key in set(request.form.keys()) for key in required_keys) or \
+        not all(key in set(session.keys()) for key in required_keys):
             if 'link-orig' not in session.keys():
                 abort(400)
             else:
@@ -123,9 +123,8 @@ def sendin():
 def test_login():
     if not current_app.debug:
         abort(404)
-    required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
-    result = [key in set(request.values.keys()) for key in required_keys]
-    if not any(result):
+    required_keys = ['link-login-only', 'link-orig', 'mac']
+    if not all(key in set(request.values.keys()) for key in required_keys):
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
@@ -137,12 +136,12 @@ def test_login():
 def login():
     error = session.pop('error', None)
 
-    required_keys = ['chap-id', 'chap-challenge', 'link-login-only', 'link-orig', 'mac']
+    required_keys = ['link-login-only', 'link-orig', 'mac']
 
     current_app.logger.debug(f'Session data before form: {[item for item in session.items()]}')
 
-    if not any(key in set(request.form.keys()) for key in required_keys):
-        if not any(key in set(session.keys()) for key in required_keys):
+    if not all(key in set(request.form.keys()) for key in required_keys):
+        if not all(key in set(session.keys()) for key in required_keys):
             abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
