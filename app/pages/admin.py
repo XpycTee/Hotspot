@@ -408,5 +408,4 @@ def _handle_failed_login(username, client_ip):
 def _set_error_and_log(message, username, client_ip, log_level):
     """Устанавливает сообщение об ошибке и записывает лог."""
     session['error'] = message
-    log_func = getattr(current_app.logger, log_level, current_app.logger.info)
-    log_func(get_translate('errors.admin.log').format(message=message, username=username, client_ip=client_ip))
+    logging.error(get_translate('errors.admin.log').format(message=message, username=username, client_ip=client_ip))
