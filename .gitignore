@@ -158,3 +158,4 @@ cython_debug/
 /html_examples for template/
 
 .DS_Store
+*.code-workspace

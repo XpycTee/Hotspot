@@ -13,3 +13,4 @@ Dockerfile
 **/__pycache__/
 .vscode/
 .venv/
+*.code-workspace
