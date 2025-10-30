@@ -10,14 +10,10 @@ from flask import (
 import jmespath
 from app.database import db
 from app.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
-from extensions import cache, fetch_employees, get_translate
+from extensions import cache, fetch_employees, get_translate, normalize_phone
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-
-def _phone_clear(phone_number):
-    """Очищает и нормализует номер телефона."""
-    return re.sub(r'\D', '', re.sub(r'^(\+?7|8)', '7', phone_number))
     
 
 def login_required(f):
@@ -120,7 +116,7 @@ def save_data(tabel_name):
             new_phones = set()
 
             for phone_number in data['phone']:
-                phone_number = _phone_clear(phone_number)
+                phone_number = normalize_phone(phone_number)
                 new_phones.add(phone_number)
 
             # Удаление старых телефонов
@@ -140,7 +136,7 @@ def save_data(tabel_name):
 
             # Добавление телефонов
             for phone_number in data['phone']:
-                phone_number = _phone_clear(phone_number)
+                phone_number = normalize_phone(phone_number)
                 if EmployeePhone.query.filter_by(phone_number=phone_number).first():
                     abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
                 new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
@@ -151,7 +147,7 @@ def save_data(tabel_name):
         if Blacklist.query.filter_by(phone_number=data['phone']).first():
             abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
         
-        phone_number = _phone_clear(data['phone'])
+        phone_number = normalize_phone(data['phone'])
 
         new_blacklist_entry = Blacklist(phone_number=phone_number)
         db.session.add(new_blacklist_entry)

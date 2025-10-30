@@ -25,13 +25,12 @@ from flask import (
     request,
     current_app
 )
-import urllib
 
 import jmespath
 
 from app.database import db
 from app.database.models import Blacklist, ClientsNumber, EmployeePhone, WifiClient
-from extensions import fetch_employees, get_translate, cache
+from extensions import fetch_employees, get_translate, cache, normalize_phone
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -49,17 +48,6 @@ def _octal_string_to_bytes(oct_string):
         byte_nums.append(decimal_value)
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
-
-
-def normalize_phone(phone_number: str) -> str:
-    """Normalize phone to digits, leading 7 for Russia-style numbers."""
-    if not phone_number:
-        return ''
-    num = re.sub(r'\D', '', phone_number)
-    num = re.sub(r'^8', '7', num)
-    if num.startswith('07'):  # guard: if weird leading zero
-        num = '7' + num[2:]
-    return num
 
 
 def _check_employee(phone_number):
