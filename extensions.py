@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 import ssl
 import certifi
@@ -50,7 +51,6 @@ def get_translate(path, replace=None, lang=None):
         lang = current_app.config.get('LANGUAGE_DEFAULT')
 
     expression = f"{lang}.{path}"
-    current_app.logger.debug(f"Full expression: '{expression}'")
 
     # Выполняем поиск перевода
     translation = jmespath.search(expression, language_content)
