@@ -64,6 +64,12 @@ def _check_employee(phone_number):
     return in_base
 
 
+def _get_today() -> datetime.datetime:
+    return datetime.datetime.combine(
+        datetime.date.today(),
+        datetime.time(6, 0)
+    )
+
 @auth_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['link-login-only', 'link-orig', 'mac']
@@ -207,11 +213,12 @@ def code():
 
             hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
-            expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
+            today_start = _get_today()
+            expire_time = today_start + hotspot_user.get('delay')
             if expire_time < datetime.datetime.now():
                 expire_time += datetime.timedelta(days=1)
 
-            db_client.expiration = expire_time + hotspot_user.get('delay')
+            db_client.expiration = expire_time
             db_client.employee = is_employee
             db.session.commit()
             redirect_url = url_for('auth.sendin')
@@ -270,8 +277,9 @@ def resend():
     return jsonify({'success': True})
 
 
-def _get_or_create_client(phone_number, now_time):
+def _get_or_create_client(phone_number):
     """Получить или создать запись клиента по номеру телефона."""
+    now_time = datetime.datetime.now()
     db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
     if not db_phone:
         try:
@@ -326,10 +334,10 @@ def auth():
         return redirect(url_for('auth.code'), 302)
 
     if int(form_code) == int(user_code):
-        now_time = datetime.datetime.now()
+        today_start = _get_today()
 
         # Получение или создание записи клиента
-        db_phone = _get_or_create_client(phone_number, now_time)
+        db_phone = _get_or_create_client(phone_number)
 
         # Проверка, является ли пользователь сотрудником
         is_employee = _check_employee(phone_number)
@@ -337,9 +345,12 @@ def auth():
         # Обновление времени истечения
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        expiration = now_time + hotspot_user.get('delay')
+        
+        expire_time = today_start + hotspot_user.get('delay')
+        if expire_time < datetime.datetime.now():
+            expire_time += datetime.timedelta(days=1)
 
-        _create_or_udpate_wifi_client(mac, expiration, is_employee, db_phone)
+        _create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
 
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
