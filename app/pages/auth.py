@@ -108,7 +108,7 @@ def sendin():
     session['link-orig'] = link_orig
 
     now_time = datetime.datetime.now()
-    db_phone = _get_or_create_client(phone_number, now_time)
+    db_phone = _get_or_create_client(phone_number)
     # Обновляем поле last_seen, если запись уже существует
     try:
         db_phone.last_seen = now_time
