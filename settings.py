@@ -73,10 +73,9 @@ class Config:
     @classmethod
     def init_app(cls, app):
         cls.settings = cls.load_settings()
-        cls.logger = logging.getLogger('gunicorn.error')
         cls.ADMIN = cls.configure_admin()
         cls.SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', cls.settings.get('flask_secret_key'))
-        cls.logger.debug(cls.SECRET_KEY)
+        logging.debug(cls.SECRET_KEY)
         cls.LANGUAGE_DEFAULT = os.environ.get('HOTSPOT_LANGUAGE', cls.settings.get('language', 'en'))
         cls.LANGUAGE_CONTENT = cls.load_language_files()
         cls.configure_cache()
