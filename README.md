@@ -7,31 +7,35 @@ This project provides a backend hotspot web application deployed in a Docker con
 
 ## Installation
 
-### Installing the Template in Mikrotik
-1. Download the Mikrotik web template files from the repository in [`examples/mikrotik_redirect`](https://github.com/XpycTee/Hotspot/blob/cdfc4c14862651df4f07a8365618853ffe728508/examples/mikrotik_redirect.zip).
-2. Edit the hostname `hotspot.server.url` in the action of the redirect form to your Hotspot server IP or DNS name.
+### Installing the Template on MikroTik
+1. Download the MikroTik web template files from the repository under `examples/mikrotik_redirect`.
+2. Edit the `action` attribute of the redirect form to set the `hotspot.server.url` to your server’s IP address or DNS name.
 
-> If you want to edit the template, refer to the Mikrotik [Hotspot Customization Documentation](https://help.mikrotik.com/docs/display/ROS/Hotspot+customisation).
+> To customize the template, refer to the MikroTik [Hotspot Customization Documentation](https://help.mikrotik.com/docs/display/ROS/Hotspot+customisation).
 
-3. For working with the backend, save the required inputs:
+3. To ensure proper backend operation, include the following required input fields:
 ```html
-<form name="redirect" action="https://hotspot.server.url/login" method="post">
-  <!-- These are required inputs, do not remove -->
-  <input type="hidden" name="mac" value="$(mac)">
-  <input type="hidden" name="link-orig" value="$(link-orig)">
-  <input type="hidden" name="chap-id" value="$(chap-id)">
-  <input type="hidden" name="chap-challenge" value="$(chap-challenge)">
-  <input type="hidden" name="link-login-only" value="$(link-login-only)">
-  <!-- These are required inputs, do not remove -->
-</form>
+<!-- Required inputs – do not remove -->
+<input type="hidden" name="mac" value="$(mac)">
+<input type="hidden" name="link-orig" value="$(link-orig)">
+<input type="hidden" name="link-login-only" value="$(link-login-only)">
+<!-- Required inputs – do not remove -->
 ```
 
-4. Upload the template folder mikrotik_redirect to your Mikrotik files.
+4. These inputs are required for the `CHAP` authentication method:
+```html
+<!--$(if chap-id)-->
+<input type="hidden" name="chap-id" value="$(chap-id)">
+<input type="hidden" name="chap-challenge" value="$(chap-challenge)">
+<!--$(endif)-->
+```
 
-### Mikrotik Hotspot Configuration
+5. Upload the `mikrotik_redirect` template folder to your MikroTik files.
+
+### MikroTik Hotspot Configuration
 - Create a hotspot profile:
-   - Set HTML Directory to `mikrotik_redirect`
-   - Enable `HTTP CHAP`, `MAC Cookie` and optionally `HTTPS`
+  - Set **HTML Directory** to `mikrotik_redirect`
+  - Enable **HTTP CHAP**, **MAC Cookie**, and optionally **HTTPS**
 - Create hotspot users and profiles for employees and guests.
 
 ##### Configurations:
