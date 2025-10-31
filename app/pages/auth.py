@@ -300,6 +300,19 @@ def _create_wifi_client_if_not_exists(mac, now_time, is_employee, db_phone):
             db.session.rollback()
 
 
+def _update_employee_status(mac, status: bool):
+    try:
+        db.session.execute(
+            update(WifiClient)
+            .where(WifiClient.mac == mac)
+            .values(employee=status)
+        )
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        logging.error("Failed to update expiration for MAC: %s", mac)
+
+
 def _update_expiration(mac, delay):
     """Обновить время истечения для WiFi клиента."""
     expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
@@ -348,6 +361,7 @@ def auth():
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
         _update_expiration(mac, hotspot_user.get('delay'))
+        _update_employee_status(mac, is_employee)
 
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
