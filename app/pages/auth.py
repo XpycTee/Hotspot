@@ -276,7 +276,7 @@ def _get_or_create_client(phone_number, now_time):
     return db_phone
 
 
-def _create_wifi_client_if_not_exists(mac, now_time, is_employee, db_phone):
+def _create_or_udpate_wifi_client(mac, expiration, is_employee, db_phone):
     """Создать запись WiFi клиента по MAC-адресу, если нету."""
     db_client = db.session.execute(
         select(WifiClient).where(WifiClient.mac == mac).with_for_update()
@@ -284,38 +284,19 @@ def _create_wifi_client_if_not_exists(mac, now_time, is_employee, db_phone):
 
     if not db_client:
         try:
-            db_client = WifiClient(mac=mac, expiration=now_time, employee=is_employee, phone=db_phone)
+            db_client = WifiClient(mac=mac, expiration=expiration, employee=is_employee, phone=db_phone)
             db.session.add(db_client)
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-
-def _update_employee_status(mac, status: bool):
-    try:
-        db.session.execute(
-            update(WifiClient)
-            .where(WifiClient.mac == mac)
-            .values(employee=status)
-        )
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        logging.error("Failed to update expiration for MAC: %s", mac)
-
-
-def _update_expiration(mac, delay):
-    """Обновить время истечения для WiFi клиента."""
-    expire_time = datetime.datetime.now().replace(hour=6, minute=0, second=0, microsecond=0)
-    try:
-        db.session.execute(
-            update(WifiClient)
-            .where(WifiClient.mac == mac)
-            .values(expiration=expire_time + delay)
-        )
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        logging.error("Failed to update expiration for MAC: %s", mac)
+    else:
+        try:
+            db_client.expiration = expiration
+            db_client.employee = is_employee
+            db_client.phone = db_phone
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
 
 
 @auth_bp.route('/auth', methods=['POST'])
@@ -344,14 +325,12 @@ def auth():
         # Проверка, является ли пользователь сотрудником
         is_employee = _check_employee(phone_number)
 
-        # Получение или создание записи WiFi клиента
-        _create_wifi_client_if_not_exists(mac, now_time, is_employee, db_phone)
-
         # Обновление времени истечения
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        _update_expiration(mac, hotspot_user.get('delay'))
-        _update_employee_status(mac, is_employee)
+        expiration = now_time + hotspot_user.get('delay')
+
+        _create_or_udpate_wifi_client(mac, expiration, is_employee, db_phone)
 
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
