@@ -4,6 +4,7 @@ import sys
 import unittest
 from unittest.mock import patch, MagicMock
 from flask import Flask
+from sqlalchemy import select
 
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -244,7 +245,30 @@ class TestAuthViews(unittest.TestCase):
             self.assertIn('/sendin', response.location)
 
     @patch('app.pages.auth.cache')
-    def test_auth_route_failure(self, mock_cache):
+    def test_auth_route_update_client(self, mock_cache):
+        test_init_data = {'code': '1234'}
+        mock_cache.get.return_value = '1234'
+        from app.database.models import WifiClient
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '12:34:56:78:9A:BC'
+                sess['phone'] = '71234567890'
+            
+            db_client = db.session.execute(
+                select(WifiClient).where(WifiClient.mac == sess['mac']).with_for_update()
+            ).scalar_one_or_none()
+            self.assertNotEqual(db_client.employee, False)
+            self.assertNotEqual(db_client.phone.phone_number, sess['phone'])
+
+            response = c.post('/auth', data=test_init_data)
+                        
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(db_client.employee, False)
+            self.assertEqual(db_client.phone.phone_number, sess['phone'])
+            self.assertIn('/sendin', response.location)
+
+    @patch('app.pages.auth.cache')
+    def test_auth_route_bad_code(self, mock_cache):
         test_init_data = {'code': '1234'}
         mock_cache.get.return_value = '5678'
         expected_responses = [
