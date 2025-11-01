@@ -27,9 +27,14 @@ GUNICORN_LOG_LEVEL=${GUNICORN_LOG_LEVEL:-info}
 GUNICORN_PORT=${GUNICORN_PORT:-8080}
 GUNICORN_ADDR=${GUNICORN_BIND:-[::]}
 
-CAHCE_SIZE=${CAHCE_SIZE:-1024}
+CACHE_SIZE=${CACHE_SIZE:-1024}
 
-memcached -d -u nobody -m $CAHCE_SIZE -l 127.0.0.1 -p 11211
+if [ -z "$CACHE_URL" ]; then
+    echo "Using local memcached"
+    memcached -d -u nobody -m $CACHE_SIZE -s "/tmp/memcached.sock"
+else
+    echo "Using external cache: $CACHE_URL"
+fi
 
 # Проверяем значение переменной DEBUG
 if [ "$DEBUG" = "true" ]; then

@@ -1,9 +1,8 @@
 # init_db.py
-from app import create_app
+from flask import Flask
 from app.database import db
+from settings import Config
 
-app = create_app()
+app = Flask("DB Initiator")
 
-with app.app_context():
-    db.create_all()
-    print("Database created.")
+Config.init_db(app, db)
