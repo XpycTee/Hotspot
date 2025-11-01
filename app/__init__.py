@@ -14,7 +14,7 @@ from settings import Config
 from extensions import cache, get_translate
 
 
-def check_required_env(required: list, logger=logging.getLogger()) -> bool:
+def check_required_env(required: list, logger=logging.getLogger("Init")) -> bool:
     missing_vars = []
     env_keys = set(os.environ.keys())
     for env_var in required:
@@ -36,34 +36,11 @@ class CustomJSONProvider(DefaultJSONProvider):
     ensure_ascii = False
 
 
-def configure_logging(app: Flask):
-    """
-    Настраивает логирование один раз: добавляет root handler (если нет),
-    переводит werkzeug и flask.app в передачу логов в root (propagate=True).
-    """
-    root = logging.getLogger()
-    # Устанавливаем уровень root (если уже стоит - перезаписываем на нужный)
-    level = logging.DEBUG if app.debug else logging.INFO
-    root.setLevel(level)
-
-    # Если у root нет обработчиков — добавляем StreamHandler с форматтером.
-    if not root.handlers:
-        fmt = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter(fmt))
-        handler.setLevel(level)
-        root.addHandler(handler)
-
-    # Принудительно заставляем werkzeug и flask.app пропагировать к root
-    werk = logging.getLogger("werkzeug")
-    werk.setLevel(level)
-    werk.propagate = True
-
-    # Очищаем специфичные handlers у app.logger и включаем propagate,
-    # чтобы сообщения из app.logger шел через root handlers.
-    app.logger.handlers = []
-    app.logger.propagate = True
-    app.logger.setLevel(level)
+def configure_logging(logger: logging.Logger):
+    gunicorn_error_logger = logging.getLogger('gunicorn.error')
+    logger.handlers = gunicorn_error_logger.handlers
+    logger.setLevel(gunicorn_error_logger.level)
+    logger.propagate = False
 
 
 def create_app(config_class=Config):
@@ -74,13 +51,16 @@ def create_app(config_class=Config):
      # Check for required environment variables
     required_env_vars = []
     
-    init = check_required_env(required_env_vars)
+    init_logger = logging.getLogger("Init")
+    configure_logging(init_logger)
+
+    init = check_required_env(required_env_vars, init_logger)
 
     if init:
         app = Flask(__name__)
 
         config_class.init_app(app)
-        configure_logging(app)
+        configure_logging(app.logger)
         
         app.json = CustomJSONProvider(app)
 
