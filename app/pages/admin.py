@@ -1,5 +1,3 @@
-import logging
-import re
 import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
@@ -8,6 +6,8 @@ from flask import (
     Blueprint, abort, render_template, redirect, url_for,
     session, request, current_app, jsonify
 )
+
+import logger
 from app.database import db
 from app.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
 from extensions import cache, get_translate, normalize_phone
@@ -19,9 +19,9 @@ def login_required(f):
     """Декоратор для проверки авторизации."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        logging.debug(f'session data {[item for item in session.items()]}')
+        logger.debug(f'session data {[item for item in session.items()]}')
         if not session.get('is_authenticated'):
-            logging.debug('User is not authenticated')
+            logger.debug('User is not authenticated')
             return redirect(url_for('admin.login'), 302)
         return f(*args, **kwargs)
     return decorated_function
@@ -45,7 +45,7 @@ def auth():
     password = request.form.get('password')
     client_ip = request.remote_addr
     user_lang = request.form.get('language', current_app.config.get('LANGUAGE_DEFAULT'))  # Получаем язык из формы, по умолчанию 'en'
-    logging.debug(f'Start login by {username}')
+    logger.debug(f'Start login by {username}')
     # Проверка блокировки
     lockout_until = cache.get("lockout_until")
     lockout_time = current_app.config.get('LOCKOUT_TIME', 0)  # Установить значение по умолчанию
@@ -69,8 +69,8 @@ def auth():
         session['user_lang'] = user_lang if user_lang != 'auto' else None
         session.permanent = True  # Устанавливаем сессию как постоянную
         current_app.permanent_session_lifetime = timedelta(minutes=30)  # Время жизни сессии
-        logging.info(get_translate('errors.admin.user_logged_in').format(username=username, client_ip=client_ip))
-        logging.debug(f'session data {[item for item in session.items()]}')
+        logger.info(get_translate('errors.admin.user_logged_in').format(username=username, client_ip=client_ip))
+        logger.debug(f'session data {[item for item in session.items()]}')
         return redirect(url_for('admin.panel'), 302)
 
     _handle_failed_login(username, client_ip)
@@ -274,7 +274,7 @@ def get_tabel(tabel_name):
         )   
 
         total_rows = query.count()
-        logging.debug(query.statement.compile())
+        logger.debug(query.statement.compile())
         clients = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
 
         data = [
@@ -362,4 +362,4 @@ def _handle_failed_login(username, client_ip):
 def _set_error_and_log(message, username, client_ip, log_level):
     """Устанавливает сообщение об ошибке и записывает лог."""
     session['error'] = message
-    logging.error(get_translate('errors.admin.log').format(message=message, username=username, client_ip=client_ip))
+    logger.error(get_translate('errors.admin.log').format(message=message, username=username, client_ip=client_ip))

@@ -10,6 +10,7 @@ from app.database import db
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
+from logger import configure_logger
 from settings import Config
 from extensions import cache, get_translate
 
@@ -36,36 +37,6 @@ class CustomJSONProvider(DefaultJSONProvider):
     ensure_ascii = False
 
 
-def configure_logging(app: Flask):
-    """
-    Настраивает логирование один раз: добавляет root handler (если нет),
-    переводит werkzeug и flask.app в передачу логов в root (propagate=True).
-    """
-    root = logging.getLogger()
-    # Устанавливаем уровень root (если уже стоит - перезаписываем на нужный)
-    level = logging.DEBUG if app.debug else logging.INFO
-    root.setLevel(level)
-
-    # Если у root нет обработчиков — добавляем StreamHandler с форматтером.
-    if not root.handlers:
-        fmt = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter(fmt))
-        handler.setLevel(level)
-        root.addHandler(handler)
-
-    # Принудительно заставляем werkzeug и flask.app пропагировать к root
-    werk = logging.getLogger("werkzeug")
-    werk.setLevel(level)
-    werk.propagate = True
-
-    # Очищаем специфичные handlers у app.logger и включаем propagate,
-    # чтобы сообщения из app.logger шел через root handlers.
-    app.logger.handlers = []
-    app.logger.propagate = True
-    app.logger.setLevel(level)
-
-
 def create_app(config_class=Config):
     log_dir = 'logs'
     if not os.path.exists(log_dir):
@@ -74,14 +45,17 @@ def create_app(config_class=Config):
      # Check for required environment variables
     required_env_vars = []
     
-    init = check_required_env(required_env_vars)
+    init_logger = logging.getLogger("Init")
+    configure_logger(init_logger)
+
+    init = check_required_env(required_env_vars, init_logger)
 
     if init:
         app = Flask(__name__)
 
         config_class.init_app(app)
         
-        configure_logging(app)
+        configure_logger(app.logger)
         
         app.json = CustomJSONProvider(app)
 

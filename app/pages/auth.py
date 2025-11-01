@@ -1,7 +1,5 @@
 # Imports
 import datetime
-import logging
-import re
 
 from hashlib import md5
 from random import randint
@@ -9,7 +7,7 @@ from random import randint
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
@@ -27,6 +25,7 @@ from flask import (
     current_app
 )
 
+import logger
 from app.database import db
 from app.database.models import Blacklist, ClientsNumber, EmployeePhone, WifiClient
 from extensions import get_translate, cache, normalize_phone
@@ -113,10 +112,10 @@ def sendin():
     try:
         db_phone.last_seen = now_time
         db.session.commit()
-        logging.debug(f"Update time {now_time} for number {phone_number}")
+        logger.debug(f"Update time {now_time} for number {phone_number}")
     except IntegrityError:
         db.session.rollback()
-        logging.error("Failed to update last_seen for phone number: %s", phone_number)
+        logger.error("Failed to update last_seen for phone number: %s", phone_number)
     
     return render_template(
         'auth/sendin.html', 
@@ -137,7 +136,7 @@ def test_login():
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
-        logging.debug(f'Session data in test: {[item for item in session.items()]}')
+        logger.debug(f'Session data in test: {[item for item in session.items()]}')
     return login()
 
 
@@ -149,14 +148,14 @@ def login():
     has_form = all(key in set(request.form.keys()) for key in required_keys)
     has_session = all(key in set(session.keys()) for key in required_keys)
 
-    logging.debug(f'Session data before form: {[item for item in session.items()]}')
+    logger.debug(f'Session data before form: {[item for item in session.items()]}')
 
     if not has_form and not has_session:
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
 
-    logging.debug(f'Session data after form: {[item for item in session.items()]}')
+    logger.debug(f'Session data after form: {[item for item in session.items()]}')
     mac = session.get('mac')
 
     db_client = WifiClient.query.filter_by(mac=mac).first()
@@ -180,7 +179,7 @@ def login():
 @auth_bp.route('/code', methods=['POST', 'GET'])
 def code():
     error = session.pop('error', None)
-    logging.debug(f'Session data before code: {[item for item in session.items()]}')
+    logger.debug(f'Session data before code: {[item for item in session.items()]}')
     phone_number = request.form.get('phone')
 
     if phone_number:
@@ -192,7 +191,7 @@ def code():
         session['phone'] = phone_number
 
         mac = session.get('mac')
-        logging.debug(f'User mac: {mac}')
+        logger.debug(f'User mac: {mac}')
         if not mac:
             abort(400)
 
@@ -219,7 +218,7 @@ def code():
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
         phone_number = session.get('phone')
-        logging.debug(f'User phone: {phone_number}')
+        logger.debug(f'User phone: {phone_number}')
         if not phone_number:
             abort(400)
 
@@ -232,10 +231,10 @@ def code():
         sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
 
         if sms_error:
-            logging.error(f"Failed to send SMS to {phone_number}")
+            logger.error(f"Failed to send SMS to {phone_number}")
             abort(500)
 
-        logging.debug(f"{phone_number}'s code: {gen_code}")
+        logger.debug(f"{phone_number}'s code: {gen_code}")
 
     return render_template('auth/code.html', error=error)
 
@@ -243,14 +242,14 @@ def code():
 @auth_bp.route('/resend', methods=['POST'])
 def resend():
     phone_number = session.get('phone')
-    logging.debug(f'Session data before code: {[item for item in session.items()]}')
+    logger.debug(f'Session data before code: {[item for item in session.items()]}')
     if not phone_number:
         abort(400)
     if cache.get(f'dont_resend_{phone_number}'):
         abort(400, description=get_translate('errors.auth.code_alredy_sended'))
 
     user_code = cache.get(f'code_{phone_number}')
-    logging.debug(f'User cached code for {phone_number}: {user_code}')
+    logger.debug(f'User cached code for {phone_number}: {user_code}')
 
     if not user_code:
         resend_code = str(randint(0, 9999)).zfill(4)
@@ -264,7 +263,7 @@ def resend():
     if sms_error:
         abort(500)
 
-    logging.debug(f"Resend {phone_number}'s code: {resend_code}")
+    logger.debug(f"Resend {phone_number}'s code: {resend_code}")
 
     return jsonify({'success': True})
 
@@ -278,7 +277,7 @@ def _get_or_create_client(phone_number):
             db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
-            logging.debug(f"Create new number {phone_number} by time {now_time}")
+            logger.debug(f"Create new number {phone_number} by time {now_time}")
         except IntegrityError:
             db.session.rollback()
             db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
