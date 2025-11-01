@@ -71,6 +71,18 @@ class Config:
     SENDER = None
 
     @classmethod
+    def init_db(cls, app, db):
+        cls.settings = cls.load_settings()
+        cls.SQLALCHEMY_DATABASE_URI = os.environ.get('HOTSPOT_DB_URL', cls.settings.get('db_url', cls.DEFAULT_DB_URL))
+        app.config.from_object(cls)
+
+        db.init_app(app)
+
+        with app.app_context():
+            db.create_all()
+            logging.info("Database created.")
+
+    @classmethod
     def init_app(cls, app):
         cls.settings = cls.load_settings()
         cls.ADMIN = cls.configure_admin()
