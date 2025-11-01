@@ -79,8 +79,8 @@ def create_app(config_class=Config):
     if init:
         app = Flask(__name__)
 
-        configure_logging(app)
         config_class.init_app(app)
+        configure_logging(app)
         
         app.json = CustomJSONProvider(app)
 
