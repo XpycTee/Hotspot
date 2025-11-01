@@ -36,7 +36,7 @@ class CustomJSONProvider(DefaultJSONProvider):
     ensure_ascii = False
 
 
-def configure_logging(logger: logging.Logger):
+def configure_logger(logger: logging.Logger):
     gunicorn_error_logger = logging.getLogger('gunicorn.error')
     logger.handlers = gunicorn_error_logger.handlers
     logger.setLevel(gunicorn_error_logger.level)
@@ -52,7 +52,7 @@ def create_app(config_class=Config):
     required_env_vars = []
     
     init_logger = logging.getLogger("Init")
-    configure_logging(init_logger)
+    configure_logger(init_logger)
 
     init = check_required_env(required_env_vars, init_logger)
 
@@ -60,7 +60,7 @@ def create_app(config_class=Config):
         app = Flask(__name__)
 
         config_class.init_app(app)
-        configure_logging(app.logger)
+        configure_logger(app.logger)
         
         app.json = CustomJSONProvider(app)
 
