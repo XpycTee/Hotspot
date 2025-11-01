@@ -37,7 +37,7 @@ class Config:
     DEFAULT_ADMIN_LOCKOUT_TIME = 5
     DEFAULT_COMPANY_NAME = 'Default Company'
     DEFAULT_DB_URL = f"sqlite:///{os.path.join(basedir, 'config/hotspot.db')}"
-    DEFAULT_CAHCE_URL = "memcached://localhost:11211"
+    DEFAULT_CAHCE_URL = "memcached+unix:///tmp/memcached.sock"
     USER_TYPES = ['guest', 'employee']
     CACHE_TYPES = {
         'redis': "RedisCache",
@@ -102,19 +102,26 @@ class Config:
         parsed_url = urlparse(url)
 
         scheme = parsed_url.scheme
-        cls.CACHE_TYPE = cls.CACHE_TYPES.get(scheme)
-
+        
         if scheme == 'redis':
+            cls.CACHE_TYPE = "redis"
             cls.CACHE_REDIS_URL = url
+        elif scheme == 'memcached+unix':
+            server = f"unix:{parsed_url.path}"
+            cls.CACHE_TYPE = "memcached"
+            cls.CACHE_MEMCACHED_SERVERS = [server]
         elif scheme == 'memcached':
             server = f"{parsed_url.hostname}:{parsed_url.port}"
+            cls.CACHE_TYPE = "memcached"
             cls.CACHE_MEMCACHED_SERVERS = [server]
         elif scheme == 'saslmemcached':
+            cls.CACHE_TYPE = "saslmemcached"
             cls.CACHE_MEMCACHED_USERNAME = parsed_url.username
             cls.CACHE_MEMCACHED_PASSWORD = parsed_url.password
             server = f"{parsed_url.hostname}:{parsed_url.port}"
             cls.CACHE_MEMCACHED_SERVERS = [server]
         elif scheme == 'file':
+            cls.CACHE_TYPE = "file"
             cls.CACHE_DIR = parsed_url.path
         else:
             raise NotImplementedError(f"Not implemented cache {scheme}")
