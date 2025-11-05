@@ -85,10 +85,13 @@ def _mask_sensetive_session(session: ItemsView[str, Any]):
     for k, v in session:
         if k == "phone":
             result[k] = _mask_phone(v)
-        if k == "mac":
+        elif k == "mac":
             result[k] = _mask_mac(v)
-        if k in sensetive:
+        elif k in sensetive:
             result[k] = '****'
+        else:
+            result[k] = v
+
     return result
 
 @auth_bp.route('/', methods=['POST', 'GET'])
