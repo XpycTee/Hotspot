@@ -5,6 +5,7 @@ import re
 
 from hashlib import md5
 from random import randint
+from typing import Any, ItemsView
 
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify
@@ -71,6 +72,25 @@ def _get_today() -> datetime.datetime:
         datetime.time(6, 0)
     )
 
+def _mask_phone(phone: str) -> str:
+    return '*'*(len(phone)-4) + phone[-4:]
+
+def _mask_mac(mac: str) -> str:
+    parts = re.split(r'[:-]', mac)
+    return 'XX:XX:XX:' + ':'.join(parts[3:])
+
+def _mask_sensetive_session(session: ItemsView[str, Any]):
+    sensetive = ["chap-id", "chap-challenge", "password"]
+    result = {}
+    for k, v in session:
+        if k == "phone":
+            result[k] = _mask_phone(v)
+        if k == "mac":
+            result[k] = _mask_mac(v)
+        if k in sensetive:
+            result[k] = '****'
+    return result
+
 @auth_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['link-login-only', 'link-orig', 'mac']
@@ -122,10 +142,10 @@ def sendin():
     try:
         db_phone.last_seen = now_time
         db.session.commit()
-        logger.debug(f"Update time {now_time} for number {phone_number}")
+        logger.debug(f"Update time {now_time} for number {_mask_phone(phone_number)}")
     except IntegrityError:
         db.session.rollback()
-        logger.error("Failed to update last_seen for phone number: %s", phone_number)
+        logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
     
     return render_template(
         'auth/sendin.html', 
@@ -146,7 +166,7 @@ def test_login():
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
-        logger.debug(f'Session data in test: {[item for item in session.items()]}')
+        logger.debug(f'Session data in test: {_mask_sensetive_session(session.items())}')
     return login()
 
 
@@ -158,14 +178,14 @@ def login():
     has_form = all(key in set(request.form.keys()) for key in required_keys)
     has_session = all(key in set(session.keys()) for key in required_keys)
 
-    logger.debug(f'Session data before form: {[item for item in session.items()]}')
+    logger.debug(f'Session data before form: {_mask_sensetive_session(session.items())}')
 
     if not has_form and not has_session:
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
 
-    logger.debug(f'Session data after form: {[item for item in session.items()]}')
+    logger.debug(f'Session data after form: {_mask_sensetive_session(session.items())}')
     mac = session.get('mac')
 
     db_client = WifiClient.query.filter_by(mac=mac).first()
@@ -189,7 +209,7 @@ def login():
 @auth_bp.route('/code', methods=['POST', 'GET'])
 def code():
     error = session.pop('error', None)
-    logger.debug(f'Session data before code: {[item for item in session.items()]}')
+    logger.debug(f'Session data before code: {_mask_sensetive_session(session.items())}')
     phone_number = request.form.get('phone')
 
     if phone_number:
@@ -201,7 +221,7 @@ def code():
         session['phone'] = phone_number
 
         mac = session.get('mac')
-        logger.debug(f'User mac: {mac}')
+        logger.debug(f'User mac: {_mask_mac(mac)}')
         if not mac:
             abort(400)
 
@@ -228,7 +248,7 @@ def code():
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
         phone_number = session.get('phone')
-        logger.debug(f'User phone: {phone_number}')
+        logger.debug(f'User phone: {_mask_phone(phone_number)}')
         if not phone_number:
             abort(400)
 
@@ -241,10 +261,10 @@ def code():
         sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
 
         if sms_error:
-            logger.error(f"Failed to send SMS to {phone_number}")
+            logger.error(f"Failed to send SMS to {_mask_phone(phone_number)}")
             abort(500)
 
-        logger.debug(f"{phone_number}'s code: {gen_code}")
+        logger.debug(f"{_mask_phone(phone_number)}'s code: {gen_code}")
 
     return render_template('auth/code.html', error=error)
 
@@ -252,14 +272,14 @@ def code():
 @auth_bp.route('/resend', methods=['POST'])
 def resend():
     phone_number = session.get('phone')
-    logger.debug(f'Session data before code: {[item for item in session.items()]}')
+    logger.debug(f'Session data before code: {_mask_sensetive_session(session.items())}')
     if not phone_number:
         abort(400)
     if cache.get(f'dont_resend_{phone_number}'):
         abort(400, description=get_translate('errors.auth.code_alredy_sended'))
 
     user_code = cache.get(f'code_{phone_number}')
-    logger.debug(f'User cached code for {phone_number}: {user_code}')
+    logger.debug(f'User cached code for {_mask_phone(phone_number)}: {user_code}')
 
     if not user_code:
         resend_code = str(randint(0, 9999)).zfill(4)
@@ -273,7 +293,7 @@ def resend():
     if sms_error:
         abort(500)
 
-    logger.debug(f"Resend {phone_number}'s code: {resend_code}")
+    logger.debug(f"Resend {_mask_phone(phone_number)}'s code: {resend_code}")
 
     return jsonify({'success': True})
 
@@ -287,7 +307,7 @@ def _get_or_create_client(phone_number):
             db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
             db.session.add(db_phone)
             db.session.commit()
-            logger.debug(f"Create new number {phone_number} by time {now_time}")
+            logger.debug(f"Create new number {_mask_phone(phone_number)} by time {now_time}")
         except IntegrityError:
             db.session.rollback()
             db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
