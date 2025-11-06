@@ -228,7 +228,7 @@ def login():
 
         if _check_employee(phone.phone_number) == db_client.employee:
             session['phone'] = phone.phone_number
-            logger.debug(f"Auth by mac: {_mask_mac(mac)}")
+            logger.debug(f"Auth by expiration")
             redirect_url = url_for('auth.sendin')
             return redirect(redirect_url, 302)
 
