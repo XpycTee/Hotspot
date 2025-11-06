@@ -6,6 +6,7 @@ import re
 from hashlib import md5
 from random import randint
 from typing import Any, ItemsView
+import uuid
 
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify, make_response
@@ -150,17 +151,13 @@ def sendin():
         db.session.rollback()
         logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
     
-    
-    response = make_response(render_template(
+    return render_template(
         'auth/sendin.html', 
         link_login_only=link_login_only, 
         username=username,
         password=password,
         link_orig=link_orig
-    ))
-
-    response.set_cookie("auth_id", phone_number, 60*60*24)
-    return response
+    )
 
 
 @auth_bp.route('/test_login', methods=['GET'])
@@ -376,16 +373,20 @@ def auth():
         # Обновление времени истечения
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-
-        expire_time = today_start + hotspot_user.get('delay')
+        delay = hotspot_user.get('delay')
+        expire_time = today_start + delay
         if expire_time < datetime.datetime.now():
             expire_time += datetime.timedelta(days=1)
 
         _create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
 
+        response = redirect(url_for('auth.sendin'), 302)
+        client_uuid = uuid.uuid4()
+        response.set_cookie("auth_id", client_uuid, delay)
+
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
-        return redirect(url_for('auth.sendin'), 302)
+        return response
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
