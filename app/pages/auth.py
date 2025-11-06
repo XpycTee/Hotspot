@@ -242,7 +242,8 @@ def code():
             hotspot_user = users_config['employee'] if is_employee else users_config['guest']
 
             today_start = _get_today()
-            expire_time = today_start + hotspot_user.get('delay')
+            delay = hotspot_user.get('delay')
+            expire_time = today_start + delay
             if expire_time < datetime.datetime.now():
                 expire_time += datetime.timedelta(days=1)
 
@@ -250,7 +251,10 @@ def code():
             db_client.employee = is_employee
             db.session.commit()
             redirect_url = url_for('auth.sendin')
-            return redirect(redirect_url, 302)
+            response = redirect(redirect_url, 302)
+            client_uuid = uuid.uuid5(name=f"{mac}/{phone_number}", namespace=uuid.NAMESPACE_DNS)
+            response.set_cookie("auth_id", client_uuid, delay)
+            return response
 
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
@@ -381,7 +385,7 @@ def auth():
         _create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
 
         response = redirect(url_for('auth.sendin'), 302)
-        client_uuid = uuid.uuid4()
+        client_uuid = uuid.uuid5(name=f"{mac}/{phone_number}", namespace=uuid.NAMESPACE_DNS)
         response.set_cookie("auth_id", client_uuid, delay)
 
         # Очистка кэша и редирект
