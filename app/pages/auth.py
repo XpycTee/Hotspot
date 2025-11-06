@@ -211,7 +211,7 @@ def login():
 
                 if _check_employee(phone_number) == db_client.employee:
                     session['phone'] = phone_number
-                    
+                    logger.debug(f"Auth by auth_id: {auth_id}")
                     redirect_url = url_for('auth.sendin')
                     return redirect(redirect_url, 302)
 
@@ -228,7 +228,7 @@ def login():
 
         if _check_employee(phone.phone_number) == db_client.employee:
             session['phone'] = phone.phone_number
-            
+            logger.debug(f"Auth by mac: {_mask_mac(mac)}")
             redirect_url = url_for('auth.sendin')
             return redirect(redirect_url, 302)
 
@@ -273,7 +273,7 @@ def code():
             db_client.employee = is_employee
             db.session.commit()
             redirect_url = url_for('auth.sendin')
-
+            logger.debug("Auth by mac&phone")
             return redirect(redirect_url, 302)
 
     # Ensure phone_number is retrieved from session if not provided in the request
@@ -406,6 +406,7 @@ def auth():
 
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
+        logger.debug("Auth by code")
         return redirect(url_for('auth.sendin'), 302)
     else:
         session.setdefault('tries', 0)
