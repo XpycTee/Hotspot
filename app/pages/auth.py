@@ -202,17 +202,18 @@ def login():
     auth_id = request.cookies.get('auth_id')
     if auth_id:
         mac_phone = cache.get(auth_id)
-        mac, phone_number = mac_phone.split('/')
-        db_client = WifiClient.query.filter_by(mac=mac).first()
-        if db_client and datetime.datetime.now() < db_client.expiration:
-            if Blacklist.query.filter_by(phone_number=phone_number).first():
-                abort(403)
+        if mac_phone:
+            mac, phone_number = mac_phone.split('/')
+            db_client = WifiClient.query.filter_by(mac=mac).first()
+            if db_client and datetime.datetime.now() < db_client.expiration:
+                if Blacklist.query.filter_by(phone_number=phone_number).first():
+                    abort(403)
 
-            if _check_employee(phone_number) == db_client.employee:
-                session['phone'] = phone_number
-                
-                redirect_url = url_for('auth.sendin')
-                return redirect(redirect_url, 302)
+                if _check_employee(phone_number) == db_client.employee:
+                    session['phone'] = phone_number
+                    
+                    redirect_url = url_for('auth.sendin')
+                    return redirect(redirect_url, 302)
 
     mac = session.get('mac')
 
