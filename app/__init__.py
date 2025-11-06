@@ -1,5 +1,4 @@
-import os
-import logging
+from logging import Logger, getLogger
 
 from app.pages.auth import auth_bp
 from app.pages.admin import admin_bp
@@ -14,70 +13,30 @@ from settings import Config
 from extensions import cache, get_translate
 
 
-def check_required_env(required: list, logger=logging.getLogger("Init")) -> bool:
-    missing_vars = []
-    env_keys = set(os.environ.keys())
-    for env_var in required:
-        if isinstance(env_var, list):
-            if not any(key in env_keys for key in env_var):
-                missing_vars.append(env_var)
-        else:
-            if env_var not in env_keys:
-                missing_vars.append(env_var)
-    
-    if missing_vars:
-        flat_missing_vars = [var if isinstance(var, str) else "/".join(var) for var in missing_vars]
-        logger.error(f'Required environment variables not set: {", ".join(flat_missing_vars)}')
-        return False
-
-    return True
-
 class CustomJSONProvider(DefaultJSONProvider):
     ensure_ascii = False
 
 
-def configure_logger(logger: logging.Logger):
-    gunicorn_error_logger = logging.getLogger('gunicorn.error')
-    logger.handlers = gunicorn_error_logger.handlers
-    logger.setLevel(gunicorn_error_logger.level)
-    logger.propagate = False
-
-
 def create_app(config_class=Config):
-    log_dir = 'logs'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    app = Flask(__name__)
 
-     # Check for required environment variables
-    required_env_vars = []
+    config_class.init_app(app)
     
-    init_logger = logging.getLogger("Init")
-    configure_logger(init_logger)
+    app.json = CustomJSONProvider(app)
 
-    init = check_required_env(required_env_vars, init_logger)
+    db.init_app(app)
+    cache.init_app(app)
 
-    if init:
-        app = Flask(__name__)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(error_bp)
 
-        config_class.init_app(app)
-        configure_logger(app.logger)
-        
-        app.json = CustomJSONProvider(app)
+    with app.app_context():
+        db.create_all()
 
-        db.init_app(app)
-        cache.init_app(app)
+    # Добавляем контекстный процессор
+    @app.context_processor
+    def inject_get_translate():
+        return dict(get_translate=get_translate)
 
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(admin_bp)
-        app.register_blueprint(error_bp)
-
-        with app.app_context():
-            db.create_all()
-
-        # Добавляем контекстный процессор
-        @app.context_processor
-        def inject_get_translate():
-            return dict(get_translate=get_translate)
-
-        return app
-    return None
+    return app

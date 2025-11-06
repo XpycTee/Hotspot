@@ -4,6 +4,7 @@ import os
 from datetime import timedelta
 from urllib.parse import urlparse
 
+from flask import Flask
 import yaml
 
 from app.sms.huawei import HuaweiSMSSender
@@ -69,9 +70,10 @@ class Config:
     COMPANY_NAME = None
     DEBUG = None
     SENDER = None
+    LOGGER = None
 
     @classmethod
-    def init_db(cls, app, db):
+    def init_db(cls, app: Flask, db):
         cls.settings = cls.load_settings()
         cls.SQLALCHEMY_DATABASE_URI = os.environ.get('HOTSPOT_DB_URL', cls.settings.get('db_url', cls.DEFAULT_DB_URL))
         app.config.from_object(cls)
@@ -83,11 +85,13 @@ class Config:
             print("Database created.")
 
     @classmethod
-    def init_app(cls, app):
+    def init_app(cls, app: Flask):
+        cls.LOGGER = logging.getLogger("Config")
+        cls.configure_logger(cls.LOGGER)
         cls.settings = cls.load_settings()
         cls.ADMIN = cls.configure_admin()
         cls.SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', cls.settings.get('flask_secret_key'))
-        logging.debug(cls.SECRET_KEY)
+        cls.LOGGER.debug(cls.SECRET_KEY)
         cls.LANGUAGE_DEFAULT = os.environ.get('HOTSPOT_LANGUAGE', cls.settings.get('language', 'en'))
         cls.LANGUAGE_CONTENT = cls.load_language_files()
         cls.configure_cache()
@@ -98,16 +102,24 @@ class Config:
         cls.SENDER = cls.configure_sms_sender()
 
         app.config.from_object(cls)
+        cls.configure_logger(app.logger)
 
     @classmethod
     def load_settings(cls):
         with open(cls.SETTINGS_FILE_PATH, "r", encoding="utf-8") as settings_file:
             return yaml.safe_load(settings_file).get('settings', {})
 
+    @staticmethod
+    def configure_logger(logger: logging.Logger):
+        gunicorn_error_logger = logging.getLogger('gunicorn.error')
+        logger.handlers = gunicorn_error_logger.handlers
+        logger.setLevel(gunicorn_error_logger.level)
+        logger.propagate = False
+
     @classmethod
     def configure_cache(cls):
         url = os.environ.get('CACHE_URL', cls.settings.get('cache_url', cls.DEFAULT_CAHCE_URL))
-        logging.debug(url)
+        cls.LOGGER.debug(url)
 
         if url == 'simple':
             cls.CACHE_TYPE = cls.CACHE_TYPES.get(url)
@@ -139,6 +151,7 @@ class Config:
             cls.CACHE_DIR = parsed_url.path
         else:
             raise NotImplementedError(f"Not implemented cache {scheme}")
+    
     @classmethod
     def configure_admin(cls):
         admin_settings = cls.settings.get('admin', {})
