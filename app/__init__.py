@@ -1,5 +1,5 @@
-from logging import Logger, getLogger
-
+import uuid
+from app.database.models import WifiClient
 from app.pages.auth import auth_bp
 from app.pages.admin import admin_bp
 from app.pages.error import error_bp
@@ -33,6 +33,13 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
+        wifi_clients = WifiClient.query.all()
+        for client in wifi_clients:
+            mac = client.mac
+            phone_number = client.phone.phone_number
+            name = f"{mac}/{phone_number}"
+            client_uuid = uuid.uuid5(name=name, namespace=uuid.NAMESPACE_DNS)
+            cache.set(str(client_uuid), name)
 
     # Добавляем контекстный процессор
     @app.context_processor

@@ -1,6 +1,5 @@
 # Imports
 import datetime
-import logging
 import re
 
 from hashlib import md5
@@ -11,7 +10,7 @@ import uuid
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify, make_response
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
@@ -115,14 +114,14 @@ def sendin():
     phone_number = session.get('phone')
     if not phone_number:
         abort(400)
-
+    logger.debug(f'Session data in sendin: {_mask_sensetive_session(session.items())}')
     is_employee = _check_employee(phone_number)
 
     username = 'employee' if is_employee else 'guest'
     password = current_app.config['HOTSPOT_USERS'][username].get('password')
     if not password:
         abort(500)
-
+    mac = session.get('mac')
     link_login_only = session.get('link-login-only')
     link_orig = session.get('link-orig')
 
@@ -151,13 +150,22 @@ def sendin():
         db.session.rollback()
         logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
     
-    return render_template(
+    response = make_response(render_template(
         'auth/sendin.html', 
         link_login_only=link_login_only, 
         username=username,
         password=password,
         link_orig=link_orig
-    )
+    ))
+
+    users_config = current_app.config['HOTSPOT_USERS']
+    hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+    delay = hotspot_user.get('delay')
+    name = f"{mac}/{phone_number}"
+    client_uuid = uuid.uuid5(name=name, namespace=uuid.NAMESPACE_DNS)
+    response.set_cookie("auth_id", str(client_uuid), delay)
+    cache.set(str(client_uuid), name)
+    return response
 
 
 @auth_bp.route('/test_login', methods=['GET'])
@@ -178,9 +186,21 @@ def test_login():
 def login():
     error = session.pop('error', None)
 
-    auth_id_cookie = request.cookies.get('auth_id', "Empty")
-    logger.debug(f"Cookie auth_id: {auth_id_cookie}")
-    
+    auth_id_cookie = request.cookies.get('auth_id')
+    if auth_id_cookie is not None:
+        mac_phone = cache.get(auth_id_cookie)
+        mac, phone_number = mac_phone.split('/')
+        db_client = WifiClient.query.filter_by(mac=mac).first()
+        if db_client and datetime.datetime.now() < db_client.expiration:
+            if Blacklist.query.filter_by(phone_number=phone_number).first():
+                abort(403)
+
+            if _check_employee(phone_number) == db_client.employee:
+                session['phone'] = phone_number
+                
+                redirect_url = url_for('auth.sendin')
+                return redirect(redirect_url, 302)
+
     required_keys = ['link-login-only', 'link-orig', 'mac']
     has_form = all(key in set(request.form.keys()) for key in required_keys)
     has_session = all(key in set(session.keys()) for key in required_keys)
@@ -206,7 +226,7 @@ def login():
 
         if _check_employee(phone.phone_number) == db_client.employee:
             session['phone'] = phone.phone_number
-
+            
             redirect_url = url_for('auth.sendin')
             return redirect(redirect_url, 302)
 
@@ -251,10 +271,8 @@ def code():
             db_client.employee = is_employee
             db.session.commit()
             redirect_url = url_for('auth.sendin')
-            response = redirect(redirect_url, 302)
-            client_uuid = uuid.uuid5(name=f"{mac}/{phone_number}", namespace=uuid.NAMESPACE_DNS)
-            response.set_cookie("auth_id", str(client_uuid), delay)
-            return response
+
+            return redirect(redirect_url, 302)
 
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
@@ -384,13 +402,9 @@ def auth():
 
         _create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
 
-        response = redirect(url_for('auth.sendin'), 302)
-        client_uuid = uuid.uuid5(name=f"{mac}/{phone_number}", namespace=uuid.NAMESPACE_DNS)
-        response.set_cookie("auth_id", str(client_uuid), delay)
-
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
-        return response
+        return redirect(url_for('auth.sendin'), 302)
     else:
         session.setdefault('tries', 0)
         session['tries'] += 1
