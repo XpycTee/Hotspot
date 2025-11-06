@@ -186,21 +186,6 @@ def test_login():
 def login():
     error = session.pop('error', None)
 
-    auth_id_cookie = request.cookies.get('auth_id')
-    if auth_id_cookie is not None:
-        mac_phone = cache.get(auth_id_cookie)
-        mac, phone_number = mac_phone.split('/')
-        db_client = WifiClient.query.filter_by(mac=mac).first()
-        if db_client and datetime.datetime.now() < db_client.expiration:
-            if Blacklist.query.filter_by(phone_number=phone_number).first():
-                abort(403)
-
-            if _check_employee(phone_number) == db_client.employee:
-                session['phone'] = phone_number
-                
-                redirect_url = url_for('auth.sendin')
-                return redirect(redirect_url, 302)
-
     required_keys = ['link-login-only', 'link-orig', 'mac']
     has_form = all(key in set(request.form.keys()) for key in required_keys)
     has_session = all(key in set(session.keys()) for key in required_keys)
@@ -213,6 +198,22 @@ def login():
         [session.update({k: v}) for k, v in request.values.items()]
 
     logger.debug(f'Session data after form: {_mask_sensetive_session(session.items())}')
+
+    auth_id = request.cookies.get('auth_id')
+    if auth_id:
+        mac_phone = cache.get(auth_id)
+        mac, phone_number = mac_phone.split('/')
+        db_client = WifiClient.query.filter_by(mac=mac).first()
+        if db_client and datetime.datetime.now() < db_client.expiration:
+            if Blacklist.query.filter_by(phone_number=phone_number).first():
+                abort(403)
+
+            if _check_employee(phone_number) == db_client.employee:
+                session['phone'] = phone_number
+                
+                redirect_url = url_for('auth.sendin')
+                return redirect(redirect_url, 302)
+
     mac = session.get('mac')
 
     db_client = WifiClient.query.filter_by(mac=mac).first()
