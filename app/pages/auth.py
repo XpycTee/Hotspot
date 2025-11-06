@@ -8,7 +8,7 @@ from random import randint
 from typing import Any, ItemsView
 
 # Importing Blueprint for creating Flask blueprints
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, make_response
 
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
@@ -88,7 +88,7 @@ def _mask_sensetive_session(session: ItemsView[str, Any]):
         elif k == "mac":
             result[k] = _mask_mac(v)
         elif k in sensetive:
-            result[k] = '****'
+            result[k] = '******'
         else:
             result[k] = v
 
@@ -150,13 +150,17 @@ def sendin():
         db.session.rollback()
         logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
     
-    return render_template(
+    
+    response = make_response(render_template(
         'auth/sendin.html', 
         link_login_only=link_login_only, 
         username=username,
         password=password,
         link_orig=link_orig
-    )
+    ))
+
+    response.set_cookie("auth_id", phone_number, 60*60*24)
+    return response
 
 
 @auth_bp.route('/test_login', methods=['GET'])
@@ -177,6 +181,9 @@ def test_login():
 def login():
     error = session.pop('error', None)
 
+    auth_id_cookie = request.cookies.get('auth_id', "Empty")
+    logger.debug(f"Cookie auth_id: {auth_id_cookie}")
+    
     required_keys = ['link-login-only', 'link-orig', 'mac']
     has_form = all(key in set(request.form.keys()) for key in required_keys)
     has_session = all(key in set(session.keys()) for key in required_keys)
