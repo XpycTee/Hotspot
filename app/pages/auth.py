@@ -253,7 +253,7 @@ def code():
             redirect_url = url_for('auth.sendin')
             response = redirect(redirect_url, 302)
             client_uuid = uuid.uuid5(name=f"{mac}/{phone_number}", namespace=uuid.NAMESPACE_DNS)
-            response.set_cookie("auth_id", client_uuid, delay)
+            response.set_cookie("auth_id", str(client_uuid), delay)
             return response
 
     # Ensure phone_number is retrieved from session if not provided in the request
@@ -386,7 +386,7 @@ def auth():
 
         response = redirect(url_for('auth.sendin'), 302)
         client_uuid = uuid.uuid5(name=f"{mac}/{phone_number}", namespace=uuid.NAMESPACE_DNS)
-        response.set_cookie("auth_id", client_uuid, delay)
+        response.set_cookie("auth_id", str(client_uuid), delay)
 
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
