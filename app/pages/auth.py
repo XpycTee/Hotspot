@@ -163,7 +163,7 @@ def sendin():
     hotspot_user = users_config['employee'] if is_employee else users_config['guest']
     delay: datetime.timedelta = hotspot_user.get('delay')
     name = f"{mac}/{phone_number}"
-    cache.set(str(client_uuid), name, timeout=delay.seconds())
+    cache.set(str(client_uuid), name, timeout=delay.seconds)
     return response
 
 
