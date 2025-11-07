@@ -87,6 +87,8 @@ def _mask_sensetive_session(session: ItemsView[str, Any]):
             result[k] = _mask_phone(v)
         elif k == "mac":
             result[k] = _mask_mac(v)
+        elif k == "fingerprint":
+            result[k] = v[:12]
         elif k in sensetive:
             result[k] = '******'
         else:
