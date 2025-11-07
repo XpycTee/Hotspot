@@ -202,36 +202,19 @@ def login():
     mac = session.get('mac')
 
     db_client = WifiClient.query.filter_by(mac=mac).first()
-    if db_client:
-        if datetime.datetime.now() < db_client.expiration:
-            phone = db_client.phone
-            if not phone:
-                abort(500)
+    if db_client and datetime.datetime.now() < db_client.expiration:
+        phone = db_client.phone
+        if not phone:
+            abort(500)
 
-            if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
-                abort(403)
+        if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
+            abort(403)
 
-            if _check_employee(phone.phone_number) == db_client.employee:
-                session['phone'] = phone.phone_number
-                logger.debug(f"Auth by expiration")
-                redirect_url = url_for('auth.sendin')
-                return redirect(redirect_url, 302)
-    
-    auth_id = session.get('uuid')
-    if auth_id:
-        mac_phone = cache.get(auth_id)
-        if mac_phone:
-            mac, phone_number = mac_phone.split('/')
-            db_client = WifiClient.query.filter_by(mac=mac).first()
-            if db_client and datetime.datetime.now() < db_client.expiration:
-                if Blacklist.query.filter_by(phone_number=phone_number).first():
-                    abort(403)
-
-                if _check_employee(phone_number) == db_client.employee:
-                    session['phone'] = phone_number
-                    logger.debug(f"Auth by auth_id")
-                    redirect_url = url_for('auth.sendin')
-                    return redirect(redirect_url, 302)
+        if _check_employee(phone.phone_number) == db_client.employee:
+            session['phone'] = phone.phone_number
+            logger.debug(f"Auth by expiration")
+            redirect_url = url_for('auth.sendin')
+            return redirect(redirect_url, 302)
 
     return render_template('auth/login.html', error=error)
 
@@ -254,9 +237,19 @@ def code():
         logger.debug(f'User mac: {_mask_mac(mac)}')
         if not mac:
             abort(400)
-
+        
         db_client = WifiClient.query.filter_by(mac=mac).first()
+        auth_method = "mac&phone"
 
+        if not db_client:
+            auth_id = session.get('uuid')
+            if auth_id:
+                cache_mac_phone = cache.get(auth_id)
+                if cache_mac_phone:
+                    cache_mac = cache_mac_phone.split('/')[0]
+                    db_client = WifiClient.query.filter_by(mac=cache_mac).first()
+                    auth_method = "uuid&phone"
+        
         if db_client and db_client.phone and (db_client.phone.phone_number == phone_number or db_client.phone.phone_number == phone_number[1:]):
             is_employee = _check_employee(phone_number)
 
@@ -274,7 +267,7 @@ def code():
             db_client.employee = is_employee
             db.session.commit()
             redirect_url = url_for('auth.sendin')
-            logger.debug("Auth by mac&phone")
+            logger.debug(f"Auth by {auth_method}")
             return redirect(redirect_url, 302)
 
     # Ensure phone_number is retrieved from session if not provided in the request
