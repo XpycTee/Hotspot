@@ -199,6 +199,24 @@ def login():
 
     logger.debug(f'Session data after form: {_mask_sensetive_session(session.items())}')
 
+    mac = session.get('mac')
+
+    db_client = WifiClient.query.filter_by(mac=mac).first()
+    if db_client:
+        if datetime.datetime.now() < db_client.expiration:
+            phone = db_client.phone
+            if not phone:
+                abort(500)
+
+            if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
+                abort(403)
+
+            if _check_employee(phone.phone_number) == db_client.employee:
+                session['phone'] = phone.phone_number
+                logger.debug(f"Auth by expiration")
+                redirect_url = url_for('auth.sendin')
+                return redirect(redirect_url, 302)
+    
     auth_id = session.get('uuid')
     if auth_id:
         mac_phone = cache.get(auth_id)
@@ -211,26 +229,9 @@ def login():
 
                 if _check_employee(phone_number) == db_client.employee:
                     session['phone'] = phone_number
-                    logger.debug(f"Auth by auth_id: {auth_id}")
+                    logger.debug(f"Auth by auth_id")
                     redirect_url = url_for('auth.sendin')
                     return redirect(redirect_url, 302)
-
-    mac = session.get('mac')
-
-    db_client = WifiClient.query.filter_by(mac=mac).first()
-    if db_client and datetime.datetime.now() < db_client.expiration:
-        phone = db_client.phone
-        if not phone:
-            abort(500)
-
-        if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
-            abort(403)
-
-        if _check_employee(phone.phone_number) == db_client.employee:
-            session['phone'] = phone.phone_number
-            logger.debug(f"Auth by expiration")
-            redirect_url = url_for('auth.sendin')
-            return redirect(redirect_url, 302)
 
     return render_template('auth/login.html', error=error)
 
