@@ -122,6 +122,7 @@ def sendin():
     if not password:
         abort(500)
     mac = session.get('mac')
+    client_uuid = session.get('uuid')
     link_login_only = session.get('link-login-only')
     link_orig = session.get('link-orig')
 
@@ -160,11 +161,9 @@ def sendin():
 
     users_config = current_app.config['HOTSPOT_USERS']
     hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-    delay = hotspot_user.get('delay')
+    delay: datetime.timedelta = hotspot_user.get('delay')
     name = f"{mac}/{phone_number}"
-    client_uuid = uuid.uuid5(name=name, namespace=uuid.NAMESPACE_DNS)
-    response.set_cookie("auth_id", str(client_uuid), delay)
-    cache.set(str(client_uuid), name)
+    cache.set(str(client_uuid), name, timeout=delay.seconds())
     return response
 
 
@@ -199,7 +198,7 @@ def login():
 
     logger.debug(f'Session data after form: {_mask_sensetive_session(session.items())}')
 
-    auth_id = request.cookies.get('auth_id')
+    auth_id = session.get('uuid')
     if auth_id:
         mac_phone = cache.get(auth_id)
         if mac_phone:
