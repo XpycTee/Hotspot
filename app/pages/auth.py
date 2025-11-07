@@ -121,8 +121,7 @@ def sendin():
     password = current_app.config['HOTSPOT_USERS'][username].get('password')
     if not password:
         abort(500)
-    mac = session.get('mac')
-    client_uuid = session.get('uuid')
+    
     link_login_only = session.get('link-login-only')
     link_orig = session.get('link-orig')
 
@@ -135,6 +134,15 @@ def sendin():
         chap_challenge = _octal_string_to_bytes(chap_challenge)
         link_login_only = link_login_only.replace('https', 'http')
         password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+
+    client_uuid = session.get('uuid')
+    if client_uuid:
+        mac = session.get('mac')
+        users_config = current_app.config['HOTSPOT_USERS']
+        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+        delay: datetime.timedelta = hotspot_user.get('delay')
+        name = f"{mac}/{phone_number}"
+        cache.set(str(client_uuid), name, timeout=delay.seconds)
 
     cache.delete(f'code_{phone_number}')
     session.clear()
@@ -151,20 +159,13 @@ def sendin():
         db.session.rollback()
         logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
     
-    response = make_response(render_template(
+    return render_template(
         'auth/sendin.html', 
         link_login_only=link_login_only, 
         username=username,
         password=password,
         link_orig=link_orig
-    ))
-
-    users_config = current_app.config['HOTSPOT_USERS']
-    hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-    delay: datetime.timedelta = hotspot_user.get('delay')
-    name = f"{mac}/{phone_number}"
-    cache.set(str(client_uuid), name, timeout=delay.seconds)
-    return response
+    )
 
 
 @auth_bp.route('/test_login', methods=['GET'])
