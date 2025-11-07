@@ -135,14 +135,14 @@ def sendin():
         link_login_only = link_login_only.replace('https', 'http')
         password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
 
-    client_uuid = session.get('uuid')
-    if client_uuid:
+    fingerprint = session.get('fingerprint')
+    if fingerprint:
         mac = session.get('mac')
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        delay: datetime.timedelta = hotspot_user.get('delay')
+        delay = hotspot_user.get('delay')
         name = f"{mac}/{phone_number}"
-        cache.set(str(client_uuid), name, timeout=delay.seconds)
+        cache.set(fingerprint, name, timeout=delay.seconds)
 
     cache.delete(f'code_{phone_number}')
     session.clear()
@@ -242,13 +242,13 @@ def code():
         auth_method = "mac&phone"
 
         if not db_client:
-            auth_id = session.get('uuid')
-            if auth_id:
-                cache_mac_phone = cache.get(auth_id)
+            fingerprint = session.get('fingerprint')
+            if fingerprint:
+                cache_mac_phone = cache.get(fingerprint)
                 if cache_mac_phone:
                     cache_mac = cache_mac_phone.split('/')[0]
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
-                    auth_method = "uuid&phone"
+                    auth_method = "fingerprint&phone"
         
         if db_client and db_client.phone and (db_client.phone.phone_number == phone_number or db_client.phone.phone_number == phone_number[1:]):
             is_employee = _check_employee(phone_number)
