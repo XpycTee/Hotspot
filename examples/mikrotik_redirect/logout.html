@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en" class="p-0 m-0 h-100">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="css/style.css">
-    <title>Hotspot Login</title>
-    <script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="-1">
+    <title>АН СОВА | Hotspot</title>
+    <link href="css/app.css" rel="stylesheet">
+	<link href="css/style.css" rel="stylesheet">
+	<script>
 		function openLogin() {
 		if (window.name != 'hotspot_logout') return true;
 		open('$(link-login)', '_blank', '');
@@ -15,21 +17,34 @@
 		}
 	</script>
 </head>
-<body>
-    <form name="login" action="$(link-login)" onSubmit="return openLogin()"  method="post">
-        <p class="mt-3"><center><h3>You are not authorised</h3></center></p>
-        <table>
-            <tr><td>Username</td><td>$(username)</td></tr>
-            <tr><td>IP address</td><td>$(ip)</td></tr>
-            <tr><td>MAC address</td><td>$(mac)</td></tr>
-            <tr><td>Session time</td><td>$(uptime)</td></tr>
-            $(if session-time-left)
-            <tr><td>Time left</td><td>$(session-time-left)</td></tr>
-            $(endif)
-            <tr><td>Bytes up / down:</td><td>$(bytes-in-nice) / $(bytes-out-nice)</td></tr>
-        </table>
-        <br>
-        <input type="submit" name="login" value="Login">
-    </form>
+<body class="p-0 m-0 h-100">
+    <div id="app" class="p-0 m-0 h-100">
+        <main class="p-0 m-0 h-100">
+            <div id="layout" class="h-100">
+                <div class="row justify-content-center" style="margin: 0px !important;">
+                    <div id="login-form" class="col-xs-auto align-self-center">
+                        <div class="card p-4 shadow" style="border-radius: 7px;">
+                            <div class="justify-content-between" style="display: flex;"><div><img src="images/logo_hotspot_01.svg"></div> <!----></div>
+                            <p class="mt-3"><center><h3>Вы не авторизованны</h3></center></p>
+                            <form name="login" id="login" action="$(link-login)" onSubmit="return openLogin()" style="display: flex; flex-direction: column; flex: 1 1 0%;">
+								<table>  
+									<tr><td>Username</td><td>$(username)</td></tr>
+									<tr><td>IP address</td><td>$(ip)</td></tr>
+									<tr><td>MAC address</td><td>$(mac)</td></tr>
+									<tr><td>Session time</td><td>$(uptime)</td></tr>
+									$(if session-time-left)
+									<tr><td>Time left</td><td>$(session-time-left)</td></tr>
+									$(endif)
+									<tr><td>Bytes up / down:</td><td>$(bytes-in-nice) / $(bytes-out-nice)</td></tr>
+								</table>
+                                <input type="submit" class="button login-button mt-2" name="login" value="Вход">
+								<div style="flex: 1 1 0%;"><!----></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 </body>
 </html>
