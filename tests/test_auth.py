@@ -258,7 +258,7 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
 
-    def test_resend_route_have_code(self):
+    def test_resend_route_cache_code(self):
         cache.set('code:79999999999', '1234')
 
         mock_sender = MagicMock()
