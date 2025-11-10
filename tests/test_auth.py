@@ -56,6 +56,7 @@ class TestAuthViews(unittest.TestCase):
         }
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        self.app.config['CACHE_TYPE'] = 'simple'
 
         db.init_app(self.app)
         cache.init_app(self.app)
@@ -73,6 +74,7 @@ class TestAuthViews(unittest.TestCase):
             new_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=new_emp_client)
             db.session.add(new_wifi_client)
             db.session.commit()
+            cache.set("0123456789abcdef", {"mac": new_wifi_client.mac, "phone": new_wifi_client.phone.phone_number})
 
             new_blocked_phone = Blacklist(phone_number='79999999123')
             db.session.add(new_blocked_phone)
@@ -209,7 +211,7 @@ class TestAuthViews(unittest.TestCase):
             response = c.get('/sendin')
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'name="password" value="employee_pass"', response.data)
-
+    
     def test_code_route(self):
         test_init_data = {'phone': '71234567890'}
         test_blocked_init_data = {'phone': '79999999123'}
@@ -222,7 +224,28 @@ class TestAuthViews(unittest.TestCase):
             # Test blocked phone
             response = c.post('/code', data=test_blocked_init_data)
             self.assertEqual(response.status_code, 403)
-    
+
+    def test_code_route_mac(self):
+        test_init_data = {
+            'phone': '79999999999'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '12:34:56:78:9A:BC'
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+
+    def test_code_route_fp(self):
+        test_init_data = {
+            'phone': '79999999999'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:FF'
+                sess['fingerprint'] = '0123456789abcdef'
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+
     def test_code_route_session(self):
         test_init_data = {'phone': '71234567890'}
         with self.client as c:
