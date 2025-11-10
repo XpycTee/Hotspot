@@ -214,14 +214,17 @@ class TestAuthViews(unittest.TestCase):
     
     def test_code_route(self):
         test_init_data = {'phone': '71234567890'}
-        test_blocked_init_data = {'phone': '79999999123'}
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
 
-            # Test blocked phone
+    def test_code_route_blocked(self):
+        test_blocked_init_data = {'phone': '79999999123'}
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_blocked_init_data)
             self.assertEqual(response.status_code, 403)
 
@@ -254,6 +257,42 @@ class TestAuthViews(unittest.TestCase):
                 sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
+
+    def test_resend_route_have_code(self):
+        cache.set('code:79999999999', '1234')
+
+        mock_sender = MagicMock()
+        mock_sender.send_sms.return_value = None
+        self.app.config['SENDER'] = mock_sender
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79999999999'
+            response = c.post('/resend')
+            mock_sender.send_sms.assert_called_once_with('79999999999', 'Your code is 1234')
+            
+            self.assertEqual(response.status_code, 200)
+
+    @patch('app.pages.auth.randint', return_value=9876)
+    def test_resend_route_rnd_code(self, _):
+        mock_sender = MagicMock()
+        mock_sender.send_sms.return_value = None
+        self.app.config['SENDER'] = mock_sender
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79999999999'
+            response = c.post('/resend')
+            mock_sender.send_sms.assert_called_once_with('79999999999', 'Your code is 9876')
+            self.assertEqual(response.status_code, 200)
+    
+    def test_resend_route_sended(self):
+        cache.set('sended:79999999999', True)
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79999999999'
+            response = c.post('/resend')
+            self.assertEqual(response.status_code, 400)
 
     @patch('app.pages.auth.cache')
     def test_auth_route(self, mock_cache):
