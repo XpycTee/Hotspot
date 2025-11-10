@@ -144,9 +144,9 @@ def sendin():
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
         delay = hotspot_user.get('delay')
         fp_data = {"mac": mac, "phone": phone_number}
-        cache.set(fingerprint, fp_data, timeout=delay.seconds)
+        cache.set(f"fingerprint:{fingerprint}", fp_data, timeout=delay.seconds)
 
-    cache.delete(f'code_{phone_number}')
+    cache.delete(f'code:{phone_number}')
     session.clear()
     session['link-orig'] = link_orig
 
@@ -244,7 +244,7 @@ def code():
         auth_method = "mac&phone"
 
         if not db_client and (fingerprint := session.get('fingerprint')):
-            if fp_data := cache.get(fingerprint):
+            if fp_data := cache.get(f"fingerprint:{fingerprint}"):
                 if cache_mac := fp_data.get("mac"):
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
                     auth_method = "fingerprint&phone"
@@ -276,10 +276,10 @@ def code():
         if not phone_number:
             abort(400)
 
-    if not cache.get(f'code_{phone_number}'):
+    if not cache.get(f'code:{phone_number}'):
         gen_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'code_{phone_number}', gen_code, timeout=5 * 60)
-        cache.set(f'dont_resend_{phone_number}', "true", timeout=60)
+        cache.set(f'code:{phone_number}', gen_code, timeout=5 * 60)
+        cache.set(f'sended:{phone_number}', True, timeout=60)
 
         sender = current_app.config.get('SENDER')
         sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
@@ -299,18 +299,18 @@ def resend():
     logger.debug(f'Session data before code: {_mask_sensetive_session(session.items())}')
     if not phone_number:
         abort(400)
-    if cache.get(f'dont_resend_{phone_number}'):
+    if cache.get(f'sended:{phone_number}'):
         abort(400, description=get_translate('errors.auth.code_alredy_sended'))
 
-    user_code = cache.get(f'code_{phone_number}')
+    user_code = cache.get(f'code:{phone_number}')
     logger.debug(f'User cached code for {_mask_phone(phone_number)}: {user_code}')
 
     if not user_code:
         resend_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'code_{phone_number}', resend_code, timeout=5 * 60)
+        cache.set(f'code:{phone_number}', resend_code, timeout=5 * 60)
     else:
         resend_code = user_code
-    cache.set(f'dont_resend_{phone_number}', "true", timeout=60)
+    cache.set(f'sended:{phone_number}', True, timeout=60)
 
     sender = current_app.config.get('SENDER')
     sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=resend_code))
@@ -369,7 +369,7 @@ def auth():
         abort(400)
     
     form_code = request.form.get('code')
-    user_code = cache.get(f'code_{phone_number}')
+    user_code = cache.get(f'code:{phone_number}')
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
@@ -398,7 +398,7 @@ def auth():
         _create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
 
         # Очистка кэша и редирект
-        cache.delete(f'code_{phone_number}')
+        cache.delete(f'code:{phone_number}')
         logger.debug("Auth by code")
         return redirect(url_for('auth.sendin'), 302)
     else:
@@ -409,7 +409,7 @@ def auth():
             session['error'] = get_translate('errors.auth.bad_code_all')
             session.pop('tries', None)
             session.pop('phone', None)
-            cache.delete(f'code_{phone_number}')
+            cache.delete(f'code:{phone_number}')
             return redirect(url_for('auth.login'), 302)
         else:
             session['error'] = get_translate('errors.auth.bad_code_try')
