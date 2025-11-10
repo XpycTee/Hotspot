@@ -143,8 +143,8 @@ def sendin():
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
         delay = hotspot_user.get('delay')
-        name = f"{mac}/{phone_number}"
-        cache.set(fingerprint, name, timeout=delay.seconds)
+        fp_data = {"mac": mac, "phone": phone_number}
+        cache.set(fingerprint, fp_data, timeout=delay.seconds)
 
     cache.delete(f'code_{phone_number}')
     session.clear()
@@ -243,12 +243,9 @@ def code():
         db_client = WifiClient.query.filter_by(mac=mac).first()
         auth_method = "mac&phone"
 
-        if not db_client:
-            fingerprint = session.get('fingerprint')
-            if fingerprint:
-                cache_mac_phone = cache.get(fingerprint)
-                if cache_mac_phone:
-                    cache_mac = cache_mac_phone.split('/')[0]
+        if not db_client and (fingerprint := session.get('fingerprint')):
+            if fp_data := cache.get(fingerprint):
+                if cache_mac := fp_data.get("mac"):
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
                     auth_method = "fingerprint&phone"
         
