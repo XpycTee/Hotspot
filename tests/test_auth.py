@@ -74,7 +74,7 @@ class TestAuthViews(unittest.TestCase):
             new_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=new_emp_client)
             db.session.add(new_wifi_client)
             db.session.commit()
-            cache.set("0123456789abcdef", {"mac": new_wifi_client.mac, "phone": new_wifi_client.phone.phone_number})
+            cache.set("fingerprint:0123456789abcdef", {"mac": new_wifi_client.mac, "phone": new_wifi_client.phone.phone_number})
 
             new_blocked_phone = Blacklist(phone_number='79999999123')
             db.session.add(new_blocked_phone)
