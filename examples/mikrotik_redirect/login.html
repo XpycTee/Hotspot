@@ -34,7 +34,7 @@
 									<input type="hidden" name="chap-challenge" value="$(chap-challenge)">
 									<!--$(endif)-->
 									<input type="hidden" name="link-login-only" value="$(link-login-only)">
-									<input type="hidden" name="identity" value="$(identity)">
+									<input type="hidden" name="router" value="$(identity)">
 									<input type="hidden" name="ip" value="$(ip)">
 									<input type="hidden" name="fingerprint" id="fingerprintField">
 								</form>
@@ -45,40 +45,26 @@
             </div>
         </main>
     </div>
-	<script>
-	(async () => {
-	function getDeviceInfo() {
-		return [
-		navigator.userAgent || '',
-		screen.width + 'x' + screen.height,
-		navigator.language || '',
-		(Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
-		navigator.hardwareConcurrency || '',
-		navigator.deviceMemory || ''
-		].join('|');
-	}
-
-	async function hashSHA256(data) {
-		if (window.crypto && crypto.subtle && crypto.subtle.digest) {
-		const encoded = new TextEncoder().encode(data);
-		const digest = await crypto.subtle.digest('SHA-256', encoded);
-		return Array.from(new Uint8Array(digest))
-			.map(b => b.toString(16).padStart(2, '0'))
-			.join('');
+	<script src="js/md5.js"></script>
+    <script>
+		function getDeviceInfo() {
+			return [
+			navigator.userAgent || '',
+			screen.width + 'x' + screen.height,
+			navigator.language || '',
+			(Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+			navigator.hardwareConcurrency || '',
+			navigator.deviceMemory || ''
+			].join('|');
 		}
-		return '';
-	}
-
-	try {
-		const info = getDeviceInfo();
-		const fingerprint = await hashSHA256(info);
-		document.getElementById('fingerprintField').value = fingerprint;
-	} catch (e) {
-		console.warn('Fingerprint generation failed:', e);
-		document.getElementById('fingerprintField').value = '';
-	}
-	})();
-	</script>
+		try {
+			const info = getDeviceInfo();
+			const fingerprint = hexMD5(info);
+			document.getElementById('fingerprintField').value = fingerprint;
+		} catch (e) {
+			console.warn('Fingerprint generation failed:', e);
+		}
+    </script>
 	<script language="JavaScript">
 		<!--
 		document.redirect.submit();
