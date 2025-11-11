@@ -1,4 +1,7 @@
 import re
+import secrets
+import string
+from typing import Any, ItemsView
 import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
@@ -22,12 +25,35 @@ def login_required(f):
     """Декоратор для проверки авторизации."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        logger.debug(f'session data {[item for item in session.items()]}')
+        logger.debug(f'session data {_mask_sensetive_session(session)}')
         if not session.get('is_authenticated'):
             logger.debug('User is not authenticated')
             return redirect(url_for('admin.login'), 302)
         return f(*args, **kwargs)
     return decorated_function
+
+
+
+def _mask_sensetive_session(session: ItemsView[str, Any]):
+    sensetive = []
+    result = {}
+    for k, v in session:
+        if k.startswith("_"):
+            continue
+        elif k in sensetive:
+            result[k] = '******'
+        else:
+            result[k] = v
+
+    return result
+
+
+@admin_bp.before_request
+def ensure_session_id():
+    if "_id" not in session:
+        characters = string.ascii_letters + string.digits
+        sessid = "".join(secrets.choice(characters) for _ in range(8))
+        session["_id"] = sessid
 
 
 @admin_bp.route('/', methods=['POST', 'GET'])
@@ -73,7 +99,7 @@ def auth():
         session.permanent = True  # Устанавливаем сессию как постоянную
         current_app.permanent_session_lifetime = timedelta(minutes=30)  # Время жизни сессии
         logger.info(get_translate('errors.admin.user_logged_in').format(username=username, client_ip=client_ip))
-        logger.debug(f'session data {[item for item in session.items()]}')
+        logger.debug(f'session data {_mask_sensetive_session(session)}')
         return redirect(url_for('admin.panel'), 302)
 
     _handle_failed_login(username, client_ip)
