@@ -81,10 +81,11 @@ def _mask_mac(mac: str) -> str:
     parts = re.split(r'[:-]', mac)
     return 'XX:XX:XX:' + ':'.join(parts[3:])
 
-def _mask_sensetive_session(session: ItemsView[str, Any]):
+def _log_masked_session():
     sensetive = ["chap-id", "chap-challenge", "password"]
     result = {}
-    for k, v in session:
+    items = session.items()
+    for k, v in items:
         if k.startswith("_"):
             continue
         if k == "phone":
@@ -127,7 +128,7 @@ def sendin():
     phone_number = session.get('phone')
     if not phone_number:
         abort(400)
-    logger.debug(f'Session data in sendin: {_mask_sensetive_session(session.items())}')
+    logger.debug(f'Session data in sendin: {_log_masked_session()}')
     is_employee = _check_employee(phone_number)
 
     username = 'employee' if is_employee else 'guest'
@@ -193,7 +194,7 @@ def test_login():
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
-        logger.debug(f'Session data in test: {_mask_sensetive_session(session.items())}')
+        logger.debug(f'Session data in test: {_log_masked_session()}')
     return login()
 
 
@@ -205,14 +206,14 @@ def login():
     has_form = all(key in set(request.form.keys()) for key in required_keys)
     has_session = all(key in set(session.keys()) for key in required_keys)
 
-    logger.debug(f'Session data before form: {_mask_sensetive_session(session.items())}')
+    logger.debug(f'Session data before form: {_log_masked_session()}')
 
     if not has_form and not has_session:
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
 
-    logger.debug(f'Session data after form: {_mask_sensetive_session(session.items())}')
+    logger.debug(f'Session data after form: {_log_masked_session()}')
 
     mac = session.get('mac')
 
@@ -237,7 +238,7 @@ def login():
 @auth_bp.route('/code', methods=['POST', 'GET'])
 def code():
     error = session.pop('error', None)
-    logger.debug(f'Session data before code: {_mask_sensetive_session(session.items())}')
+    logger.debug(f'Session data before code: {_log_masked_session()}')
     phone_number = request.form.get('phone')
 
     if phone_number:
@@ -310,7 +311,7 @@ def code():
 @auth_bp.route('/resend', methods=['POST'])
 def resend():
     phone_number = session.get('phone')
-    logger.debug(f'Session data before code: {_mask_sensetive_session(session.items())}')
+    logger.debug(f'Session data before code: {_log_masked_session()}')
     if not phone_number:
         abort(400)
     if cache.get(f'sended:{phone_number}'):
