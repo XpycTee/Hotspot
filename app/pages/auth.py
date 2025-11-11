@@ -104,8 +104,7 @@ def _log_masked_session():
 @auth_bp.before_request
 def ensure_session_id():
     if "_id" not in session:
-        characters = string.ascii_letters + string.digits
-        sessid = "".join(secrets.choice(characters) for _ in range(8))
+        sessid = secrets.token_hex(4)
         session["_id"] = sessid
 
 @auth_bp.route('/', methods=['POST', 'GET'])
