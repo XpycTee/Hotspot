@@ -4,6 +4,8 @@ import re
 
 from hashlib import md5
 from random import randint
+import secrets
+import string
 from typing import Any, ItemsView
 import uuid
 
@@ -83,6 +85,8 @@ def _mask_sensetive_session(session: ItemsView[str, Any]):
     sensetive = ["chap-id", "chap-challenge", "password"]
     result = {}
     for k, v in session:
+        if k.startswith("_"):
+            continue
         if k == "phone":
             result[k] = _mask_phone(v)
         elif k == "mac":
@@ -95,6 +99,13 @@ def _mask_sensetive_session(session: ItemsView[str, Any]):
             result[k] = v
 
     return result
+
+@auth_bp.before_request
+def ensure_session_id():
+    if "_id" not in session:
+        characters = string.ascii_letters + string.digits
+        sessid = "".join(secrets.choice(characters) for _ in range(8))
+        session["_id"] = sessid
 
 @auth_bp.route('/', methods=['POST', 'GET'])
 def index():
@@ -148,8 +159,6 @@ def sendin():
         cache.set(f"fingerprint:{fingerprint}", fp_data, timeout=delay.total_seconds())
 
     cache.delete(f'code:{phone_number}')
-    session.clear()
-    session['link-orig'] = link_orig
 
     now_time = datetime.datetime.now()
     db_phone = _get_or_create_client(phone_number)
@@ -162,6 +171,9 @@ def sendin():
         db.session.rollback()
         logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
     
+    session.clear()
+    session['link-orig'] = link_orig
+
     return render_template(
         'auth/sendin.html', 
         link_login_only=link_login_only, 
