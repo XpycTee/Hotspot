@@ -248,6 +248,7 @@ def code():
             if fp_data := cache.get(f"fingerprint:{fingerprint}"):
                 if cache_mac := fp_data.get("mac"):
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
+                    session['mac'] = cache_mac
                     auth_method = "fingerprint&phone"
         
         if db_client and db_client.phone and (db_client.phone.phone_number == phone_number or db_client.phone.phone_number == phone_number[1:]):
