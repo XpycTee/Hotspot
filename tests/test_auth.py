@@ -26,7 +26,7 @@ class TestAuthViews(unittest.TestCase):
         self.app.root_path = os.path.join(root_dir, 'app')
         self.app.config['SECRET_KEY'] = 'secret'
         self.app.config['HOTSPOT_USERS'] = {
-            'employee': {'delay': datetime.timedelta(hours=1), 'password': 'employee_pass'},
+            'employee': {'delay': datetime.timedelta(hours=24), 'password': 'employee_pass'},
             'guest': {'delay': datetime.timedelta(hours=1), 'password': 'guest_pass'}
         }
         mock_sender = MagicMock()
@@ -212,6 +212,21 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'name="password" value="employee_pass"', response.data)
     
+    def test_sendin_route_employee_https_fp(self):
+        test_init_data = {
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'phone': '79999999999',
+            'fingerprint': '0123456789abcdef'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                for key, value in test_init_data.items():
+                    sess[key] = value
+            response = c.get('/sendin')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b'name="password" value="employee_pass"', response.data)
+
     def test_code_route(self):
         test_init_data = {'phone': '71234567890'}
         with self.client as c:
@@ -349,6 +364,18 @@ class TestAuthViews(unittest.TestCase):
                 self.assertEqual(response.status_code, expected_status)
                 self.assertIn(expected_location, response.location)
 
+    def test_fp_repeating(self):
+        test_init_data = {
+            'phone': '79999999999'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:FF'
+                sess['fingerprint'] = '0123456789abcdef'
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+            fp = cache.get('fingerprint:0123456789abcdef')
+            assert None != fp
 
 if __name__ == '__main__':
     unittest.main()
