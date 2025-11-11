@@ -142,10 +142,10 @@ def sendin():
         mac = session.get('mac')
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        delay = hotspot_user.get('delay')
+        delay: datetime.timedelta = hotspot_user.get('delay')
         fp_data = {"mac": mac, "phone": phone_number}
-        logger.debug(f"Caching fp: {fingerprint[:12]} delay {delay.seconds}")
-        cache.set(f"fingerprint:{fingerprint}", fp_data, timeout=delay.seconds)
+        logger.debug(f"Caching fp: {fingerprint[:12]} delay {delay.total_seconds}")
+        cache.set(f"fingerprint:{fingerprint}", fp_data, timeout=delay.total_seconds)
 
     cache.delete(f'code:{phone_number}')
     session.clear()
