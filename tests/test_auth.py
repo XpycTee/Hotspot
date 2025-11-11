@@ -366,14 +366,28 @@ class TestAuthViews(unittest.TestCase):
 
     def test_fp_repeating(self):
         test_init_data = {
-            'phone': '79999999999'
+            'mac': '00:00:00:00:00:FF',
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'phone': '79999999999',
+            'fingerprint': '0123456789abcdef'
         }
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['mac'] = '00:00:00:00:00:FF'
-                sess['fingerprint'] = '0123456789abcdef'
+                for key, value in test_init_data.items():
+                    sess[key] = value
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 302)
+
+            response = c.post('/sendin', data=test_init_data)
+            self.assertEqual(response.status_code, 200)
+            
+            with c.session_transaction() as sess:
+                for key, value in test_init_data.items():
+                    sess[key] = value
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+
             fp = cache.get('fingerprint:0123456789abcdef')
             assert None != fp
 
