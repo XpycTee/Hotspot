@@ -1,22 +1,19 @@
 # logger.py
-from flask import current_app, session
+from flask import current_app, session, request
+
+def _format_msg(text):
+    sess_id = session.get('_id')
+    endpoint = request.endpoint
+    return f"[{endpoint}:{sess_id}] {text}"
 
 def debug(msg, *args, **kwargs):
-    sess_id = session.get('_id')
-    msg = f"[s-{sess_id}] {msg}"
-    current_app.logger.debug(msg, *args, **kwargs)
+    current_app.logger.debug(_format_msg(msg), *args, **kwargs)
 
 def info(msg, *args, **kwargs):
-    sess_id = session.get('_id')
-    msg = f"[s-{sess_id}] {msg}"
-    current_app.logger.info(msg, *args, **kwargs)
+    current_app.logger.info(_format_msg(msg), *args, **kwargs)
 
 def warning(msg, *args, **kwargs):
-    sess_id = session.get('_id')
-    msg = f"[s-{sess_id}] {msg}"
-    current_app.logger.warning(msg, *args, **kwargs)
+    current_app.logger.warning(_format_msg(msg), *args, **kwargs)
 
 def error(msg, *args, **kwargs):
-    sess_id = session.get('_id')
-    msg = f"[s-{sess_id}] {msg}"
-    current_app.logger.error(msg, *args, **kwargs)
+    current_app.logger.error(_format_msg(msg), *args, **kwargs)

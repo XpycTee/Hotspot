@@ -26,6 +26,7 @@ class TestAdminViews(unittest.TestCase):
         self.app = Flask(__name__)
         self.app.register_blueprint(admin_bp)
         self.app.root_path = os.path.join(root_dir, 'app')
+        self.app.config['DEBUG'] = True
         self.app.config['SECRET_KEY'] = 'secret'
         self.app.config['BLACKLIST'] = []
         self.app.config['ADMIN'] = {
