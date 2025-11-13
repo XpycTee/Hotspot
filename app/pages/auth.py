@@ -247,6 +247,8 @@ def code():
             abort(403)
 
         session['phone'] = phone_number
+        if fingerprint := session.get('fingerprint'):
+            session['fingerprint'] = sha256(f"{fingerprint}:{phone_number}".encode()).hexdigest()
 
         mac = session.get('mac')
         logger.debug(f'User mac: {_mask_mac(mac)}')
@@ -256,9 +258,8 @@ def code():
         db_client = WifiClient.query.filter_by(mac=mac).first()
         auth_method = "mac&phone"
 
-        if not db_client and (fingerprint := session.get('fingerprint')):
-            fp_phone = sha256(f"{fingerprint}:{phone_number}".encode()).hexdigest()
-            if fp_data := cache.get(f"fingerprint:{fp_phone}"):
+        if not db_client and fingerprint:
+            if fp_data := cache.get(f"fingerprint:{fingerprint}"):
                 if cache_mac := fp_data.get("mac"):
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
                     session['mac'] = cache_mac
