@@ -148,15 +148,16 @@ def sendin():
         link_login_only = link_login_only.replace('https', 'http')
         password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
 
-    fingerprint = session.get('fingerprint')
-    if fingerprint:
+    
+    if user_fp := session.get('user_fp'):
         mac = session.get('mac')
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
         delay: datetime.timedelta = hotspot_user.get('delay')
         fp_data = {"mac": mac, "phone": phone_number}
-        logger.debug(f"Caching fp: {fingerprint[:12]} delay {delay}")
-        cache.set(f"fingerprint:{fingerprint}", fp_data, timeout=delay.total_seconds())
+        logger.debug(f"Caching fp: {user_fp[:12]} delay {delay}")
+        
+        cache.set(f"fingerprint:{user_fp}", fp_data, timeout=delay.total_seconds())
 
     cache.delete(f'code:{phone_number}')
 
@@ -247,9 +248,6 @@ def code():
             abort(403)
 
         session['phone'] = phone_number
-        if fingerprint := session.get('fingerprint'):
-            fingerprint = sha256(f"{fingerprint}:{phone_number}".encode()).hexdigest()
-            session['fingerprint'] = fingerprint
 
         mac = session.get('mac')
         logger.debug(f'User mac: {_mask_mac(mac)}')
@@ -259,8 +257,10 @@ def code():
         db_client = WifiClient.query.filter_by(mac=mac).first()
         auth_method = "mac&phone"
 
-        if not db_client and fingerprint:
-            if fp_data := cache.get(f"fingerprint:{fingerprint}"):
+        if not db_client and (hardware_fp := session.get('fingerprint')):
+            user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
+            session['user_fp'] = user_fp
+            if fp_data := cache.get(f"fingerprint:{user_fp}"):
                 if cache_mac := fp_data.get("mac"):
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
                     session['mac'] = cache_mac
