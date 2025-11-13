@@ -388,7 +388,7 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 302)
 
-            fp = cache.get('fingerprint:0123456789abcdef')
+            fp = cache.get('fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002')
             assert None != fp
 
 if __name__ == '__main__':

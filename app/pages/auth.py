@@ -248,7 +248,8 @@ def code():
 
         session['phone'] = phone_number
         if fingerprint := session.get('fingerprint'):
-            session['fingerprint'] = sha256(f"{fingerprint}:{phone_number}".encode()).hexdigest()
+            fingerprint = sha256(f"{fingerprint}:{phone_number}".encode()).hexdigest()
+            session['fingerprint'] = fingerprint
 
         mac = session.get('mac')
         logger.debug(f'User mac: {_mask_mac(mac)}')
