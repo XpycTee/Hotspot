@@ -2,7 +2,7 @@
 import datetime
 import re
 
-from hashlib import md5
+from hashlib import md5, sha256
 from random import randint
 import secrets
 import string
@@ -257,7 +257,8 @@ def code():
         auth_method = "mac&phone"
 
         if not db_client and (fingerprint := session.get('fingerprint')):
-            if fp_data := cache.get(f"fingerprint:{fingerprint}"):
+            fp_phone = sha256(f"{fingerprint}:{phone_number}".encode()).hexdigest()
+            if fp_data := cache.get(f"fingerprint:{fp_phone}"):
                 if cache_mac := fp_data.get("mac"):
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
                     session['mac'] = cache_mac
