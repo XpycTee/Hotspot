@@ -92,7 +92,7 @@ def _log_masked_session():
             result[k] = _mask_phone(v)
         elif k == "mac":
             result[k] = _mask_mac(v)
-        elif k == "fingerprint":
+        elif k in ["fingerprint", "user_fp"]:
             result[k] = v[:12]
         elif k in sensetive:
             result[k] = '******'
