@@ -260,9 +260,12 @@ def code():
         db_client = WifiClient.query.filter_by(mac=mac).first()
         auth_method = "mac&phone"
 
-        if not db_client and (hardware_fp := session.get('fingerprint')):
+        user_fp = None
+        if hardware_fp := session.get('fingerprint'):
             user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
             session['user_fp'] = user_fp
+
+        if not db_client and user_fp:
             if fp_data := cache.get(f"fingerprint:{user_fp}"):
                 if cache_mac := fp_data.get("mac"):
                     db_client = WifiClient.query.filter_by(mac=cache_mac).first()
