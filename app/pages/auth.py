@@ -222,12 +222,15 @@ def login():
         phone = db_client.phone
         if not phone:
             abort(500)
-
-        if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
+        phone_number = phone.phone_number
+        if Blacklist.query.filter_by(phone_number=phone_number).first():
             abort(403)
 
-        if _check_employee(phone.phone_number) == db_client.employee:
-            session['phone'] = phone.phone_number
+        if _check_employee(phone_number) == db_client.employee:
+            session['phone'] = phone_number
+            if hardware_fp := session.get('fingerprint'):
+                user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
+                session['user_fp'] = user_fp
             logger.debug(f"Auth by expiration")
             redirect_url = url_for('auth.sendin')
             return redirect(redirect_url, 302)
