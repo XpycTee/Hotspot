@@ -68,7 +68,7 @@ def _mask_phone(phone: str) -> str:
 
 
 def _mask_mac(mac: str) -> str:
-    parts = re.split(r'[:-]', mac)
+    parts = mac.split(':')
     return 'XX:XX:XX:' + ':'.join(parts[3:])
 
 
