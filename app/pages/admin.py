@@ -1,3 +1,4 @@
+import secrets
 import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
@@ -25,6 +26,13 @@ def login_required(f):
             return redirect(url_for('admin.login'), 302)
         return f(*args, **kwargs)
     return decorated_function
+
+
+@admin_bp.before_request
+def ensure_session_id():
+    if "_id" not in session:
+        sessid = secrets.token_hex(4)
+        session["_id"] = sessid
 
 
 @admin_bp.route('/', methods=['POST', 'GET'])
