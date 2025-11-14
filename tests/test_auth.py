@@ -64,23 +64,65 @@ class TestAuthViews(unittest.TestCase):
             db.create_all()
 
             # Добавление номера телефона в таблицу EmployeePhone
-            from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Blacklist  # Импорт модели EmployeePhone
+            from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employee, Blacklist  # Импорт модели EmployeePhone
 
-            new_emp_client = ClientsNumber(phone_number='79999999999', last_seen=datetime.datetime.now())
-            db.session.add(new_emp_client)
+            # Non Authed Employee
+            non_authed_emp = Employee(lastname = "NonAuthed", name = "Employee")
+            db.session.add(non_authed_emp)
             db.session.commit()
-            new_phone = EmployeePhone(phone_number='79999999999', employee_id=new_emp_client.id)
-            db.session.add(new_phone)
-            new_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=new_emp_client)
-            db.session.add(new_wifi_client)
+            non_authed_emp_phone = EmployeePhone(phone_number='79999999991', employee_id=non_authed_emp.id)
+            db.session.add(non_authed_emp_phone)
+
+            # Expired Employee
+            expired_emp = Employee(lastname = "Expired", name = "Employee")
+            db.session.add(expired_emp)
             db.session.commit()
-            cache.set("fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002", {"mac": new_wifi_client.mac, "phone": new_wifi_client.phone.phone_number})
+            expired_emp_phone = EmployeePhone(phone_number='79999999992', employee_id=expired_emp.id)
+            db.session.add(expired_emp_phone)
+            expired_emp_client = ClientsNumber(phone_number='79999999992', last_seen=datetime.datetime.now())
+            db.session.add(expired_emp_client)
+            db.session.commit()
+            expired_emp_wifi_client = WifiClient(mac="12:34:56:78:9A:BD", expiration=datetime.datetime.now().replace(hour=0, minute=0, second=0), employee=True, phone=expired_emp_client)
+            db.session.add(expired_emp_wifi_client)
+            db.session.commit()
+
+            # Authed Employee
+            authed_emp = Employee(lastname = "Authed", name = "Employee")
+            db.session.add(authed_emp)
+            db.session.commit()
+            authed_emp_phone = EmployeePhone(phone_number='79999999999', employee_id=authed_emp.id)
+            db.session.add(authed_emp_phone)
+            authed_emp_client = ClientsNumber(phone_number='79999999999', last_seen=datetime.datetime.now())
+            db.session.add(authed_emp_client)
+            db.session.commit()
+            authed_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=authed_emp_client)
+            db.session.add(authed_wifi_client)
+            db.session.commit()
+            cache.set("fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002", authed_wifi_client.mac)
+            
+            # Expired Guest
+            expired_guest_client = ClientsNumber(phone_number='70000000010', last_seen=datetime.datetime.now())
+            db.session.add(expired_guest_client)
+            db.session.commit()
+            expired_guest_wifi_client = WifiClient(mac="00:00:00:00:00:10", expiration=datetime.datetime.now().replace(hour=0, minute=0, second=0), employee=False, phone=expired_guest_client)
+            db.session.add(expired_guest_wifi_client)
+            db.session.commit()
+
+            # Authed Guest
+            authed_guest_client = ClientsNumber(phone_number='70000000011', last_seen=datetime.datetime.now())
+            db.session.add(authed_guest_client)
+            db.session.commit()
+            authed_guest_wifi_client = WifiClient(mac="00:00:00:00:00:11", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=False, phone=authed_guest_client)
+            db.session.add(authed_guest_wifi_client)
+            db.session.commit()
+            cache.set("fingerprint:ab185fb8f0baa93fc0d6852d019045d92dbc71aebec472c7461f7163892f5e92", authed_guest_wifi_client.mac)
 
             new_blocked_phone = Blacklist(phone_number='79999999123')
             db.session.add(new_blocked_phone)
 
             new_guest_client = ClientsNumber(phone_number='79999999321', last_seen=datetime.datetime.now())
             db.session.add(new_guest_client)
+
             db.session.commit()
 
         @self.app.context_processor
@@ -107,7 +149,8 @@ class TestAuthViews(unittest.TestCase):
             'chap-challenge': 'challenge', 
             'link-login-only': 'link', 
             'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:00'
+            'mac': '00:00:00:00:00:00',
+            'fingerprint': '0123456789abcdef'
         }
         with self.client as c:
             response = c.post('/login', data=test_init_data)
@@ -217,7 +260,7 @@ class TestAuthViews(unittest.TestCase):
             'link-login-only': 'link', 
             'link-orig': 'orig', 
             'phone': '79999999999',
-            'fingerprint': '0123456789abcdef'
+            'hardware_fp': '0123456789abcdef'
         }
         with self.client as c:
             with c.session_transaction() as sess:
@@ -260,7 +303,7 @@ class TestAuthViews(unittest.TestCase):
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['mac'] = '00:00:00:00:00:FF'
-                sess['fingerprint'] = '0123456789abcdef'
+                sess['hardware_fp'] = '0123456789abcdef'
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 302)
 
@@ -370,7 +413,7 @@ class TestAuthViews(unittest.TestCase):
             'link-login-only': 'link', 
             'link-orig': 'orig', 
             'phone': '79999999999',
-            'fingerprint': '0123456789abcdef'
+            'hardware_fp': '0123456789abcdef'
         }
         with self.client as c:
             with c.session_transaction() as sess:
@@ -390,6 +433,185 @@ class TestAuthViews(unittest.TestCase):
 
             fp = cache.get('fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002')
             assert None != fp
+
+    @patch('app.pages.auth.randint', return_value=1234)
+    def test_scenario_guest_code(self, _):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '00:00:00:00:00:00',
+            'fingerprint': '0123456789abcdef'
+        }
+        test_code_data = {'phone': '71234567890'}
+        test_auth_data = {'code': '1234'}
+
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/code', data=test_code_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/auth', data=test_auth_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+
+    def test_scenario_guest_epxiration(self):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '00:00:00:00:00:11',
+            'fingerprint': '0123456789abcdef'
+        }
+        
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+
+    def test_scenario_guest_mac_phone(self):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '00:00:00:00:00:10',
+            'fingerprint': '0123456789abcdef'
+        }
+        test_code_data = {'phone': '70000000010'}
+        
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/code', data=test_code_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+
+    def test_scenario_guest_fp_phone(self):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '00:00:00:00:00:XX',
+            'fingerprint': '0123456789abcdef'
+        }
+        test_code_data = {'phone': '70000000011'}
+        
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/code', data=test_code_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+            
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+    
+    @patch('app.pages.auth.randint', return_value=1234)
+    def test_scenario_emp_code(self, _):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '00:00:00:00:00:00',
+            'fingerprint': '0123456789abcdef'
+        }
+        test_code_data = {'phone': '79999999991'}
+        test_auth_data = {'code': '1234'}
+
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/code', data=test_code_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/auth', data=test_auth_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+
+    def test_scenario_emp_epxiration(self):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '12:34:56:78:9A:BC',
+            'fingerprint': '0123456789abcdef'
+        }
+        
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+
+    def test_scenario_emp_mac_phone(self):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '12:34:56:78:9A:BD',
+            'fingerprint': '0123456789abcdef'
+        }
+        test_code_data = {'phone': '79999999992'}
+        
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/code', data=test_code_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+
+    def test_scenario_emp_fp_phone(self):
+        test_login_data = {
+            'chap-id': '1', 
+            'chap-challenge': 'challenge', 
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'mac': '00:00:00:00:00:XX',
+            'fingerprint': '0123456789abcdef'
+        }
+        test_code_data = {'phone': '79999999999'}
+        
+        with self.client as c:
+            response = c.post('/login', data=test_login_data)
+            self.assertEqual(response.status_code, 200)
+
+            response = c.post('/code', data=test_code_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
+            
+            response = c.post('/sendin')
+            self.assertEqual(response.status_code, 200)
+
 
 if __name__ == '__main__':
     unittest.main()
