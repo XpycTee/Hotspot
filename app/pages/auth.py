@@ -3,7 +3,6 @@ import datetime
 
 from hashlib import md5, sha256
 from random import randint
-import re
 import secrets
 
 # Importing Blueprint for creating Flask blueprints
@@ -150,9 +149,7 @@ def sendin():
         cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
     
     cache.delete(f'code:{phone_number}')
-    session.clear()
-    session['link-orig'] = link_orig
-
+    
     now_time = datetime.datetime.now()
     db_phone = _get_or_create_client(phone_number)
     # Обновляем поле last_seen, если запись уже существует
@@ -163,7 +160,10 @@ def sendin():
     except IntegrityError:
         db.session.rollback()
         logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
-    
+
+    session.clear()
+    session['link-orig'] = link_orig
+
     return render_template(
         'auth/sendin.html', 
         link_login_only=link_login_only, 
