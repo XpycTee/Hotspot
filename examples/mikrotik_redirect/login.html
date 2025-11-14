@@ -27,9 +27,30 @@
         <!--$(if chap-id)-->
         <input type="hidden" name="chap-id" value="$(chap-id)">
         <input type="hidden" name="chap-challenge" value="$(chap-challenge)">
+        <input type="hidden" name="hardware_fp" id="fpField">
         <!--$(endif)-->
     </form>
 </body>
+<script src="js/md5.js"></script>
+<script>
+    function getDeviceInfo() {
+        return [
+        navigator.userAgent || '',
+        screen.width + 'x' + screen.height,
+        navigator.language || '',
+        (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+        navigator.hardwareConcurrency || '',
+        navigator.deviceMemory || ''
+        ].join('|');
+    }
+    try {
+        const info = getDeviceInfo();
+        const fingerprint = hexMD5(info);
+        document.getElementById('fpField').value = fingerprint;
+    } catch (e) {
+        console.warn('Fingerprint generation failed:', e);
+    }
+</script>
 <!-- This script is required don't remove-->
 <script language="JavaScript">
     <!--

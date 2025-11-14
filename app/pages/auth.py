@@ -1,7 +1,7 @@
 # Imports
 import datetime
 
-from hashlib import md5
+from hashlib import md5, sha256
 from random import randint
 import re
 import secrets
@@ -83,6 +83,8 @@ def _log_masked_session():
             result[k] = _mask_phone(v)
         elif k == "mac":
             result[k] = _mask_mac(v)
+        elif k in ["hardware_fp", "user_fp"]:
+            result[k] = v[:12]
         elif k in sensetive:
             result[k] = '******'
         else:
@@ -139,6 +141,14 @@ def sendin():
         link_login_only = link_login_only.replace('https', 'http')
         password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
 
+    if user_fp := session.get('user_fp'):
+        mac = session.get('mac')
+        users_config = current_app.config['HOTSPOT_USERS']
+        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
+        delay: datetime.timedelta = hotspot_user.get('delay')
+        logger.debug(f"Caching user_fp: {user_fp[:12]} delay {delay}")
+        cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
+    
     cache.delete(f'code_{phone_number}')
     session.clear()
     session['link-orig'] = link_orig
@@ -206,7 +216,10 @@ def login():
         
         if _check_employee(phone.phone_number) == db_client.employee:
             session['phone'] = phone.phone_number
-
+            if hardware_fp := session.get('hardware_fp'):
+                user_fp = sha256(f"{hardware_fp}:{phone.phone_number}".encode()).hexdigest()
+                session['user_fp'] = user_fp
+            logger.debug(f"Auth by expiration")
             redirect_url = url_for('auth.sendin')
             return redirect(redirect_url, 302)
 
@@ -233,6 +246,18 @@ def code():
             abort(400)
 
         db_client = WifiClient.query.filter_by(mac=mac).first()
+        auth_method = "mac&phone"
+
+        user_fp = None
+        if hardware_fp := session.get('hardware_fp'):
+            user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
+            session['user_fp'] = user_fp
+        
+        if not db_client and user_fp:
+            if fp_mac := cache.get(f"fingerprint:{user_fp}"):
+                db_client = WifiClient.query.filter_by(mac=fp_mac).first()
+                session['mac'] = fp_mac
+                auth_method = "fingerprint&phone"
 
         if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
             is_employee = _check_employee(phone_number)
@@ -250,6 +275,7 @@ def code():
             db_client.employee = is_employee
             db.session.commit()
             redirect_url = url_for('auth.sendin')
+            logger.debug(f"Auth by {auth_method}")
             return redirect(redirect_url, 302)
 
     # Ensure phone_number is retrieved from session if not provided in the request
@@ -382,6 +408,7 @@ def auth():
 
         # Очистка кэша и редирект
         cache.delete(f'code_{phone_number}')
+        logger.debug("Auth by code")
         return redirect(url_for('auth.sendin'), 302)
     else:
         session.setdefault('tries', 0)
