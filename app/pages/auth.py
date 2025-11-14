@@ -92,7 +92,7 @@ def _log_masked_session():
             result[k] = _mask_phone(v)
         elif k == "mac":
             result[k] = _mask_mac(v)
-        elif k in ["fingerprint", "user_fp"]:
+        elif k in ["fingerprint", "hardware_fp", "user_fp"]:
             result[k] = v[:12]
         elif k in sensetive:
             result[k] = '******'
@@ -148,16 +148,13 @@ def sendin():
         link_login_only = link_login_only.replace('https', 'http')
         password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
 
-    
     if user_fp := session.get('user_fp'):
         mac = session.get('mac')
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
         delay: datetime.timedelta = hotspot_user.get('delay')
-        fp_data = {"mac": mac, "phone": phone_number}
-        logger.debug(f"Caching fp: {user_fp[:12]} delay {delay}")
-        
-        cache.set(f"fingerprint:{user_fp}", fp_data, timeout=delay.total_seconds())
+        logger.debug(f"Caching user_fp: {user_fp[:12]} delay {delay}")
+        cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
 
     cache.delete(f'code:{phone_number}')
 
@@ -194,6 +191,8 @@ def test_login():
         abort(400)
     else:
         [session.update({k: v}) for k, v in request.values.items()]
+        if 'fingerprint' in session.items():
+            session['hardware_fp'] = session.pop('fingerprint')
         logger.debug(f'Session data in test: {_log_masked_session()}')
     return login()
 
@@ -213,6 +212,9 @@ def login():
     else:
         [session.update({k: v}) for k, v in request.values.items()]
 
+    if 'fingerprint' in session:
+        session['hardware_fp'] = session.pop('fingerprint')
+
     logger.debug(f'Session data after form: {_log_masked_session()}')
 
     mac = session.get('mac')
@@ -228,7 +230,7 @@ def login():
 
         if _check_employee(phone_number) == db_client.employee:
             session['phone'] = phone_number
-            if hardware_fp := session.get('fingerprint'):
+            if hardware_fp := session.get('hardware_fp'):
                 user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
                 session['user_fp'] = user_fp
             logger.debug(f"Auth by expiration")
@@ -261,16 +263,15 @@ def code():
         auth_method = "mac&phone"
 
         user_fp = None
-        if hardware_fp := session.get('fingerprint'):
+        if hardware_fp := session.get('hardware_fp'):
             user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
             session['user_fp'] = user_fp
 
         if not db_client and user_fp:
-            if fp_data := cache.get(f"fingerprint:{user_fp}"):
-                if cache_mac := fp_data.get("mac"):
-                    db_client = WifiClient.query.filter_by(mac=cache_mac).first()
-                    session['mac'] = cache_mac
-                    auth_method = "fingerprint&phone"
+            if fp_mac := cache.get(f"fingerprint:{user_fp}"):
+                db_client = WifiClient.query.filter_by(mac=fp_mac).first()
+                session['mac'] = fp_mac
+                auth_method = "fingerprint&phone"
         
         if db_client and db_client.phone and (db_client.phone.phone_number == phone_number or db_client.phone.phone_number == phone_number[1:]):
             is_employee = _check_employee(phone_number)

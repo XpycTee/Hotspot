@@ -36,7 +36,7 @@
 									<input type="hidden" name="link-login-only" value="$(link-login-only)">
 									<input type="hidden" name="router" value="$(identity)">
 									<input type="hidden" name="ip" value="$(ip)">
-									<input type="hidden" name="fingerprint" id="fingerprintField">
+									<input type="hidden" name="hardware_fp" id="fpField">
 								</form>
 								<label id="modal_trigger" class="text-center mt-2 link-line" for="modal-trigger">Политика конфиденциальности</label>
                         </div>
@@ -60,7 +60,7 @@
 		try {
 			const info = getDeviceInfo();
 			const fingerprint = hexMD5(info);
-			document.getElementById('fingerprintField').value = fingerprint;
+			document.getElementById('fpField').value = fingerprint;
 		} catch (e) {
 			console.warn('Fingerprint generation failed:', e);
 		}
