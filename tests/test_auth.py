@@ -57,7 +57,7 @@ class TestAuthViews(unittest.TestCase):
         }
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-        self.app.config['CACHE_TYPE'] = 'simple'
+        self.app.config['CACHE_TYPE'] = 'SimpleCache'
 
         db.init_app(self.app)
         cache.init_app(self.app)
