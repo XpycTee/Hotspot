@@ -78,7 +78,7 @@ def _mask_phone(phone: str) -> str:
     return '*'*(len(phone)-4) + phone[-4:]
 
 def _mask_mac(mac: str) -> str:
-    parts = re.split(r'[:-]', mac)
+    parts = mac.split(':')
     return 'XX:XX:XX:' + ':'.join(parts[3:])
 
 def _log_masked_session():
@@ -212,8 +212,8 @@ def login():
     else:
         [session.update({k: v}) for k, v in request.values.items()]
 
-    if 'fingerprint' in session:
-        session['hardware_fp'] = session.pop('fingerprint')
+    if fp := session.pop('fingerprint'):
+        session['hardware_fp'] = fp
 
     logger.debug(f'Session data after form: {_log_masked_session()}')
 
