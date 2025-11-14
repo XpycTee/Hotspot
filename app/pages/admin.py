@@ -28,6 +28,20 @@ def login_required(f):
     return decorated_function
 
 
+def _log_masked_session():
+    sensetive = []
+    result = {}
+    items = session.items()
+    for k, v in items:
+        if k.startswith("_"):
+            continue
+        elif k in sensetive:
+            result[k] = '******'
+        else:
+            result[k] = v
+    return result
+
+
 @admin_bp.before_request
 def ensure_session_id():
     if "_id" not in session:
@@ -78,7 +92,7 @@ def auth():
         session.permanent = True  # Устанавливаем сессию как постоянную
         current_app.permanent_session_lifetime = timedelta(minutes=30)  # Время жизни сессии
         logger.info(get_translate('errors.admin.user_logged_in').format(username=username, client_ip=client_ip))
-        logger.debug(f'session data {[item for item in session.items()]}')
+        logger.debug(f'session data {_log_masked_session()}')
         return redirect(url_for('admin.panel'), 302)
 
     _handle_failed_login(username, client_ip)
