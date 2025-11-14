@@ -57,6 +57,7 @@ class TestAuthViews(unittest.TestCase):
         }
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+        self.app.config['CACHE_TYPE'] = 'simple'
 
         db.init_app(self.app)
         cache.init_app(self.app)
@@ -74,13 +75,14 @@ class TestAuthViews(unittest.TestCase):
             new_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=new_emp_client)
             db.session.add(new_wifi_client)
             db.session.commit()
+            cache.set("fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002", new_wifi_client.mac)
 
             new_blocked_phone = Blacklist(phone_number='79999999123')
             db.session.add(new_blocked_phone)
 
             new_guest_client = ClientsNumber(phone_number='79999999321', last_seen=datetime.datetime.now())
             db.session.add(new_guest_client)
-
+            
             db.session.commit()
             
         @self.app.context_processor
@@ -212,19 +214,58 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertIn(b'name="password" value="employee_pass"', response.data)
 
+    def test_sendin_route_employee_https_fp(self):
+        test_init_data = {
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'phone': '79999999999',
+            'fingerprint': '0123456789abcdef'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                for key, value in test_init_data.items():
+                    sess[key] = value
+            response = c.get('/sendin')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b'name="password" value="employee_pass"', response.data)
+    
     def test_code_route(self):
         test_init_data = {'phone': '71234567890'}
-        test_blocked_init_data = {'phone': '79999999123'}
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
-
-            # Test blocked phone
+    
+    def test_code_route_blocked(self):
+        test_blocked_init_data = {'phone': '79999999123'}
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_blocked_init_data)
             self.assertEqual(response.status_code, 403)
-    
+
+    def test_code_route_mac(self):
+        test_init_data = {
+            'phone': '79999999999'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '12:34:56:78:9A:BC'
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+
+    def test_code_route_fp(self):
+        test_init_data = {
+            'phone': '79999999999'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:FF'
+                sess['hardware_fp'] = '0123456789abcdef'
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+
     def test_code_route_session(self):
         test_init_data = {'phone': '71234567890'}
         with self.client as c:
@@ -233,6 +274,54 @@ class TestAuthViews(unittest.TestCase):
                 sess['mac'] = '00:00:00:00:00:00'
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 200)
+
+    def test_resend_route_cache_code(self):
+        cache.set('code:79999999999', '1234')
+
+        mock_sender = MagicMock()
+        mock_sender.send_sms.return_value = None
+        self.app.config['SENDER'] = mock_sender
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79999999999'
+            response = c.post('/resend')
+            mock_sender.send_sms.assert_called_once_with('79999999999', 'Your code is 1234')
+            
+            self.assertEqual(response.status_code, 200)
+
+    @patch('app.pages.auth.randint', return_value=9876)
+    def test_resend_route_rnd_code(self, _):
+        mock_sender = MagicMock()
+        mock_sender.send_sms.return_value = None
+        self.app.config['SENDER'] = mock_sender
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79999999999'
+            response = c.post('/resend')
+            mock_sender.send_sms.assert_called_once_with('79999999999', 'Your code is 9876')
+            self.assertEqual(response.status_code, 200)
+    
+    def test_resend_route_sended(self):
+        cache.set('sended:79999999999', True)
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79999999999'
+            response = c.post('/resend')
+            self.assertEqual(response.status_code, 400)
+
+    @patch('app.pages.auth.cache')
+    def test_auth_route(self, mock_cache):
+        test_init_data = {'code': '1234'}
+        mock_cache.get.return_value = '1234'
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:00'
+                sess['phone'] = '71234567890'
+            response = c.post('/auth', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/sendin', response.location)
 
     @patch('app.pages.auth.cache')
     def test_auth_route_update_client(self, mock_cache):
@@ -276,6 +365,33 @@ class TestAuthViews(unittest.TestCase):
                 response = c.post('/auth', data=test_init_data)
                 self.assertEqual(response.status_code, expected_status)
                 self.assertIn(expected_location, response.location)
+
+    def test_fp_repeating(self):
+        test_init_data = {
+            'mac': '00:00:00:00:00:FF',
+            'link-login-only': 'link', 
+            'link-orig': 'orig', 
+            'phone': '79999999999',
+            'hardware_fp': '0123456789abcdef'
+        }
+        with self.client as c:
+            with c.session_transaction() as sess:
+                for key, value in test_init_data.items():
+                    sess[key] = value
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+
+            response = c.post('/sendin', data=test_init_data)
+            self.assertEqual(response.status_code, 200)
+            
+            with c.session_transaction() as sess:
+                for key, value in test_init_data.items():
+                    sess[key] = value
+            response = c.post('/code', data=test_init_data)
+            self.assertEqual(response.status_code, 302)
+
+            fp = cache.get('fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002')
+            assert None != fp
 
 
 if __name__ == '__main__':
