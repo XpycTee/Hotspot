@@ -11,6 +11,7 @@ from flask import (
     session, request, current_app, jsonify
 )
 import jmespath
+from sqlalchemy import case, func
 
 import logger
 from app.database import db
@@ -311,20 +312,23 @@ def get_tabel(tabel_name):
                 WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{sova_phone_number_search}%'))
             )
 
-        employee_delay: timedelta = current_app.config['HOTSPOT_USERS']['employee']['delay']
+        employee_delay = current_app.config['HOTSPOT_USERS']['employee']['delay']
         guest_delay = current_app.config['HOTSPOT_USERS']['guest']['delay']
+    
+        # Преобразуем timedelta в секунды (универсальный тип)
+        employee_delay_sec = int(employee_delay.total_seconds())
+        guest_delay_sec = int(guest_delay.total_seconds())
 
-        # Сортируем по вычисляемому выражению
-        delay_case = db.case(
-            (WifiClient.employee == True, employee_delay),
-            else_=guest_delay
+        delay_case = case(
+            (WifiClient.employee == True, employee_delay_sec),
+            else_=guest_delay_sec
         )
 
-        query = query.order_by(
-            db.desc(
-                db.func.extract('epoch', WifiClient.expiration) - delay_case
-            )
-        )
+        # Выражение UNIX-time для expiration
+        expiration_unix = func.extract('epoch', WifiClient.expiration)
+
+        # order_by по (expiration_unix - delay)
+        query = query.order_by((expiration_unix - delay_case).desc())
 
         total_rows = query.count()
         logger.debug(query.statement.compile())
