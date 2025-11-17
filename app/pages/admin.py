@@ -311,18 +311,20 @@ def get_tabel(tabel_name):
                 WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{sova_phone_number_search}%'))
             )
 
-        employee_delay = current_app.config['HOTSPOT_USERS']['employee']['delay']
+        employee_delay: timedelta = current_app.config['HOTSPOT_USERS']['employee']['delay']
         guest_delay = current_app.config['HOTSPOT_USERS']['guest']['delay']
 
         # Сортируем по вычисляемому выражению
+        delay_case = db.case(
+            (WifiClient.employee == True, employee_delay),
+            else_=guest_delay
+        )
+
         query = query.order_by(
             db.desc(
-                WifiClient.expiration - db.case(
-                    (WifiClient.employee == True, employee_delay),
-                    else_=guest_delay
-                )
+                db.func.extract('epoch', WifiClient.expiration) - delay_case
             )
-        )   
+        )
 
         total_rows = query.count()
         logger.debug(query.statement.compile())

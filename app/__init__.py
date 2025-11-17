@@ -1,5 +1,3 @@
-import uuid
-from app.database.models import WifiClient
 from app.pages.auth import auth_bp
 from app.pages.admin import admin_bp
 from app.pages.error import error_bp
@@ -27,9 +25,14 @@ def create_app(config_class=Config):
     db.init_app(app)
     cache.init_app(app)
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(error_bp)
+    bluepints = [
+        auth_bp,
+        admin_bp,
+        error_bp
+    ]
+ 
+    for bp in bluepints:
+        app.register_blueprint(bp)
 
     with app.app_context():
         db.create_all()
