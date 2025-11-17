@@ -212,9 +212,8 @@ def login():
     else:
         [session.update({k: v}) for k, v in request.values.items()]
 
-    if fp := session.get('fingerprint'):
+    if fp := session.pop('fingerprint', None):
         session['hardware_fp'] = fp
-        del session['fingerprint']
 
     logger.debug(f'Session data after form: {_log_masked_session()}')
 
