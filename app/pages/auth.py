@@ -148,8 +148,9 @@ def sendin():
     if user_fp := session.get('user_fp'):
         mac = session.get('mac')
         db_client = WifiClient.query.filter_by(mac=mac).first()
-        db_client.user_fp = user_fp
-        logger.debug(f"Update user_fp: {user_fp[:12]}")
+        if db_client.user_fp != user_fp:
+            db_client.user_fp = user_fp
+            logger.debug(f"Update user_fp: {user_fp[:12]}")
 
     now_time = datetime.datetime.now()
     db_phone = _get_or_create_client(phone_number)
