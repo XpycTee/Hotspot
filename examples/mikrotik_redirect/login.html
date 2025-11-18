@@ -46,20 +46,12 @@
         </main>
     </div>
 	<script src="js/md5.js"></script>
+	<script src="js/fingerprint.js"></script>
     <script>
-		function getDeviceInfo() {
-			return [
-			navigator.userAgent || '',
-			screen.width + 'x' + screen.height,
-			navigator.language || '',
-			(Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
-			navigator.hardwareConcurrency || '',
-			navigator.deviceMemory || ''
-			].join('|');
-		}
 		try {
 			const info = getDeviceInfo();
-			const fingerprint = hexMD5(info);
+			const json = JSON.stringify(info);
+			const fingerprint = hexMD5(json);
 			document.getElementById('fpField').value = fingerprint;
 		} catch (e) {
 			console.warn('Fingerprint generation failed:', e);
