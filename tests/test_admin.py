@@ -5,7 +5,7 @@ from unittest import mock
 from unittest.mock import patch
 
 import bcrypt
-from flask import Flask
+from flask import Flask, session
 
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -145,6 +145,7 @@ class TestAdminViews(unittest.TestCase):
     @patch('app.pages.admin.cache')
     def test_handle_failed_login(self, mock_cache):
         with self.app.test_request_context('/admin/auth'):
+            session['_id'] = 'a' * 8
             for i in range(3):
                 mock_cache.get.return_value = i
                 _handle_failed_login('admin', '127.0.0.1')
