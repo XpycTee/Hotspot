@@ -7,6 +7,7 @@ from flask import Flask
 from sqlalchemy import select
 
 from extensions import get_translate, cache
+from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employee, Blacklist
 
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -63,9 +64,6 @@ class TestAuthViews(unittest.TestCase):
         cache.init_app(self.app)
         with self.app.app_context():
             db.create_all()
-
-            # Добавление номера телефона в таблицу EmployeePhone
-            from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employee, Blacklist  # Импорт модели EmployeePhone
             
             # Non Authed Employee
             non_authed_emp = Employee(lastname = "NonAuthed", name = "Employee")
