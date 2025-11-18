@@ -256,15 +256,16 @@ def code():
         db_client = WifiClient.query.filter_by(mac=mac).first()
         auth_method = "mac&phone"
 
-        if not db_client:
-            if hardware_fp := session.get('hardware_fp'):
-                user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
-                session['user_fp'] = user_fp
+        user_fp = None
+        if hardware_fp := session.get('hardware_fp'):
+            user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
+            session['user_fp'] = user_fp
 
-                db_client = WifiClient.query.filter_by(user_fp=user_fp).first()
-                if db_client:
-                    session['mac'] = db_client.mac
-                    auth_method = "fingerprint&phone"
+        if not db_client and user_fp:
+            db_client = WifiClient.query.filter_by(user_fp=user_fp).first()
+            if db_client:
+                session['mac'] = db_client.mac
+                auth_method = "fingerprint&phone"
             
         if db_client and db_client.phone and (db_client.phone.phone_number == phone_number or db_client.phone.phone_number == phone_number[1:]):
             is_employee = _check_employee(phone_number)
