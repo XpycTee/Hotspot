@@ -18,7 +18,7 @@ if [ -z "$FLASK_SECRET_KEY" ]; then
     echo "SECRET_KEY not found. Generating a new one..."
     FLASK_SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
     export FLASK_SECRET_KEY
-    echo "Generated SECRET_KEY: $FLASK_SECRET_KEY"
+    echo "Flask Secret key Generated"
 fi
 
 # Устанавливаем параметры Gunicorn из переменных окружения или используем значения по умолчанию
