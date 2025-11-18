@@ -13,6 +13,7 @@ class ClientsNumber(db.Model):
 class WifiClient(db.Model):
     id = Column(Integer, primary_key=True)
     mac = Column(String(17), unique=True)
+    user_fp =  Column(String(64))
     expiration = Column(DateTime)
     employee = Column(Boolean)
     phone_id = Column(Integer, ForeignKey(ClientsNumber.id))

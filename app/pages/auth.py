@@ -5,12 +5,9 @@ import re
 from hashlib import md5, sha256
 from random import randint
 import secrets
-import string
-from typing import Any, ItemsView
-import uuid
 
 # Importing Blueprint for creating Flask blueprints
-from flask import Blueprint, jsonify, make_response
+from flask import Blueprint, jsonify
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -150,11 +147,9 @@ def sendin():
 
     if user_fp := session.get('user_fp'):
         mac = session.get('mac')
-        users_config = current_app.config['HOTSPOT_USERS']
-        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        delay: datetime.timedelta = hotspot_user.get('delay')
-        logger.debug(f"Caching user_fp: {user_fp[:12]} delay {delay}")
-        cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
+        db_client = WifiClient.query.filter_by(mac=mac).first()
+        db_client.user_fp = user_fp
+        logger.debug(f"Update user_fp: {user_fp[:12]}")
 
     now_time = datetime.datetime.now()
     db_phone = _get_or_create_client(phone_number)
@@ -260,17 +255,16 @@ def code():
         db_client = WifiClient.query.filter_by(mac=mac).first()
         auth_method = "mac&phone"
 
-        user_fp = None
-        if hardware_fp := session.get('hardware_fp'):
-            user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
-            session['user_fp'] = user_fp
+        if not db_client:
+            if hardware_fp := session.get('hardware_fp'):
+                user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
+                session['user_fp'] = user_fp
 
-        if not db_client and user_fp:
-            if fp_mac := cache.get(f"fingerprint:{user_fp}"):
-                db_client = WifiClient.query.filter_by(mac=fp_mac).first()
-                session['mac'] = fp_mac
-                auth_method = "fingerprint&phone"
-        
+                db_client = WifiClient.query.filter_by(user_fp=user_fp).first()
+                if db_client:
+                    session['mac'] = db_client.mac
+                    auth_method = "fingerprint&phone"
+            
         if db_client and db_client.phone and (db_client.phone.phone_number == phone_number or db_client.phone.phone_number == phone_number[1:]):
             is_employee = _check_employee(phone_number)
 

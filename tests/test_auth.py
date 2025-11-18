@@ -95,10 +95,9 @@ class TestAuthViews(unittest.TestCase):
             authed_emp_client = ClientsNumber(phone_number='79999999999', last_seen=datetime.datetime.now())
             db.session.add(authed_emp_client)
             db.session.commit()
-            authed_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=authed_emp_client)
+            authed_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=authed_emp_client, user_fp="e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002")
             db.session.add(authed_wifi_client)
             db.session.commit()
-            cache.set("fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002", authed_wifi_client.mac)
             
             # Expired Guest
             expired_guest_client = ClientsNumber(phone_number='70000000010', last_seen=datetime.datetime.now())
@@ -112,10 +111,10 @@ class TestAuthViews(unittest.TestCase):
             authed_guest_client = ClientsNumber(phone_number='70000000011', last_seen=datetime.datetime.now())
             db.session.add(authed_guest_client)
             db.session.commit()
-            authed_guest_wifi_client = WifiClient(mac="00:00:00:00:00:11", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=False, phone=authed_guest_client)
+            authed_guest_wifi_client = WifiClient(mac="00:00:00:00:00:11", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=False, phone=authed_guest_client, user_fp="ab185fb8f0baa93fc0d6852d019045d92dbc71aebec472c7461f7163892f5e92")
             db.session.add(authed_guest_wifi_client)
             db.session.commit()
-            cache.set("fingerprint:ab185fb8f0baa93fc0d6852d019045d92dbc71aebec472c7461f7163892f5e92", authed_guest_wifi_client.mac)
+
 
             new_blocked_phone = Blacklist(phone_number='79999999123')
             db.session.add(new_blocked_phone)
@@ -419,6 +418,7 @@ class TestAuthViews(unittest.TestCase):
             'phone': '79999999999',
             'hardware_fp': '0123456789abcdef'
         }
+        from app.database.models import WifiClient
         with self.client as c:
             with c.session_transaction() as sess:
                 for key, value in test_init_data.items():
@@ -434,9 +434,9 @@ class TestAuthViews(unittest.TestCase):
                     sess[key] = value
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 302)
-
-            fp = cache.get('fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002')
-            assert None != fp
+            user_fp = "e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002"
+            db_client = WifiClient.query.filter_by(user_fp=user_fp).first()
+            assert None != db_client
 
     @patch('app.pages.auth.randint', return_value=1234)
     def test_scenario_guest_code(self, _):
