@@ -6,6 +6,8 @@ from unittest.mock import patch, MagicMock
 from flask import Flask
 from sqlalchemy import select
 
+from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employee, Blacklist
+
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
@@ -62,9 +64,6 @@ class TestAuthViews(unittest.TestCase):
         cache.init_app(self.app)
         with self.app.app_context():
             db.create_all()
-
-            # Добавление номера телефона в таблицу EmployeePhone
-            from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employee, Blacklist  # Импорт модели EmployeePhone
 
             # Non Authed Employee
             non_authed_emp = Employee(lastname = "NonAuthed", name = "Employee")
@@ -369,7 +368,7 @@ class TestAuthViews(unittest.TestCase):
     def test_auth_route_update_client(self, mock_cache):
         test_init_data = {'code': '1234'}
         mock_cache.get.return_value = '1234'
-        from app.database.models import WifiClient
+
         with self.client as c:
             with c.session_transaction() as sess:
                 sess['mac'] = '12:34:56:78:9A:BC'
@@ -418,7 +417,6 @@ class TestAuthViews(unittest.TestCase):
             'phone': '79999999999',
             'hardware_fp': '0123456789abcdef'
         }
-        from app.database.models import WifiClient
         with self.client as c:
             with c.session_transaction() as sess:
                 for key, value in test_init_data.items():
