@@ -156,8 +156,6 @@ def sendin():
         logger.debug(f"Caching user_fp: {user_fp[:12]} delay {delay}")
         cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
 
-    cache.delete(f'code:{phone_number}')
-
     now_time = datetime.datetime.now()
     db_phone = _get_or_create_client(phone_number)
     # Обновляем поле last_seen, если запись уже существует
@@ -300,10 +298,14 @@ def code():
         if not phone_number:
             abort(400)
 
-    if not cache.get(f'code:{phone_number}'):
+    session_id = session.get('_id')
+
+    if not cache.get(f'sms:{session_id}:code'):
         gen_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'code:{phone_number}', gen_code, timeout=5 * 60)
-        cache.set(f'sended:{phone_number}', True, timeout=60)
+
+        cache.set(f'sms:{session_id}:code', gen_code, timeout=5 * 60)
+        cache.set(f'sms:{session_id}:attempts', 0, timeout=5 * 60)
+        cache.set(f'sms:{session_id}:sended', True, timeout=60)
 
         sender = current_app.config.get('SENDER')
         sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
@@ -323,18 +325,20 @@ def resend():
     logger.debug(f'Session data before code: {_log_masked_session()}')
     if not phone_number:
         abort(400)
-    if cache.get(f'sended:{phone_number}'):
+
+    session_id = session.get('_id')
+    if cache.get(f'sms:{session_id}:sended'):
         abort(400, description=get_translate('errors.auth.code_alredy_sended'))
 
-    user_code = cache.get(f'code:{phone_number}')
+    user_code = cache.get(f'sms:{session_id}:code')
     logger.debug(f'User cached code for {_mask_phone(phone_number)}: {user_code}')
 
     if not user_code:
         resend_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'code:{phone_number}', resend_code, timeout=5 * 60)
+        cache.set(f'sms:{session_id}:code', resend_code, timeout=5 * 60)
     else:
         resend_code = user_code
-    cache.set(f'sended:{phone_number}', True, timeout=60)
+    cache.set(f'sms:{session_id}:sended', True, timeout=60)
 
     sender = current_app.config.get('SENDER')
     sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=resend_code))
@@ -392,8 +396,9 @@ def auth():
     if not mac or not phone_number:
         abort(400)
     
+    session_id = session.get('_id')
     form_code = request.form.get('code')
-    user_code = cache.get(f'code:{phone_number}')
+    user_code = cache.get(f'sms:{session_id}:code')
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
@@ -422,19 +427,27 @@ def auth():
         _create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
 
         # Очистка кэша и редирект
-        cache.delete(f'code:{phone_number}')
+        cache.delete(f'sms:{session_id}:code')
+        cache.delete(f'sms:{session_id}:attempts')
+        cache.delete(f'sms:{session_id}:sended')
         logger.debug("Auth by code")
         return redirect(url_for('auth.sendin'), 302)
     else:
-        session.setdefault('tries', 0)
-        session['tries'] += 1
+        attempts = cache.get(f'sms:{session_id}:attempts')
+        if attempts is None:
+            attempts = 3
 
-        if session['tries'] >= 3:
+        attempts += 1
+        
+        if attempts >= 3:
             session['error'] = get_translate('errors.auth.bad_code_all')
-            session.pop('tries', None)
             session.pop('phone', None)
-            cache.delete(f'code:{phone_number}')
+            
+            cache.delete(f'sms:{session_id}:code')
+            cache.delete(f'sms:{session_id}:attempts')
+            cache.delete(f'sms:{session_id}:sended')
             return redirect(url_for('auth.login'), 302)
         else:
+            cache.set(f'sms:{session_id}:attempts', attempts, timeout=5 * 60)
             session['error'] = get_translate('errors.auth.bad_code_try')
             return redirect(url_for('auth.code'), 307)
