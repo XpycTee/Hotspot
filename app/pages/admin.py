@@ -1,7 +1,5 @@
 import re
 import secrets
-import string
-from typing import Any, ItemsView
 import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
@@ -49,7 +47,7 @@ def login_required(f):
 @admin_bp.before_request
 def ensure_session_id():
     if "_id" not in session:
-        sessid = secrets.token_hex(4)
+        sessid = secrets.token_hex(32)
         session["_id"] = sessid
 
 
