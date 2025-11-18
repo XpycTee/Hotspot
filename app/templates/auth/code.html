@@ -20,19 +20,23 @@
     <a class="text-center mt-2 link-line" href="/resend" id="resendLink" style="display:none;">{{ get_translate('html.code.resend_link') }}</a>
 </form>
 <script>
+    let submitted = false;
     function checkCodeForm() {
+         if (submitted) return;
         // Get the value of the code input field
         const codeValue = document.getElementById('code').value;
 
         // Check if the length of the code is 4
         if (codeValue.length === 4) {
-            // If the length is 4, submit the form
+            submitted = true;
             document.getElementById('codeForm').submit();
-          } else {
-            // If the length is not 4, display an error message or handle it as per your requirement
-            console.log('Code must be 4 characters long');
-          }
+        }
     }
+    
+    document.getElementById('codeForm').addEventListener('submit', (e) => {
+        if (submitted) return;
+        submitted = true;
+    });
 
     // Таймер для повторной отправки кода
     let timer = 60;
