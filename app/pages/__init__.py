@@ -1,4 +1,4 @@
-import secrets
+import uuid
 from app.pages.auth import auth_bp
 from app.pages.admin import admin_bp
 from app.pages.error import error_bp
@@ -20,4 +20,4 @@ for bp in bluepints:
 @pages_bp.before_request
 def ensure_session_id():
     if "_id" not in session:
-        session["_id"] = secrets.token_hex(32)
+        session["_id"] = str(uuid.uuid4())
