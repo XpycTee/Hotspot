@@ -38,7 +38,6 @@ RUN chmod +x ./entrypoint.sh
 # Указываем порты и монтируемые директории
 EXPOSE 8080
 VOLUME /hotspot/config
-VOLUME /hotspot/logs
 
 # Используем entrypoint.sh для запуска
 ENTRYPOINT ["./entrypoint.sh"]
