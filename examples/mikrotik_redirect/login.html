@@ -55,13 +55,10 @@
 			document.getElementById('fpField').value = fingerprint;
 		} catch (e) {
 			console.warn('Fingerprint generation failed:', e);
+		} finally {
+			document.redirect.submit();
 		}
     </script>
-	<script language="JavaScript">
-		<!--
-		document.redirect.submit();
-		-->
-	</script>
 	<div class="modalm">
 		<input id="modal-trigger" class="checkbox" type="checkbox">
 		<div class="modal-overlay">
