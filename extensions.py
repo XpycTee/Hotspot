@@ -2,11 +2,10 @@ import json
 import re
 import ssl
 import certifi
+import httpx
 import jmespath
 from flask import session, request, current_app
 from flask_caching import Cache
-import urllib
-
 
 cache = Cache()
 
@@ -14,9 +13,11 @@ cache = Cache()
 @cache.memoize(timeout=1 * 60 * 60)  # Кешируем результат на 1 час
 def fetch_employees():
     """Функция для получения данных сотрудников из внешнего ресурса."""
-    context = ssl.create_default_context(cafile=certifi.where())
-    with urllib.request.urlopen('https://is.sova72.ru/documents/employee/phonebook.json', context=context) as response:
-        return json.load(response)
+    url = 'https://is.sova72.ru/documents/employee/phonebook.json'
+    with httpx.Client() as client:
+        response = client.get(url)
+        response.raise_for_status()
+        return response.json()
 
 
 def normalize_phone(phone_number: str) -> str:

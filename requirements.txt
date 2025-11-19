@@ -9,3 +9,4 @@ smsru-api~=1.2
 huawei-lte-api~=1.8.1
 gunicorn~=23.0.0
 bcrypt~=4.3.0
+httpx~=0.28.1
