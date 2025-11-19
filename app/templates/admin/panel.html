@@ -23,7 +23,7 @@
         <div class="card p-4 shadow" style="border-radius: 7px;">
             <div class="justify-content-between" style="display: flex;"><div><img src="{{ url_for('static', filename='sova/images/logo_hotspot_01.svg') }}"></div> <!----></div>
             <div class="admin-dashboard">
-                <a href="{{ url_for('admin.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout') }}</a>
+                <a href="{{ url_for('pages.admin.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout') }}</a>
                 <ul class="nav-tabs">
                     <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title') }}</a></li>
                     <li><a href="#employee">{{ get_translate('html.admin.panel.tables.employees.title') }}</a></li>

@@ -98,12 +98,6 @@ def _log_masked_session():
 
     return result
 
-@auth_bp.before_request
-def ensure_session_id():
-    if "_id" not in session:
-        sessid = secrets.token_hex(32)
-        session["_id"] = sessid
-
 @auth_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['link-login-only', 'link-orig', 'mac']
@@ -116,7 +110,7 @@ def index():
         else:
             redirect(session.get('link-orig'), 302)
 
-    return redirect(url_for('auth.login'), 302)
+    return redirect(url_for('pages.auth.login'), 302)
 
 
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
@@ -228,7 +222,7 @@ def login():
                 user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
                 session['user_fp'] = user_fp
             logger.debug(f"Auth by expiration")
-            redirect_url = url_for('auth.sendin')
+            redirect_url = url_for('pages.auth.sendin')
             return redirect(redirect_url, 302)
 
     return render_template('auth/login.html', error=error)
@@ -283,7 +277,7 @@ def code():
             db_client.expiration = expire_time
             db_client.employee = is_employee
             db.session.commit()
-            redirect_url = url_for('auth.sendin')
+            redirect_url = url_for('pages.auth.sendin')
             logger.debug(f"Auth by {auth_method}")
             return redirect(redirect_url, 302)
 
@@ -398,10 +392,10 @@ def auth():
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
-        return redirect(url_for('auth.code'), 302)
+        return redirect(url_for('pages.auth.code'), 302)
     if user_code is None:
         session['error'] = get_translate('errors.auth.expired_code')
-        return redirect(url_for('auth.code'), 302)
+        return redirect(url_for('pages.auth.code'), 302)
 
     if int(form_code) == int(user_code):
         today_start = _get_today()
@@ -427,7 +421,7 @@ def auth():
         cache.delete(f'sms:{session_id}:attempts')
         cache.delete(f'sms:{session_id}:sended')
         logger.debug("Auth by code")
-        return redirect(url_for('auth.sendin'), 302)
+        return redirect(url_for('pages.auth.sendin'), 302)
     else:
         attempts = cache.get(f'sms:{session_id}:attempts')
         if attempts is None:
@@ -442,8 +436,8 @@ def auth():
             cache.delete(f'sms:{session_id}:code')
             cache.delete(f'sms:{session_id}:attempts')
             cache.delete(f'sms:{session_id}:sended')
-            return redirect(url_for('auth.login'), 302)
+            return redirect(url_for('pages.auth.login'), 302)
         else:
             cache.set(f'sms:{session_id}:attempts', attempts, timeout=5 * 60)
             session['error'] = get_translate('errors.auth.bad_code_try')
-            return redirect(url_for('auth.code'), 307)
+            return redirect(url_for('pages.auth.code'), 307)

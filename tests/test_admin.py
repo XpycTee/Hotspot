@@ -12,11 +12,12 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
 from app.database.models import Blacklist, Employee
 from app.pages.admin import (
-    admin_bp,
     _check_password,
     _reset_login_attempts,
     _handle_failed_login
 )
+from app.pages import pages_bp
+
 
 from extensions import get_translate
 from app.database import db
@@ -24,7 +25,7 @@ from app.database import db
 class TestAdminViews(unittest.TestCase):
     def setUp(self):
         self.app = Flask(__name__)
-        self.app.register_blueprint(admin_bp)
+        self.app.register_blueprint(pages_bp)
         self.app.root_path = os.path.join(root_dir, 'app')
         self.app.config['DEBUG'] = True
         self.app.config['SECRET_KEY'] = 'secret'

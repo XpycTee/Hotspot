@@ -12,10 +12,10 @@ from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employ
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
 from app.pages.auth import (
-    auth_bp,
     _octal_string_to_bytes,
     _check_employee,
 )
+from app.pages import pages_bp
 
 from extensions import get_translate, cache
 from app.database import db
@@ -24,7 +24,7 @@ class TestAuthViews(unittest.TestCase):
     def setUp(self):
         self.app = Flask(__name__)
         self.app.debug = True
-        self.app.register_blueprint(auth_bp)
+        self.app.register_blueprint(pages_bp)
         self.app.root_path = os.path.join(root_dir, 'app')
         self.app.config['SECRET_KEY'] = 'secret'
         self.app.config['HOTSPOT_USERS'] = {

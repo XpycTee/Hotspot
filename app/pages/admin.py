@@ -39,22 +39,15 @@ def login_required(f):
         logger.debug(f'session data {_log_masked_session()}')
         if not session.get('is_authenticated'):
             logger.debug('User is not authenticated')
-            return redirect(url_for('admin.login'), 302)
+            return redirect(url_for('pages.admin.login'), 302)
         return f(*args, **kwargs)
     return decorated_function
-
-
-@admin_bp.before_request
-def ensure_session_id():
-    if "_id" not in session:
-        sessid = secrets.token_hex(32)
-        session["_id"] = sessid
 
 
 @admin_bp.route('/', methods=['POST', 'GET'])
 @login_required
 def admin():
-    return redirect(url_for('admin.panel'), 302)
+    return redirect(url_for('pages.admin.panel'), 302)
 
 
 @admin_bp.route('/login', methods=['POST', 'GET'])
@@ -78,7 +71,7 @@ def auth():
             get_translate('errors.admin.end_tries').format(lockout_time=lockout_time),
             username, client_ip, "warning"
         )
-        return redirect(url_for('admin.login'), 302)
+        return redirect(url_for('pages.admin.login'), 302)
 
     app_admin = current_app.config.get('ADMIN', {})
     if (
@@ -95,10 +88,10 @@ def auth():
         current_app.permanent_session_lifetime = timedelta(minutes=30)  # Время жизни сессии
         logger.info(get_translate('errors.admin.user_logged_in').format(username=username, client_ip=client_ip))
         logger.debug(f'session data {_log_masked_session()}')
-        return redirect(url_for('admin.panel'), 302)
+        return redirect(url_for('pages.admin.panel'), 302)
 
     _handle_failed_login(username, client_ip)
-    return redirect(url_for('admin.login'), 302)
+    return redirect(url_for('pages.admin.login'), 302)
 
 
 @admin_bp.route('/panel', methods=['POST', 'GET'])
@@ -111,7 +104,7 @@ def panel():
 @admin_bp.route('/logout', methods=['POST', 'GET'])
 def logout():
     session.clear()  # Очищаем сессию
-    return redirect(url_for('admin.login'), 302)
+    return redirect(url_for('pages.admin.login'), 302)
 
 
 @admin_bp.route('/save/<tabel_name>', methods=['POST'])

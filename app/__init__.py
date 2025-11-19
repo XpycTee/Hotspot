@@ -1,6 +1,4 @@
-from app.pages.auth import auth_bp
-from app.pages.admin import admin_bp
-from app.pages.error import error_bp
+from app.pages import pages_bp
 
 from app.database import db
 
@@ -25,14 +23,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     cache.init_app(app)
 
-    bluepints = [
-        auth_bp,
-        admin_bp,
-        error_bp
-    ]
- 
-    for bp in bluepints:
-        app.register_blueprint(bp)
+    app.register_blueprint(pages_bp)
 
     with app.app_context():
         db.create_all()
