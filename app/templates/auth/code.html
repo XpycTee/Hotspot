@@ -14,30 +14,46 @@
 
     <div id="error-message" style="flex: 1 1 0%; {{ 'display:none;' if not error else '' }}">{{ error }}</div>
 
-    <input type="submit" class="button login-button mt-2" value="{{ get_translate('html.code.submit_button') }}">
+    <button id="sendBtn" type="button" class="button login-button mt-2">{{ get_translate('html.code.submit_button') }}"</button>
 
     <p class="text-center mt-2 link-line disabled" disabled id="resendMessage">{{ get_translate('html.code.resend_message') }} <span id="timer">60</span> {{ get_translate('html.code.seconds') }}</p>
     <a class="text-center mt-2 link-line" href="/resend" id="resendLink" style="display:none;">{{ get_translate('html.code.resend_link') }}</a>
 </form>
 <script>
-    let submitted = false;
-    function checkCodeForm() {
-         if (submitted) return;
-        // Get the value of the code input field
-        const codeValue = document.getElementById('code').value;
+    let allowSubmit = false; // разрешение нашего сабмита
 
-        // Check if the length of the code is 4
-        if (codeValue.length === 4) {
-            submitted = true;
-            document.getElementById('codeForm').submit();
+    const form = document.getElementById('codeForm');
+
+    // Блокируем внезапные сабмиты браузера (автоподстановка, Enter и т.д.)
+    form.addEventListener('submit', (e) => {
+        if (!allowSubmit) {
+            e.preventDefault(); // запрет
+            return;
         }
-    }
-    
-    document.getElementById('codeForm').addEventListener('submit', (e) => {
-        if (submitted) return;
-        submitted = true;
+
+        // Сбрасываем флаг, чтобы случайно не сабмитнуть повторно
+        allowSubmit = false;
     });
 
+    // Функция ручного сабмита
+    function doSubmit() {
+        allowSubmit = true;
+        form.submit();
+    }
+
+    // Автоотправка при вводе 4 цифр
+    document.getElementById('code').addEventListener('input', () => {
+        if (document.getElementById('code').value.length === 4) {
+            doSubmit();
+        }
+    });
+
+    // Отправка по кастомной кнопке
+    document.getElementById('sendBtn').addEventListener('click', () => {
+        doSubmit();
+    });
+</script>
+<script>
     // Таймер для повторной отправки кода
     let timer = 60;
     const timerElement = document.getElementById('timer');
