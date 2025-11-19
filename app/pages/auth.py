@@ -207,24 +207,30 @@ def login():
 
     mac = session.get('mac')
 
+    logger.debug(f"Find {_mask_mac(mac)} in db")
     db_client = WifiClient.query.filter_by(mac=mac).first()
     if db_client and datetime.datetime.now() < db_client.expiration:
+        logger.debug(f"{_mask_mac(mac)} found not expired")
         phone = db_client.phone
         if not phone:
             abort(500)
         phone_number = phone.phone_number
         if Blacklist.query.filter_by(phone_number=phone_number).first():
+            logger.info(f"{_mask_phone(phone_number)} in blacklist")
             abort(403)
 
+        logger.debug(f"{_mask_phone(phone_number)} check employee")
         if _check_employee(phone_number) == db_client.employee:
+            logger.debug(f"{_mask_phone(phone_number)} is employee")
             session['phone'] = phone_number
             if hardware_fp := session.get('hardware_fp'):
                 user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
                 session['user_fp'] = user_fp
-            logger.debug(f"Auth by expiration")
+            logger.debug("Auth by expiration")
             redirect_url = url_for('pages.auth.sendin')
             return redirect(redirect_url, 302)
-
+        
+    logger.debug(f"{_mask_mac(mac)} can't auth, render login")
     return render_template('auth/login.html', error=error)
 
 
