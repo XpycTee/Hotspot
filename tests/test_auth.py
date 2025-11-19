@@ -315,7 +315,8 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
 
     def test_resend_route_cache_code(self):
-        cache.set('sms:qwerty1234:code', '1234')
+        session_id = 'qwerty1234'
+        cache.set(f'{session_id}:sms:code', '1234')
 
         mock_sender = MagicMock()
         mock_sender.send_sms.return_value = None
@@ -323,7 +324,7 @@ class TestAuthViews(unittest.TestCase):
 
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['_id'] = 'qwerty1234'
+                sess['_id'] = session_id
                 sess['phone'] = '79999999999'
             response = c.post('/resend')
             mock_sender.send_sms.assert_called_once_with('79999999999', 'Your code is 1234')
@@ -344,10 +345,11 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
     
     def test_resend_route_sended(self):
-        cache.set('sms:qwerty1234:sended', True)
+        session_id = 'qwerty1234'
+        cache.set(f'{session_id}:sms:sended', True)
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['_id'] = 'qwerty1234'
+                sess['_id'] = session_id
                 sess['phone'] = '79999999999'
             response = c.post('/resend')
             self.assertEqual(response.status_code, 400)
@@ -388,9 +390,10 @@ class TestAuthViews(unittest.TestCase):
             self.assertIn('/sendin', response.location)
 
     def test_auth_route_bad_code(self):
+        session_id = 'qwerty1234'
         test_init_data = {'code': '1234'}
-        cache.set(f'sms:qwerty1234:code', 5678)
-        cache.set(f'sms:qwerty1234:attempts', 0)
+        cache.set(f'{session_id}:sms:code', 5678)
+        cache.set(f'{session_id}:sms:attempts', 0)
 
         expected_responses = [
             (307, '/code'),
@@ -400,7 +403,7 @@ class TestAuthViews(unittest.TestCase):
 
         with self.client as c:
             with c.session_transaction() as sess:
-                sess['_id'] = 'qwerty1234'
+                sess['_id'] = session_id
                 sess['mac'] = '00:00:00:00:00:00'
                 sess['phone'] = '71234567890'
 
