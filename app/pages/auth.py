@@ -4,7 +4,6 @@ import re
 
 from hashlib import md5, sha256
 from random import randint
-import secrets
 
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify

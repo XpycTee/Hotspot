@@ -1,7 +1,4 @@
-import json
 import re
-import ssl
-import certifi
 import httpx
 import jmespath
 from flask import session, request, current_app
