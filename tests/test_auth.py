@@ -3,7 +3,7 @@ import os
 import sys
 import unittest
 from unittest.mock import patch, MagicMock
-from flask import Flask
+from flask import Flask, session
 from sqlalchemy import select
 
 from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employee, Blacklist
@@ -137,7 +137,8 @@ class TestAuthViews(unittest.TestCase):
         self.assertEqual(_octal_string_to_bytes("\\141\\142\\143"), b'abc')
 
     def test_check_employee(self):
-        with self.app.app_context():
+        with self.app.test_request_context('/'):
+            session['_id'] = 'a' * 8
             self.assertTrue(_check_employee('79999999999'))
             self.assertFalse(_check_employee('0987654321'))
 
