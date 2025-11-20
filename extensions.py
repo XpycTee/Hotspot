@@ -4,6 +4,8 @@ import jmespath
 from flask import session, request, current_app
 from flask_caching import Cache
 
+import logger
+
 cache = Cache()
 
 
@@ -11,6 +13,7 @@ cache = Cache()
 def fetch_employees():
     """Функция для получения данных сотрудников из внешнего ресурса."""
     url = 'https://is.sova72.ru/documents/employee/phonebook.json'
+    logger.debug('Fetch employees from base')
     with httpx.Client() as client:
         response = client.get(url)
         response.raise_for_status()
