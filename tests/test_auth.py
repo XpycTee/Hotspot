@@ -21,6 +21,16 @@ from extensions import get_translate, cache
 from app.database import db
 
 class TestAuthViews(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.patcher = patch("app.pages.auth.fetch_employees")
+        cls.mock_get = cls.patcher.start()
+        cls.mock_get.return_value = {}
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher.stop()
+
     def setUp(self):
         self.app = Flask(__name__)
         self.app.debug = True
@@ -135,6 +145,7 @@ class TestAuthViews(unittest.TestCase):
 
     def test_octal_string_to_bytes(self):
         self.assertEqual(_octal_string_to_bytes("\\141\\142\\143"), b'abc')
+
 
     def test_check_employee(self):
         with self.app.test_request_context('/'):
