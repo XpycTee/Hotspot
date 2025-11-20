@@ -14,13 +14,14 @@
 
     <div id="error-message" style="flex: 1 1 0%; {{ 'display:none;' if not error else '' }}">{{ error }}</div>
 
-    <button id="sendBtn" type="button" class="button login-button mt-2">{{ get_translate('html.code.submit_button') }}"</button>
+    <button id="sendBtn" type="button" class="button login-button mt-2">{{ get_translate('html.code.submit_button') }}</button>
 
     <p class="text-center mt-2 link-line disabled" disabled id="resendMessage">{{ get_translate('html.code.resend_message') }} <span id="timer">60</span> {{ get_translate('html.code.seconds') }}</p>
     <a class="text-center mt-2 link-line" href="/resend" id="resendLink" style="display:none;">{{ get_translate('html.code.resend_link') }}</a>
 </form>
 <script>
     let allowSubmit = false; // разрешение нашего сабмита
+    let submitTimeout = null;
 
     const form = document.getElementById('codeForm');
     const codeInput = document.getElementById('code');
