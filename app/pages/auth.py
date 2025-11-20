@@ -54,9 +54,11 @@ def _octal_string_to_bytes(oct_string):
 def _check_employee(phone_number):
     """Проверка, является ли номер телефона сотрудником."""
     employees = fetch_employees()  # Используем кешированные данные
-    sova_phone_number = re.sub(r'^(\+?7|8)', '', phone_number) if phone_number else ''
-    expression = f"employee[].phone[].number | contains([], '{sova_phone_number}')"
-    in_base = bool(jmespath.search(expression, employees))
+    in_base = False
+    if employees:
+        sova_phone_number = re.sub(r'^(\+?7|8)', '', phone_number) if phone_number else ''
+        expression = f"employee[].phone[].number | contains([], '{sova_phone_number}')"
+        in_base = bool(jmespath.search(expression, employees))
     if not in_base:
         # Проверка наличия номера телефона в базе данных сотрудников
         employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
