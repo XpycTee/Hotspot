@@ -31,7 +31,6 @@
             e.preventDefault(); // запрет
             return;
         }
-
         // Сбрасываем флаг, чтобы случайно не сабмитнуть повторно
         allowSubmit = false;
     });
@@ -41,15 +40,22 @@
         if (!codeInput.reportValidity()) {
             return;
         }
-
         allowSubmit = true;
         form.submit();
     }
 
-    // Автоотправка при вводе 4 цифр
-    document.getElementById('code').addEventListener('input', () => {
-        if (codeInput.value.length === 4) {
-            doSubmit();
+    // Автоотправка при вводе, но с задержкой
+    codeInput.addEventListener('input', () => {
+        const val = codeInput.value;
+
+        // Сбрасываем прошедшие таймеры
+        if (submitTimeout) clearTimeout(submitTimeout);
+
+        // Если длина 4 — ждём немного и только потом сабмитим
+        if (val.length === 4) {
+            submitTimeout = setTimeout(() => {
+                doSubmit();
+            }, 200); // можно 150–300 мс
         }
     });
 
