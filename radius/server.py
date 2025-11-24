@@ -3,6 +3,9 @@ import os
 from pyrad2 import dictionary, server
 from pyrad2.constants import PacketType
 
+from core.db.session import create_all
+from core.wifi.auth import authenticate_by_mac
+
 logging.basicConfig(level=logging.INFO)
 
 TEST_SERVER = os.environ.get("TEST_RADIUS_SERVER")
@@ -14,10 +17,14 @@ RADIUS_SECRET = TEST_SECRET.encode()
 
 def auth_by_mac(mac, reply):
     logging.debug(f"Find {mac} in db")
-    test_db = {"00:00:00:00:00:00": {"employee": True} }
-    employee = test_db.get("employee", False)
-    reply.AddAttribute("MT-Group", "employee" if employee else "guest")
-    reply.code = PacketType.AccessAccept
+    client = authenticate_by_mac(mac)
+    status = client.get('status')
+    if status == "OK":
+        employee = client.get("employee")
+        reply.AddAttribute("MT-Group", "employee" if employee else "guest")
+        reply.code = PacketType.AccessAccept
+    elif status == ["NOT_FOUND", "EXPIRED", "BLOCKED"]:
+        reply.code = PacketType.AccessReject
 
 
 class TESTRADIUS(server.Server):
@@ -53,6 +60,8 @@ class TESTRADIUS(server.Server):
 
 
 if __name__ == "__main__":
+    create_all()
+
     srv = TESTRADIUS(dict=dictionary.Dictionary("dictionary"), coa_enabled=True)
 
     srv.hosts[RADIUS_SERVER] = server.RemoteHost(

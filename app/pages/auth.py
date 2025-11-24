@@ -26,6 +26,7 @@ from flask import (
     current_app
 )
 
+from core.wifi.auth import authenticate_by_mac
 import logger
 from app.database import db
 from app.database.models import Blacklist, ClientsNumber, EmployeePhone, WifiClient
@@ -202,26 +203,27 @@ def login():
 
     logger.debug(f'Session data after form: {_log_masked_session()}')
     mac = session.get('mac')
+    hardware_fp = session.get('hardware_fp', None)
 
-    db_client = WifiClient.query.filter_by(mac=mac).first()
-    if db_client and datetime.datetime.now() < db_client.expiration:
-        phone = db_client.phone
-        if not phone:
-            abort(500)
+    response = authenticate_by_mac(mac, hardware_fp)
 
-        if Blacklist.query.filter_by(phone_number=phone.phone_number).first():
-            abort(403)
-        
-        if _check_employee(phone.phone_number) == db_client.employee:
-            session['phone'] = phone.phone_number
-            if hardware_fp := session.get('hardware_fp'):
-                user_fp = sha256(f"{hardware_fp}:{phone.phone_number}".encode()).hexdigest()
-                session['user_fp'] = user_fp
-            logger.debug(f"Auth by expiration")
-            redirect_url = url_for('auth.sendin')
-            return redirect(redirect_url, 302)
+    status = response.get('status')
+    if status == "OK":
+        phone = response.get('phone')
+        user_fp = response.get('user_fp')
 
-    return render_template('auth/login.html', error=error)
+        session['phone'] = phone
+        if user_fp:
+            session['user_fp'] = user_fp
+
+        redirect_url = url_for('auth.sendin')
+        return redirect(redirect_url, 302)
+    elif status == "BLOCKED":
+        abort(403)
+    elif status in ["NOT_FOUND", "EXPIRED"]:
+        return render_template('auth/login.html', error=error)
+    else:
+        abort(500)
 
 
 @auth_bp.route('/code', methods=['POST', 'GET'])
