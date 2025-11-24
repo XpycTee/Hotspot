@@ -1,0 +1,61 @@
+# -*- text -*-
+# Copyright (C) 2023 The FreeRADIUS Server project and contributors
+# This work is licensed under CC-BY version 4.0 https://creativecommons.org/licenses/by/4.0
+# Version $Id$
+#	http://www.mikrotik.com
+#
+#	https://wiki.mikrotik.com/wiki/Manual:RADIUS_Client/vendor_dictionary
+#
+#	$Id$
+#
+VENDOR		Mikrotik			14988
+
+BEGIN-VENDOR	Mikrotik
+
+ATTRIBUTE	MT-Recv-Limit				1	integer
+ATTRIBUTE	MT-Xmit-Limit				2	integer
+
+# this attribute is unused
+ATTRIBUTE	MT-Group					3	string
+
+ATTRIBUTE	MT-Wireless-Forward			4	integer
+ATTRIBUTE	MT-Wireless-Skip-Dot1x			5	integer
+ATTRIBUTE	MT-Wireless-Enc-Algo			6	integer
+ATTRIBUTE	MT-Wireless-Enc-Key			7	string
+ATTRIBUTE	MT-Rate-Limit				8	string
+ATTRIBUTE	MT-Realm					9	string
+ATTRIBUTE	MT-Host-IP					10	ipaddr
+ATTRIBUTE	MT-Mark-Id					11	string
+ATTRIBUTE	MT-Advertise-URL				12	string
+ATTRIBUTE	MT-Advertise-Interval			13	integer
+ATTRIBUTE	MT-Recv-Limit-Gigawords			14	integer
+ATTRIBUTE	MT-Xmit-Limit-Gigawords			15	integer
+ATTRIBUTE	MT-Wireless-PSK				16	string
+ATTRIBUTE	MT-Total-Limit				17	integer
+ATTRIBUTE	MT-Total-Limit-Gigawords			18	integer
+ATTRIBUTE	MT-Address-List				19	string
+ATTRIBUTE	MT-Wireless-MPKey				20	string
+ATTRIBUTE	MT-Wireless-Comment			21	string
+ATTRIBUTE	MT-Delegated-IPv6-Pool			22	string
+ATTRIBUTE	MT-DHCP-Option-Set				23	string
+ATTRIBUTE	MT-DHCP-Option-Param-STR1			24	string
+ATTRIBUTE	MT-DHCP-Option-ParamSTR2			25	string
+ATTRIBUTE	MT-Wireless-VLANID				26	integer
+ATTRIBUTE	MT-Wireless-VLANID-Type			27	integer
+ATTRIBUTE	MT-Wireless-Minsignal			28	string
+ATTRIBUTE	MT-Wireless-Maxsignal			29	string
+ATTRIBUTE	MT-Switching-Filter			30	string
+
+# MikroTik Values
+
+VALUE	MT-Wireless-Enc-Algo		No-encryption		0
+VALUE	MT-Wireless-Enc-Algo		40-bit-WEP		1
+VALUE	MT-Wireless-Enc-Algo		104-bit-WEP		2
+VALUE	MT-Wireless-Enc-Algo		AES-CCM			3
+VALUE	MT-Wireless-Enc-Algo		TKIP			4
+
+VALUE	MT-Wireless-VLANID-Type		802.1q			0
+VALUE	MT-Wireless-VLANID-Type		802.1ad			1
+
+END-VENDOR	Mikrotik
+ALIAS		Mikrotik				Vendor-Specific.Mikrotik

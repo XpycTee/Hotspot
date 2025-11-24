@@ -1,13 +1,7 @@
-import datetime
 import logging
 import os
 from pyrad2 import dictionary, server
 from pyrad2.constants import PacketType
-
-from app.database.models import Blacklist, WifiClient
-from app.pages.auth import _check_employee
-
-
 
 logging.basicConfig(level=logging.INFO)
 
