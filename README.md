@@ -38,7 +38,7 @@ This project provides a backend hotspot web application deployed in a Docker con
   - Enable HTTP CHAP, MAC Cookie 
 - Create hotspot users and profiles for employees and guests.
 
-> ‼️WARTNING‼️ Don't use HTTP PAP and HTTPS, because these methods transmit the user's password in plain text.
+> ‼️WARTNING‼️ Don't use HTTP PAP and HTTPS, because these methods transmit the user's password in plain text. In the future, I plan to change the authorization method, but for now, please avoid using these methods for security reasons.
 
 ##### Configurations:
 1. Hotspot profile, using mac-cookie and http-chap is required:
