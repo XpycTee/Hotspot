@@ -35,8 +35,10 @@ This project provides a backend hotspot web application deployed in a Docker con
 ### MikroTik Hotspot Configuration
 - Create a hotspot profile:
   - Set **HTML Directory** to `mikrotik_redirect`
-  - Enable **HTTP CHAP**, **MAC Cookie**, and optionally **HTTPS**
+  - Enable HTTP CHAP, MAC Cookie 
 - Create hotspot users and profiles for employees and guests.
+
+> ‼️WARTNING‼️ Don't use HTTP PAP and HTTPS, because these methods transmit the user's password in plain text.
 
 ##### Configurations:
 1. Hotspot profile, using mac-cookie and http-chap is required:
