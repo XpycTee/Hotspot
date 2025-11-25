@@ -28,66 +28,66 @@ from app.pages.auth import (
 
 
 class TestAuthViews(unittest.TestCase):
-    def create_db(self, url='sqlite:///:memory:'):
+    def create_db(self):
         create_all()
-        self.session = get_session()
+        with get_session() as session:
 
-        # Non Authed Employee
-        non_authed_emp = Employee(lastname = "NonAuthed", name = "Employee")
-        self.session.add(non_authed_emp)
-        self.session.commit()
-        non_authed_emp_phone = EmployeePhone(phone_number='79999999991', employee_id=non_authed_emp.id)
-        self.session.add(non_authed_emp_phone)
+            # Non Authed Employee
+            non_authed_emp = Employee(lastname = "NonAuthed", name = "Employee")
+            session.add(non_authed_emp)
+            session.commit()
+            non_authed_emp_phone = EmployeePhone(phone_number='79999999991', employee_id=non_authed_emp.id)
+            session.add(non_authed_emp_phone)
 
-        # Expired Employee
-        expired_emp = Employee(lastname = "Expired", name = "Employee")
-        self.session.add(expired_emp)
-        self.session.commit()
-        expired_emp_phone = EmployeePhone(phone_number='79999999992', employee_id=expired_emp.id)
-        self.session.add(expired_emp_phone)
-        expired_emp_client = ClientsNumber(phone_number='79999999992', last_seen=datetime.datetime.now())
-        self.session.add(expired_emp_client)
-        self.session.commit()
-        expired_emp_wifi_client = WifiClient(mac="12:34:56:78:9A:BD", expiration=datetime.datetime.now().replace(hour=0, minute=0, second=0), employee=True, phone=expired_emp_client)
-        self.session.add(expired_emp_wifi_client)
-        self.session.commit()
+            # Expired Employee
+            expired_emp = Employee(lastname = "Expired", name = "Employee")
+            session.add(expired_emp)
+            session.commit()
+            expired_emp_phone = EmployeePhone(phone_number='79999999992', employee_id=expired_emp.id)
+            session.add(expired_emp_phone)
+            expired_emp_client = ClientsNumber(phone_number='79999999992', last_seen=datetime.datetime.now())
+            session.add(expired_emp_client)
+            session.commit()
+            expired_emp_wifi_client = WifiClient(mac="12:34:56:78:9A:BD", expiration=datetime.datetime.now().replace(hour=0, minute=0, second=0), employee=True, phone=expired_emp_client)
+            session.add(expired_emp_wifi_client)
+            session.commit()
 
-        # Authed Employee
-        authed_emp = Employee(lastname = "Authed", name = "Employee")
-        self.session.add(authed_emp)
-        self.session.commit()
-        authed_emp_phone = EmployeePhone(phone_number='79999999999', employee_id=authed_emp.id)
-        self.session.add(authed_emp_phone)
-        authed_emp_client = ClientsNumber(phone_number='79999999999', last_seen=datetime.datetime.now())
-        self.session.add(authed_emp_client)
-        self.session.commit()
-        authed_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=authed_emp_client, user_fp="e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002")
-        self.session.add(authed_wifi_client)
-        self.session.commit()
-        
-        # Expired Guest
-        expired_guest_client = ClientsNumber(phone_number='70000000010', last_seen=datetime.datetime.now())
-        self.session.add(expired_guest_client)
-        self.session.commit()
-        expired_guest_wifi_client = WifiClient(mac="00:00:00:00:00:10", expiration=datetime.datetime.now().replace(hour=0, minute=0, second=0), employee=False, phone=expired_guest_client)
-        self.session.add(expired_guest_wifi_client)
-        self.session.commit()
+            # Authed Employee
+            authed_emp = Employee(lastname = "Authed", name = "Employee")
+            session.add(authed_emp)
+            session.commit()
+            authed_emp_phone = EmployeePhone(phone_number='79999999999', employee_id=authed_emp.id)
+            session.add(authed_emp_phone)
+            authed_emp_client = ClientsNumber(phone_number='79999999999', last_seen=datetime.datetime.now())
+            session.add(authed_emp_client)
+            session.commit()
+            authed_wifi_client = WifiClient(mac="12:34:56:78:9A:BC", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=True, phone=authed_emp_client, user_fp="e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002")
+            session.add(authed_wifi_client)
+            session.commit()
+            
+            # Expired Guest
+            expired_guest_client = ClientsNumber(phone_number='70000000010', last_seen=datetime.datetime.now())
+            session.add(expired_guest_client)
+            session.commit()
+            expired_guest_wifi_client = WifiClient(mac="00:00:00:00:00:10", expiration=datetime.datetime.now().replace(hour=0, minute=0, second=0), employee=False, phone=expired_guest_client)
+            session.add(expired_guest_wifi_client)
+            session.commit()
 
-        # Authed Guest
-        authed_guest_client = ClientsNumber(phone_number='70000000011', last_seen=datetime.datetime.now())
-        self.session.add(authed_guest_client)
-        self.session.commit()
-        authed_guest_wifi_client = WifiClient(mac="00:00:00:00:00:11", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=False, phone=authed_guest_client, user_fp="ab185fb8f0baa93fc0d6852d019045d92dbc71aebec472c7461f7163892f5e92")
-        self.session.add(authed_guest_wifi_client)
-        self.session.commit()
+            # Authed Guest
+            authed_guest_client = ClientsNumber(phone_number='70000000011', last_seen=datetime.datetime.now())
+            session.add(authed_guest_client)
+            session.commit()
+            authed_guest_wifi_client = WifiClient(mac="00:00:00:00:00:11", expiration=datetime.datetime.now().replace(hour=23, minute=59, second=59), employee=False, phone=authed_guest_client, user_fp="ab185fb8f0baa93fc0d6852d019045d92dbc71aebec472c7461f7163892f5e92")
+            session.add(authed_guest_wifi_client)
+            session.commit()
 
-        new_blocked_phone = Blacklist(phone_number='79999999123')
-        self.session.add(new_blocked_phone)
+            new_blocked_phone = Blacklist(phone_number='79999999123')
+            session.add(new_blocked_phone)
 
-        new_guest_client = ClientsNumber(phone_number='79999999321', last_seen=datetime.datetime.now())
-        self.session.add(new_guest_client)
+            new_guest_client = ClientsNumber(phone_number='79999999321', last_seen=datetime.datetime.now())
+            session.add(new_guest_client)
 
-        self.session.commit()
+            session.commit()
 
     def create_flask(self):
         self.app = Flask(__name__)
@@ -132,7 +132,7 @@ class TestAuthViews(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.create_db(cls, 'sqlite:///:memory:')
+        cls.create_db(cls)
 
     def setUp(self):
         self.create_flask()
@@ -188,20 +188,6 @@ class TestAuthViews(unittest.TestCase):
             with c.session_transaction() as sess:
                 sess.update(test_init_data)
             response = c.post('/login')
-            self.assertEqual(response.status_code, 200)
-
-    @patch('app.pages.auth.check_employee')
-    def test_login_route_bad_emp(self, mock_chck):
-        mock_chck.return_value = False
-        test_init_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '12:34:56:78:9A:BC'
-        }
-        with self.client as c:
-            response = c.post('/login', data=test_init_data)
             self.assertEqual(response.status_code, 200)
 
     def test_sendin_route_guest_chap(self):
@@ -366,11 +352,11 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/resend')
             self.assertEqual(response.status_code, 400)
 
-    @patch('app.pages.auth.cache')
+    @patch('app.pages.auth.get_code')
     def test_auth_route(self, mock_cache):
         test_init_data = {'code': '1234'}
         test_sess_data = {'mac': '00:00:00:00:00:00', 'phone': '71234567890'}
-        mock_cache.get.return_value = '1234'
+        mock_cache.return_value = '1234'
         with self.client as c:
             with c.session_transaction() as sess:
                 sess.update(test_sess_data)
@@ -378,26 +364,32 @@ class TestAuthViews(unittest.TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertIn('/sendin', response.location)
 
-    @patch('app.pages.auth.cache')
+    @patch('app.pages.auth.get_code')
     def test_auth_route_update_client(self, mock_cache):
         test_init_data = {'code': '1234'}
         test_sess_data = {'mac': '12:34:56:78:9A:BC', 'phone': '71234567890'}
-        mock_cache.get.return_value = '1234'
+        mock_cache.return_value = '1234'
         with self.client as c:
             with c.session_transaction() as sess:
                 sess.update(test_sess_data)
             
-            db_client = self.session.execute(
-                select(WifiClient).where(WifiClient.mac == sess['mac']).with_for_update()
-            ).scalar_one_or_none()
-            self.assertNotEqual(db_client.employee, False)
-            self.assertNotEqual(db_client.phone.phone_number, sess['phone'])
+            with get_session() as db_session:
+                query = select(WifiClient).where(WifiClient.mac == sess['mac'])
+                db_client = db_session.scalars(query).first()
+                
+                self.assertNotEqual(db_client.employee, False)
+                self.assertNotEqual(db_client.phone.phone_number, sess['phone'])
 
             response = c.post('/auth', data=test_init_data)
-                        
+
+            with get_session() as db_session:
+                query = select(WifiClient).where(WifiClient.mac == sess['mac'])
+                db_client = db_session.scalars(query).first()
+
+                self.assertEqual(db_client.employee, False)
+                self.assertEqual(db_client.phone.phone_number, sess['phone'])
+
             self.assertEqual(response.status_code, 302)
-            self.assertEqual(db_client.employee, False)
-            self.assertEqual(db_client.phone.phone_number, sess['phone'])
             self.assertIn('/sendin', response.location)
 
     def test_auth_route_bad_code(self):

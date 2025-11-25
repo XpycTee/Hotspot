@@ -1,11 +1,13 @@
 import logging
 from random import randint
 
+from core.cache import get_cache
 from core.sms.sender import DebugSender
 from app.utils.language import get_translate
 
 
 def generate_code(session_id):
+    cache = get_cache()
     code = str(randint(0, 9999)).zfill(4)
     cache.set(f'{session_id}:sms:code', code, timeout=300)
     cache.set(f'{session_id}:sms:attempts', 0, timeout=300)
@@ -13,25 +15,29 @@ def generate_code(session_id):
     return code
 
 def get_code(session_id):
+    cache = get_cache()
     return cache.get(f"{session_id}:sms:code")
 
 def set_sended(session_id):
+    cache = get_cache()
     cache.set(f'{session_id}:sms:sended', True, timeout=60)
 
 def increment_attempts(session_id):
-    attempts = cache.get(f"{session_id}:sms:attempts") or 0
-    attempts += 1
-    cache.set(f'{session_id}:sms:attempts', attempts, timeout=300)
-    return attempts
+    cache = get_cache()
+    cache.inc(f"{session_id}:sms:attempts")
+    return cache.get(f"{session_id}:sms:attempts")
 
 def verify_code(session_id, code):
+    cache = get_cache()
     cached = cache.get(f"{session_id}:sms:code")
     return cached and cached == code
 
 def code_sended(session_id):
+    cache = get_cache()
     return cache.get(f"{session_id}:sms:sended")
 
 def clear_code(session_id):
+    cache = get_cache()
     cache.delete(f'{session_id}:sms:code')
     cache.delete(f'{session_id}:sms:attempts')
     cache.delete(f'{session_id}:sms:sended')

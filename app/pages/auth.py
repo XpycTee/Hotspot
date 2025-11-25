@@ -8,7 +8,6 @@ import secrets
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify
 
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
@@ -26,10 +25,12 @@ from flask import (
     current_app
 )
 
-from core.sms.code import clear_code, resend_code, send_code
+from core.sms.code import clear_code, get_code, increment_attempts, send_code
 from app.utils.language import get_translate
+from core.user.repository import check_employee, get_or_create_client
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
+from core.wifi.repository import create_or_udpate_wifi_client
 from extensions import cache
 
 import logger
@@ -146,7 +147,7 @@ def sendin():
         cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
     
     now_time = datetime.datetime.now()
-    db_phone = _get_or_create_client(phone_number)
+    db_phone = get_or_create_client(phone_number)
     # Обновляем поле last_seen, если запись уже существует
     try:
         db_phone.last_seen = now_time
@@ -236,16 +237,17 @@ def code():
         status = response.get('status')
         if status == "OK":
             user_fp = response.get('user_fp')
-
-            session['phone'] = phone_number
             if user_fp:
                 session['user_fp'] = user_fp
 
-            #TODO mac нужно бы обновить в сессии или переделать sendin
+            session['phone'] = phone_number
+            session['mac'] = response.get('mac', mac)
 
             redirect_url = url_for('auth.sendin')
             return redirect(redirect_url, 302)
-
+        elif status == "BLOCKED":
+            abort(403)
+            
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
         phone_number = session.get('phone')
@@ -286,45 +288,6 @@ def resend():
         abort(500)
 
 
-def _get_or_create_client(phone_number):
-    """Получить или создать запись клиента по номеру телефона."""
-    now_time = datetime.datetime.now()
-    db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
-    if not db_phone:
-        try:
-            db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
-            db.session.add(db_phone)
-            db.session.commit()
-            logger.debug(f"Create new number {_mask_phone(phone_number)} by time {now_time}")
-        except IntegrityError:
-            db.session.rollback()
-            db_phone = ClientsNumber.query.filter_by(phone_number=phone_number).first()
-    return db_phone
-
-
-def _create_or_udpate_wifi_client(mac, expiration, is_employee, db_phone):
-    """Создать запись WiFi клиента по MAC-адресу, если нету."""
-    db_client = db.session.execute(
-        select(WifiClient).where(WifiClient.mac == mac).with_for_update()
-    ).scalar_one_or_none()
-
-    if not db_client:
-        try:
-            db_client = WifiClient(mac=mac, expiration=expiration, employee=is_employee, phone=db_phone)
-            db.session.add(db_client)
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-    else:
-        try:
-            db_client.expiration = expiration
-            db_client.employee = is_employee
-            db_client.phone = db_phone
-            db.session.commit()
-        except IntegrityError:
-            db.session.rollback()
-
-
 @auth_bp.route('/auth', methods=['POST'])
 def auth():
     mac = session.get('mac')
@@ -334,7 +297,7 @@ def auth():
 
     session_id = session.get('_id')
     form_code = request.form.get('code')
-    user_code = cache.get(f'{session_id}:sms:code')
+    user_code = get_code(session_id)
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
@@ -343,14 +306,15 @@ def auth():
         session['error'] = get_translate('errors.auth.expired_code')
         return redirect(url_for('auth.code'), 302)
 
+    # Бизнес логика
     if int(form_code) == int(user_code):
         today_start = _get_today()
 
         # Получение или создание записи клиента
-        db_phone = _get_or_create_client(phone_number)
+        db_phone = get_or_create_client(phone_number)
 
         # Проверка, является ли пользователь сотрудником
-        is_employee = _check_employee(phone_number)
+        is_employee = check_employee(phone_number)
 
         # Обновление времени истечения
         users_config = current_app.config['HOTSPOT_USERS']
@@ -360,29 +324,19 @@ def auth():
         if expire_time < datetime.datetime.now():
             expire_time += datetime.timedelta(days=1)
 
-        _create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
+        create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
 
-        # Очистка кэша и редирект
-        cache.delete(f'{session_id}:sms:code')
-        cache.delete(f'{session_id}:sms:attempts')
-        cache.delete(f'{session_id}:sms:sended')
+        clear_code(session_id)
         logger.debug("Auth by code")
         return redirect(url_for('auth.sendin'), 302)
     else:
-        attempts = cache.get(f'{session_id}:sms:attempts')
-        if attempts is None:
-            attempts = 3
-
-        attempts += 1
+        attempts = increment_attempts(session_id)
         
         if attempts >= 3:
             session['error'] = get_translate('errors.auth.bad_code_all')
             session.pop('phone', None)
-            cache.delete(f'{session_id}:sms:code')
-            cache.delete(f'{session_id}:sms:attempts')
-            cache.delete(f'{session_id}:sms:sended')
+            clear_code(session_id)
             return redirect(url_for('auth.login'), 302)
         else:
-            cache.set(f'{session_id}:sms:attempts', attempts, timeout=5 * 60)
             session['error'] = get_translate('errors.auth.bad_code_try')
             return redirect(url_for('auth.code'), 307)

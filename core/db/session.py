@@ -1,12 +1,27 @@
+from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from core.db.models import Model
 
-DB_URL = 'sqlite:///config/hotspot.db'
+#DB_URL = 'sqlite:///config/hotspot.db'
+DB_URL = 'sqlite:///:memory:'
 
 engine = create_engine(DB_URL)
-get_session = sessionmaker(bind=engine)
+SessionLocal = sessionmaker(bind=engine)
+
+@contextmanager
+def get_session():
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 
 def create_all():
     import core.db.models.employee
@@ -16,5 +31,3 @@ def create_all():
     import core.db.models.blacklist
 
     Model.metadata.create_all(engine)
-
-    

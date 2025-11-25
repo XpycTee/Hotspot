@@ -1,4 +1,8 @@
+import datetime
+import logging
+from sqlalchemy.exc import IntegrityError
 from core.db.models.blacklist import Blacklist
+from core.db.models.clients_number import ClientsNumber
 from core.db.models.employee_phone import EmployeePhone
 from core.db.models.wifi_client import WifiClient
 from core.db.session import get_session
@@ -8,20 +12,40 @@ from sqlalchemy import select
 
 
 def check_employee(phone_number) -> bool:
-    session = get_session()
-    query = select(EmployeePhone).where(EmployeePhone.phone_number==phone_number)
-    employee_phone = session.scalars(query).first()
-    return employee_phone is not None
+    with get_session() as db_session:
+        query = select(EmployeePhone).where(EmployeePhone.phone_number==phone_number)
+        employee_phone = db_session.scalars(query).first()
+        return employee_phone is not None
 
 
-def update_status(wifi_client: WifiClient, new_status: bool):
-    session = get_session()
-    wifi_client.employee = new_status
-    session.commit()
+def update_status(mac, new_status: bool):
+    with get_session() as db_session:
+        query = select(WifiClient).where(WifiClient.mac==mac)
+        wifi_client = db_session.scalars(query).first()
+        wifi_client.employee = new_status
+        db_session.commit()
 
 
 def check_blacklist(phone_number) -> bool:
-    session = get_session()
-    query = select(Blacklist).where(Blacklist.phone_number==phone_number)
-    blocked_client = session.scalars(query).first()
-    return blocked_client
+    with get_session() as db_session:
+        query = select(Blacklist).where(Blacklist.phone_number==phone_number)
+        blocked_client = db_session.scalars(query).first()
+        return blocked_client
+
+
+def get_or_create_client(phone_number):
+    """Получить или создать запись клиента по номеру телефона."""
+    with get_session() as db_session:
+        now_time = datetime.datetime.now()
+        query = select(ClientsNumber).where(ClientsNumber.phone_number==phone_number)
+        db_phone = db_session.scalars(query).first()
+        if not db_phone:
+            try:
+                db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
+                db_session.add(db_phone)
+                db_session.commit()
+                logging.debug(f"Create new number {phone_number} by time {now_time}")
+            except IntegrityError:
+                db_session.rollback()
+                db_phone = db_session.scalars(query).first()
+        return db_phone
