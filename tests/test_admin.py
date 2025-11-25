@@ -19,7 +19,7 @@ from app.pages.admin import (
 )
 
 from app.database import db
-from extensions import get_translate
+from app.utils.language import get_translate
 
 class TestAdminViews(unittest.TestCase):
     def setUp(self):

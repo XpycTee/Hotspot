@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from werkzeug.exceptions import HTTPException
 
-from extensions import get_translate
+from app.utils.language import get_translate
 
 error_bp = Blueprint('errors', __name__)
 

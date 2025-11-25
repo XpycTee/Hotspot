@@ -6,7 +6,8 @@ from unittest.mock import patch, MagicMock
 from flask import Flask
 from sqlalchemy import select
 
-from extensions import get_translate, cache
+from app.utils.language import get_translate
+from extensions import cache
 from app.database.models import WifiClient, ClientsNumber, EmployeePhone, Employee, Blacklist
 
 # Add the root directory of the project to the sys.path

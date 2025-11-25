@@ -10,9 +10,10 @@ from app.database import db
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
+from app.utils.language import get_translate
 from logger import configure_logger
 from settings import Config
-from extensions import cache, get_translate
+from extensions import cache
 
 
 def check_required_env(required: list, logger=logging.getLogger()) -> bool:
