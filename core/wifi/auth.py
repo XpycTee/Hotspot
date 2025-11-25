@@ -6,6 +6,7 @@ import logging
 from core.user.blacklist import check_blacklist
 from core.user.employee import check_employee, update_status
 from core.user.expiration import update_expiration
+from core.utils.phone import normalize_phone
 from core.wifi.client import find_by_fp, find_by_mac
 from core.wifi.fingerprint import get_fingerprint
 
@@ -43,6 +44,8 @@ def authenticate_by_mac(mac, hardware_fp=None):
 def authenticate_by_phone(mac, phone_number, hardware_fp=None):
     resp = {"status": "NOT_FOUND"}
 
+    phone_number = normalize_phone(phone_number)
+
     if check_blacklist(phone_number):
         resp = {"status": "BLOCKED"}
         logging.info(f"{mac} is blocked")
@@ -68,7 +71,8 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
         #users_config = current_app.config['HOTSPOT_USERS']
         #hotspot_user = users_config['employee'] if is_employee else users_config['guest']
         #hotspot_user.get('delay')
-        delay = datetime.timedelta(days = 1) # TODO Refactor getting delay
+        # TODO Refactor getting delay
+        delay = datetime.timedelta(days = 1)
 
         update_expiration(wifi_client, delay)
         update_status(wifi_client, is_employee)
