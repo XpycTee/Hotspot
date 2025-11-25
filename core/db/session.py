@@ -6,7 +6,7 @@ from core.db.models import Model
 DB_URL = 'sqlite:///config/hotspot.db'
 
 engine = create_engine(DB_URL)
-SessionLocal = sessionmaker(bind=engine)
+get_session = sessionmaker(bind=engine)
 
 def create_all():
     import core.db.models.employee

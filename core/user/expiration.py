@@ -1,8 +1,8 @@
 import datetime
 
 from core.db.models.wifi_client import WifiClient
-from core.db.session import SessionLocal
-from core.wifi.client import find_by_mac
+from core.db.session import get_session
+from core.wifi.repository import find_by_mac
 
 
 def _get_today() -> datetime.datetime:
@@ -13,7 +13,7 @@ def _get_today() -> datetime.datetime:
 
 
 def update_expiration(wifi_client: WifiClient, user_delay: datetime.timedelta):
-    session = SessionLocal()
+    session = get_session()
     today_start = _get_today()
 
     expire_time = today_start + user_delay
@@ -22,8 +22,3 @@ def update_expiration(wifi_client: WifiClient, user_delay: datetime.timedelta):
 
     wifi_client.expiration = expire_time
     session.commit()
-
-
-def update_expiration_by_mac(mac: str, user_delay: datetime.timedelta):
-    wifi_client = find_by_mac(mac)
-    return update_expiration(wifi_client, user_delay)

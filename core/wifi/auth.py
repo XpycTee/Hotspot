@@ -3,12 +3,14 @@
 import datetime
 import logging
 
-from core.user.blacklist import check_blacklist
-from core.user.employee import check_employee, update_status
+from core.user.repository import check_blacklist
+from core.user.repository import update_status
+from core.user.repository import check_employee
 from core.user.expiration import update_expiration
 from core.utils.phone import normalize_phone
-from core.wifi.client import find_by_fp, find_by_mac
+from core.wifi.repository import find_by_fp
 from core.wifi.fingerprint import get_fingerprint
+from core.wifi.repository import find_by_mac
 
 
 def authenticate_by_mac(mac, hardware_fp=None):
