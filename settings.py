@@ -6,10 +6,10 @@ from urllib.parse import urlparse
 
 import yaml
 
-from app.sms.huawei import HuaweiSMSSender
-from app.sms.mikrotik import MikrotikSMSSender
-from app.sms.smsru import SMSRUSender
-from app.sms import DebugSender
+from core.sms.sender.huawei import HuaweiSMSSender
+from core.sms.sender.mikrotik import MikrotikSMSSender
+from core.sms.sender.smsru import SMSRUSender
+from core.sms.sender import DebugSender
 import bcrypt
 
 basedir = os.path.abspath(os.path.dirname(__file__))
