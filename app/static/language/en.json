@@ -38,7 +38,8 @@
       "bad_auth": "If authorization failed, contact tech support",
       "missing_code": "Code is missing, please enter the code",
       "expired_code": "Code expired, a new code has been sent to you",
-      "code_alredy_sended": "Code already sent, please wait a minute"
+      "code_can_not_resend": "Code already sent, please wait a minute",
+      "code_alredy_sended": "Code already sent, please enter the code"
     },
     "admin": {
       "log": "{message} for user {username} from {client_ip}",
