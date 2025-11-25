@@ -6,7 +6,7 @@ from urllib import request
 from urllib import error
 from urllib.parse import urlparse
 
-from app.sms import BaseSender
+from core.sms.sender import BaseSender
 
 
 class MikrotikSMSSender(BaseSender):
