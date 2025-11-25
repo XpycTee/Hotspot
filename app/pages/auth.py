@@ -26,11 +26,13 @@ from flask import (
     current_app
 )
 
-from core.wifi.auth import authenticate_by_mac
+from core.sms.code import clear_code, resend_code, send_code
+from app.utils.language import get_translate
+from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
+
+from extensions import cache
+
 import logger
-from app.database import db
-from app.database.models import Blacklist, ClientsNumber, EmployeePhone, WifiClient
-from extensions import get_translate, cache, normalize_phone
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -48,12 +50,6 @@ def _octal_string_to_bytes(oct_string):
         byte_nums.append(decimal_value)
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
-
-
-def _check_employee(phone_number):
-    # Проверка наличия номера телефона в базе данных сотрудников
-    employee_phone = EmployeePhone.query.filter_by(phone_number=phone_number).first()
-    return employee_phone is not None
 
 
 def _get_today() -> datetime.datetime:
@@ -233,75 +229,42 @@ def code():
     phone_number = request.form.get('phone')
 
     if phone_number:
-        phone_number = normalize_phone(phone_number)
-
-        if Blacklist.query.filter_by(phone_number=phone_number).first():
-            abort(403)
-
-        session['phone'] = phone_number
-
         mac = session.get('mac')
-        logger.debug(f'User mac: {_mask_mac(mac)}')
-        if not mac:
-            abort(400)
+        hardware_fp = session.get('hardware_fp', None)
 
-        db_client = WifiClient.query.filter_by(mac=mac).first()
-        auth_method = "mac&phone"
+        response = authenticate_by_phone(mac, phone_number, hardware_fp)
+        status = response.get('status')
+        if status == "OK":
+            user_fp = response.get('user_fp')
 
-        user_fp = None
-        if hardware_fp := session.get('hardware_fp'):
-            user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
-            session['user_fp'] = user_fp
-        
-        if not db_client and user_fp:
-            if fp_mac := cache.get(f"fingerprint:{user_fp}"):
-                db_client = WifiClient.query.filter_by(mac=fp_mac).first()
-                session['mac'] = fp_mac
-                auth_method = "fingerprint&phone"
+            session['phone'] = phone_number
+            if user_fp:
+                session['user_fp'] = user_fp
 
-        if db_client and db_client.phone and db_client.phone.phone_number == phone_number:
-            is_employee = _check_employee(phone_number)
+            #TODO mac нужно бы обновить в сессии или переделать sendin
 
-            users_config = current_app.config['HOTSPOT_USERS']
-
-            hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-
-            today_start = _get_today()
-            expire_time = today_start + hotspot_user.get('delay')
-            if expire_time < datetime.datetime.now():
-                expire_time += datetime.timedelta(days=1)
-
-            db_client.expiration = expire_time
-            db_client.employee = is_employee
-            db.session.commit()
             redirect_url = url_for('auth.sendin')
-            logger.debug(f"Auth by {auth_method}")
             return redirect(redirect_url, 302)
 
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
         phone_number = session.get('phone')
-        logger.debug(f'User phone: {_mask_phone(phone_number)}')
+        logger.debug(f'User phone from session: {_mask_phone(phone_number)}')
         if not phone_number:
             abort(400)
 
     session_id = session.get('_id')
-    if not cache.get(f'{session_id}:sms:code'):
-        gen_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'{session_id}:sms:code', gen_code, timeout=5 * 60)
-        cache.set(f'{session_id}:sms:attempts', 0, timeout=5 * 60)
-        cache.set(f'{session_id}:sms:sended', True, timeout=60)
 
-        sender = current_app.config.get('SENDER')
-        sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=gen_code))
+    response = send_code(session_id, phone_number)
 
-        if sms_error:
-            logger.error(f"Failed to send SMS to {_mask_phone(phone_number)}")
-            abort(500)
-
-        logger.debug(f"{_mask_phone(phone_number)}'s code: {gen_code}")
-
-    return render_template('auth/code.html', error=error)
+    status = response.get('status')
+    if status == "OK":
+        return render_template('auth/code.html', error=error)
+    if status == "ALREDY_SENDED":
+        error = get_translate("errors.auth.code_alredy_sended")
+        return render_template('auth/code.html', error=error)
+    else:
+        abort(500)
 
 
 @auth_bp.route('/resend', methods=['POST'])
@@ -312,27 +275,15 @@ def resend():
         abort(400)
     
     session_id = session.get('_id')
-    if cache.get(f'{session_id}:sms:sended'):
-        abort(400, description=get_translate('errors.auth.code_alredy_sended'))
-
-    user_code = cache.get(f'{session_id}:sms:code')
-    logger.debug(f'User cached code for {_mask_phone(phone_number)}: {user_code}')
-
-    if not user_code:
-        resend_code = str(randint(0, 9999)).zfill(4)
-        cache.set(f'{session_id}:sms:code', resend_code, timeout=5 * 60)
+    response = send_code(session_id, phone_number)
+    status = response.get('status')
+    if status == "OK":
+        return jsonify({'success': True})
+    if status == "ALREDY_SENDED":
+        error = get_translate("errors.auth.code_can_not_resend")
+        abort(400, description=error)
     else:
-        resend_code = user_code
-    cache.set(f'{session_id}:sms:sended', True, timeout=60)
-
-    sender = current_app.config.get('SENDER')
-    sms_error = sender.send_sms(phone_number, get_translate('sms_code').format(code=resend_code))
-    if sms_error:
         abort(500)
-
-    logger.debug(f"Resend {_mask_phone(phone_number)}'s code: {resend_code}")
-
-    return jsonify({'success': True})
 
 
 def _get_or_create_client(phone_number):
