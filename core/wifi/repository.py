@@ -49,7 +49,7 @@ def create_or_udpate_wifi_client(mac, is_employee, phone_number):
 
         if not db_client:
             try:
-                db_client = WifiClient(mac=mac, expiration=expiration, employee=is_employee, phone=db_phone)
+                db_client = WifiClient(mac=mac, expiration=expiration, employee=is_employee, phone=db_phone, user_fp=None)
                 db_session.add(db_client)
                 db_session.commit()
             except IntegrityError:

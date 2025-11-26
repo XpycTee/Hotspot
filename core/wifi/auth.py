@@ -8,7 +8,7 @@ from core.user.repository import check_employee
 from core.user.expiration import update_expiration
 from core.utils.phone import normalize_phone
 from core.wifi.repository import create_or_udpate_wifi_client, find_by_fp
-from core.wifi.fingerprint import get_fingerprint
+from core.wifi.fingerprint import hash_fingerprint
 from core.wifi.repository import find_by_mac
 
 
@@ -32,7 +32,7 @@ def authenticate_by_mac(mac, hardware_fp=None):
 
         is_employee = check_employee(phone_number)
         if wifi_client.get('employee') == is_employee:
-            user_fp = get_fingerprint(phone_number, hardware_fp)
+            user_fp = hash_fingerprint(phone_number, hardware_fp)
             logging.info(f"{mac} authing by expiration")
             response = {
                 "status": "OK", 
@@ -55,7 +55,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
     auth_method = "phone & mac"
     wifi_client = find_by_mac(mac)
     
-    user_fp = get_fingerprint(phone_number, hardware_fp)
+    user_fp = hash_fingerprint(phone_number, hardware_fp)
 
     if not wifi_client and user_fp:
         wifi_client = find_by_fp(user_fp)

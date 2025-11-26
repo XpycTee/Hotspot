@@ -49,3 +49,15 @@ def get_or_create_client_phone(phone_number):
                 db_session.rollback()
                 db_phone = db_session.scalars(query).first()
         return db_phone
+
+def update_last_seen(phone_number):
+    now_time = datetime.datetime.now()
+    db_phone = get_or_create_client_phone(phone_number)
+    with get_session() as db_session:
+        try:
+            db_phone.last_seen = now_time
+            db_session.commit()
+            logging.debug(f"Update time {now_time} for number {phone_number}")
+        except IntegrityError:
+            db_session.rollback()
+            logging.error(f"Failed to update last_seen for phone number: {phone_number}")

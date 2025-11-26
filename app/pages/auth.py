@@ -26,31 +26,19 @@ from flask import (
 )
 
 from core.sms.code import send_code
+from core.user.expiration import get_delay
 from core.utils.language import get_translate
-from core.user.repository import check_employee, get_or_create_client_phone
+from core.user.repository import check_employee, get_or_create_client_phone, update_last_seen
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
 from core.wifi.auth import authenticate_by_code
+from core.wifi.challange import _octal_string_to_bytes, hash_chap
+from core.wifi.fingerprint import update_fingerprint
 from extensions import cache
 
 import logger
 
 auth_bp = Blueprint('auth', __name__)
-
-
-def _octal_string_to_bytes(oct_string):
-    if not oct_string:
-        return b''
-    # Split the octal string by backslash and process each part
-    byte_nums = []
-    for octal_num in oct_string.split("\\")[1:]:
-        decimal_value = 0
-        # Convert each octal digit to decimal and sum up the values
-        for i in range(len(octal_num)):
-            decimal_value += int(octal_num[-(i + 1)]) * 8 ** i
-        byte_nums.append(decimal_value)
-    # Convert the list of decimal values to bytes
-    return bytes(byte_nums)
 
 
 def _mask_phone(phone: str) -> str:
@@ -274,31 +262,15 @@ def sendin():
     chap_id = session.get('chap-id')
     chap_challenge = session.get('chap-challenge')
     
-    # use HTTP CHAP method in hotspot
     if chap_id and chap_challenge:
-        chap_id = _octal_string_to_bytes(chap_id)
-        chap_challenge = _octal_string_to_bytes(chap_challenge)
         link_login_only = link_login_only.replace('https', 'http')
-        password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+        password = hash_chap(chap_id, password, chap_challenge)
 
     if user_fp := session.get('user_fp'):
         mac = session.get('mac')
-        users_config = current_app.config['HOTSPOT_USERS']
-        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        delay: datetime.timedelta = hotspot_user.get('delay')
-        logger.debug(f"Caching user_fp: {user_fp[:12]} delay {delay}")
-        cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
+        update_fingerprint(mac, user_fp)
     
-    now_time = datetime.datetime.now()
-    db_phone = get_or_create_client_phone(phone_number)
-    # Обновляем поле last_seen, если запись уже существует
-    try:
-        db_phone.last_seen = now_time
-        db.session.commit()
-        logger.debug(f"Update time {now_time} for number {_mask_phone(phone_number)}")
-    except IntegrityError:
-        db.session.rollback()
-        logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
+    update_last_seen(phone_number)
 
     session.clear()
     session['link-orig'] = link_orig
