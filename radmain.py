@@ -4,7 +4,7 @@ import os
 from pyrad2 import dictionary, server
 
 from core.db.session import create_all
-from radius.server import TESTRADIUS
+from radius.server import HotspotRADIUS
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     create_all()
     logging.info("DB loaded")
 
-    srv = TESTRADIUS(dict=dictionary.Dictionary("radius/dictionary"), coa_enabled=True)
+    srv = HotspotRADIUS(dict=dictionary.Dictionary("radius/dictionary"), coa_enabled=True)
     logging.info("Created server")
     srv.hosts[RADIUS_SERVER] = server.RemoteHost(
         RADIUS_SERVER, RADIUS_SECRET, "cap-test"
