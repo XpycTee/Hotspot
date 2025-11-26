@@ -1,34 +1,10 @@
-import binascii
-import hashlib
 import logging
 
 from pyrad2 import server
 from pyrad2.constants import PacketType
 
 from core.wifi.auth import authenticate_by_mac
-
-def check_chap(request, stored_password):
-    # stored_password — твой "чистый" пароль, который должен знать сервер
-    # request — это AccessRequest из pyrad2
-
-    chap_password = request.get("CHAP-Password")[0]
-    chap_challenge_hex = request.get("CHAP-Challenge")[0]
-    chap_challenge = binascii.unhexlify(chap_challenge_hex)
-    
-    # 1. Извлекаем ID
-    chap_id = chap_password[0]
-
-    # 2. Извлекаем хеш
-    received_hash = chap_password[1:]   # 16 байт
-
-    # 3. Делаем наш хеш
-    m = hashlib.md5()
-    m.update(bytes([chap_id]))
-    m.update(stored_password.encode("utf-8"))
-    m.update(chap_challenge)
-    expected_hash = m.digest()
-
-    return received_hash == expected_hash
+from core.wifi.challange import radius_check_chap
 
 class HotspotRADIUS(server.Server):
     def HandleAuthPacket(self, pkt):
@@ -43,7 +19,7 @@ class HotspotRADIUS(server.Server):
         mac = pkt.get("Calling-Station-Id", [""])[0]
         username = pkt.get("User-Name", [""])[0]
 
-        if username == mac and check_chap(pkt, mac):
+        if username == mac and radius_check_chap(pkt, mac):
             client = authenticate_by_mac(mac)
             status = client.get('status')
             if status == "OK":
@@ -51,7 +27,7 @@ class HotspotRADIUS(server.Server):
                 reply.AddAttribute("MT-Group", "employee" if employee else "guest")
                 reply.code = PacketType.AccessAccept
         else:
-            if check_chap(pkt, "qwerty"):
+            if radius_check_chap(pkt, "qwerty"):
                 print("NT")
             else:
                 print("Bad PASSW")
