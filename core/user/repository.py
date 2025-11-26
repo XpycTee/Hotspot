@@ -33,7 +33,7 @@ def check_blacklist(phone_number) -> bool:
         return blocked_client
 
 
-def get_or_create_client(phone_number):
+def get_or_create_client_phone(phone_number):
     """Получить или создать запись клиента по номеру телефона."""
     with get_session() as db_session:
         now_time = datetime.datetime.now()
