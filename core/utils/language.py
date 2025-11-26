@@ -1,7 +1,7 @@
 import jmespath
 
 
-def get_translate(path, lang, replace=None, templates={}):
+def get_translate(path, lang="en", replace=None, templates={}):
     language_content = {} # TODO current_app.config.get('LANGUAGE_CONTENT')
     supported_languages = list(language_content.keys())
 
