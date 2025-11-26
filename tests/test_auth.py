@@ -16,16 +16,14 @@ from core.db.models.employee_phone import EmployeePhone
 from core.db.models.wifi_client import WifiClient
 from core.db.session import create_all, get_session
 from core.user.repository import check_employee
+from core.wifi.challange import _octal_string_to_bytes
 
 
 
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
-from app.pages.auth import (
-    auth_bp,
-    _octal_string_to_bytes,
-)
+from app.pages.auth import auth_bp
 
 
 class TestAuthViews(unittest.TestCase):
@@ -374,7 +372,6 @@ class TestAuthViews(unittest.TestCase):
     
 
     def test_fp_repeating(self):
-        cache = get_cache()
         test_init_data = {
             'mac': '00:00:00:00:00:FF',
             'link-login-only': 'link', 
@@ -396,10 +393,14 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/code', data=test_init_data)
             self.assertEqual(response.status_code, 302)
 
-            fp = cache.get('fingerprint:e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002')
-            assert None != fp
-    
-    @patch('app.pages.auth.get_code', return_value="1234")
+            user_fp = "e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002"
+            with get_session() as db_session:
+                query = select(WifiClient).where(WifiClient.user_fp==user_fp)
+                db_client = db_session.scalars(query).first()
+
+            assert None != db_client
+
+    @patch('app.pages.auth.authenticate_by_code', return_value={"status": "OK"})
     def test_scenario_guest_code(self, _):
         test_login_data = {
             'chap-id': '1', 
@@ -489,7 +490,7 @@ class TestAuthViews(unittest.TestCase):
             response = c.post('/sendin')
             self.assertEqual(response.status_code, 200)
     
-    @patch('app.pages.auth.randint', return_value=1234)
+    @patch('app.pages.auth.authenticate_by_code', return_value={"status": "OK"})
     def test_scenario_emp_code(self, _):
         test_login_data = {
             'chap-id': '1', 
