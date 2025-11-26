@@ -1,7 +1,7 @@
 # Imports
 import datetime
 
-from hashlib import md5, sha256
+from hashlib import md5
 from random import randint
 import secrets
 
@@ -25,12 +25,12 @@ from flask import (
     current_app
 )
 
-from core.sms.code import clear_code, get_code, increment_attempts, send_code
+from core.sms.code import send_code
 from app.utils.language import get_translate
-from core.user.repository import check_employee, get_or_create_client
+from core.user.repository import get_or_create_client_phone
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
-from core.wifi.repository import create_or_udpate_wifi_client
+from core.wifi.auth import authenticate_by_code
 from extensions import cache
 
 import logger
@@ -51,13 +51,6 @@ def _octal_string_to_bytes(oct_string):
         byte_nums.append(decimal_value)
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
-
-
-def _get_today() -> datetime.datetime:
-    return datetime.datetime.combine(
-        datetime.date.today(),
-        datetime.time(6, 0)
-    )
 
 
 def _mask_phone(phone: str) -> str:
@@ -112,63 +105,6 @@ def index():
     return redirect(url_for('auth.login'), 302)
 
 
-@auth_bp.route('/sendin', methods=['POST', 'GET'])
-def sendin():
-    phone_number = session.get('phone')
-    if not phone_number:
-        abort(400)
-
-    is_employee = _check_employee(phone_number)
-
-    username = 'employee' if is_employee else 'guest'
-    password = current_app.config['HOTSPOT_USERS'][username].get('password')
-    if not password:
-        abort(500)
-
-    link_login_only = session.get('link-login-only')
-    link_orig = session.get('link-orig')
-
-    chap_id = session.get('chap-id')
-    chap_challenge = session.get('chap-challenge')
-    
-    # use HTTP CHAP method in hotspot
-    if chap_id and chap_challenge:
-        chap_id = _octal_string_to_bytes(chap_id)
-        chap_challenge = _octal_string_to_bytes(chap_challenge)
-        link_login_only = link_login_only.replace('https', 'http')
-        password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
-
-    if user_fp := session.get('user_fp'):
-        mac = session.get('mac')
-        users_config = current_app.config['HOTSPOT_USERS']
-        hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        delay: datetime.timedelta = hotspot_user.get('delay')
-        logger.debug(f"Caching user_fp: {user_fp[:12]} delay {delay}")
-        cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
-    
-    now_time = datetime.datetime.now()
-    db_phone = get_or_create_client(phone_number)
-    # Обновляем поле last_seen, если запись уже существует
-    try:
-        db_phone.last_seen = now_time
-        db.session.commit()
-        logger.debug(f"Update time {now_time} for number {_mask_phone(phone_number)}")
-    except IntegrityError:
-        db.session.rollback()
-        logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
-
-    session.clear()
-    session['link-orig'] = link_orig
-
-    return render_template(
-        'auth/sendin.html', 
-        link_login_only=link_login_only, 
-        username=username,
-        password=password,
-        link_orig=link_orig
-    )
-
-
 @auth_bp.route('/test_login', methods=['GET'])
 def test_login():
     if not current_app.debug:
@@ -213,8 +149,7 @@ def login():
         if user_fp:
             session['user_fp'] = user_fp
 
-        redirect_url = url_for('auth.sendin')
-        return redirect(redirect_url, 302)
+        return redirect(url_for('auth.sendin'), 302)
     elif status == "BLOCKED":
         abort(403)
     elif status in ["NOT_FOUND", "EXPIRED"]:
@@ -233,6 +168,8 @@ def code():
         mac = session.get('mac')
         hardware_fp = session.get('hardware_fp', None)
 
+        session['phone'] = phone_number
+
         response = authenticate_by_phone(mac, phone_number, hardware_fp)
         status = response.get('status')
         if status == "OK":
@@ -240,11 +177,9 @@ def code():
             if user_fp:
                 session['user_fp'] = user_fp
 
-            session['phone'] = phone_number
             session['mac'] = response.get('mac', mac)
 
-            redirect_url = url_for('auth.sendin')
-            return redirect(redirect_url, 302)
+            return redirect(url_for('auth.sendin'), 302)
         elif status == "BLOCKED":
             abort(403)
             
@@ -297,46 +232,81 @@ def auth():
 
     session_id = session.get('_id')
     form_code = request.form.get('code')
-    user_code = get_code(session_id)
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
         return redirect(url_for('auth.code'), 302)
-    if user_code is None:
+
+    response = authenticate_by_code(session_id, mac, form_code, phone_number)
+    status = response.get('status')
+    if status == "OK":
+        return redirect(url_for('auth.sendin'), 302)
+    elif status == "CODE_EXPIRED":
         session['error'] = get_translate('errors.auth.expired_code')
         return redirect(url_for('auth.code'), 302)
+    elif status == "BAD_TRY":
+        session['error'] = get_translate('errors.auth.bad_code_try')
+        return redirect(url_for('auth.code'), 307)
+    elif status == "BAD_CODE":
+        session['error'] = get_translate('errors.auth.bad_code_all')
+        session.pop('phone', None)
+        return redirect(url_for('auth.login'), 302)
+    else:
+        abort(500)
 
-    # Бизнес логика
-    if int(form_code) == int(user_code):
-        today_start = _get_today()
 
-        # Получение или создание записи клиента
-        db_phone = get_or_create_client(phone_number)
+@auth_bp.route('/sendin', methods=['POST', 'GET'])
+def sendin():
+    phone_number = session.get('phone')
+    if not phone_number:
+        abort(400)
 
-        # Проверка, является ли пользователь сотрудником
-        is_employee = check_employee(phone_number)
+    is_employee = _check_employee(phone_number)
 
-        # Обновление времени истечения
+    username = 'employee' if is_employee else 'guest'
+    password = current_app.config['HOTSPOT_USERS'][username].get('password')
+    if not password:
+        abort(500)
+
+    link_login_only = session.get('link-login-only')
+    link_orig = session.get('link-orig')
+
+    chap_id = session.get('chap-id')
+    chap_challenge = session.get('chap-challenge')
+    
+    # use HTTP CHAP method in hotspot
+    if chap_id and chap_challenge:
+        chap_id = _octal_string_to_bytes(chap_id)
+        chap_challenge = _octal_string_to_bytes(chap_challenge)
+        link_login_only = link_login_only.replace('https', 'http')
+        password = md5(chap_id + password.encode() + chap_challenge).hexdigest()
+
+    if user_fp := session.get('user_fp'):
+        mac = session.get('mac')
         users_config = current_app.config['HOTSPOT_USERS']
         hotspot_user = users_config['employee'] if is_employee else users_config['guest']
-        
-        expire_time = today_start + hotspot_user.get('delay')
-        if expire_time < datetime.datetime.now():
-            expire_time += datetime.timedelta(days=1)
+        delay: datetime.timedelta = hotspot_user.get('delay')
+        logger.debug(f"Caching user_fp: {user_fp[:12]} delay {delay}")
+        cache.set(f"fingerprint:{user_fp}", mac, timeout=delay.total_seconds())
+    
+    now_time = datetime.datetime.now()
+    db_phone = get_or_create_client_phone(phone_number)
+    # Обновляем поле last_seen, если запись уже существует
+    try:
+        db_phone.last_seen = now_time
+        db.session.commit()
+        logger.debug(f"Update time {now_time} for number {_mask_phone(phone_number)}")
+    except IntegrityError:
+        db.session.rollback()
+        logger.error("Failed to update last_seen for phone number: %s", _mask_phone(phone_number))
 
-        create_or_udpate_wifi_client(mac, expire_time, is_employee, db_phone)
+    session.clear()
+    session['link-orig'] = link_orig
 
-        clear_code(session_id)
-        logger.debug("Auth by code")
-        return redirect(url_for('auth.sendin'), 302)
-    else:
-        attempts = increment_attempts(session_id)
-        
-        if attempts >= 3:
-            session['error'] = get_translate('errors.auth.bad_code_all')
-            session.pop('phone', None)
-            clear_code(session_id)
-            return redirect(url_for('auth.login'), 302)
-        else:
-            session['error'] = get_translate('errors.auth.bad_code_try')
-            return redirect(url_for('auth.code'), 307)
+    return render_template(
+        'auth/sendin.html', 
+        link_login_only=link_login_only, 
+        username=username,
+        password=password,
+        link_orig=link_orig
+    )
