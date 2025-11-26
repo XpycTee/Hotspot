@@ -8,7 +8,7 @@ from flask import (
     session, request, current_app, jsonify
 )
 
-from app.utils.language import get_translate
+from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 import logger
 from app.database import db

@@ -3,7 +3,7 @@ from random import randint
 
 from core.cache import get_cache
 from core.sms.sender import DebugSender
-from app.utils.language import get_translate
+from core.utils.language import get_translate
 
 
 def generate_code(session_id):

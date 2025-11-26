@@ -8,7 +8,7 @@ from app.pages.error import error_bp
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
-from app.utils.language import get_translate
+from core.utils.language import get_translate
 from logger import configure_logger
 from settings import Config
 from extensions import cache

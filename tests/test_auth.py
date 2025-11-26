@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 from flask import Flask
 from sqlalchemy import select
 
-from app.utils.language import get_translate
+from core.utils.language import get_translate
 from core.cache import get_cache
 from core.db.models import Model
 from core.db.models.blacklist import Blacklist

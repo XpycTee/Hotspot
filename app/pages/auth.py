@@ -26,8 +26,8 @@ from flask import (
 )
 
 from core.sms.code import send_code
-from app.utils.language import get_translate
-from core.user.repository import get_or_create_client_phone
+from core.utils.language import get_translate
+from core.user.repository import check_employee, get_or_create_client_phone
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
 from core.wifi.auth import authenticate_by_code
@@ -261,7 +261,7 @@ def sendin():
     if not phone_number:
         abort(400)
 
-    is_employee = _check_employee(phone_number)
+    is_employee = check_employee(phone_number)
 
     username = 'employee' if is_employee else 'guest'
     password = current_app.config['HOTSPOT_USERS'][username].get('password')
