@@ -1,14 +1,17 @@
 import datetime
 import logging
+import secrets
 
+from core.cache import get_cache
 from core.sms.code import clear_code, increment_attempts, verify_code
-from core.user.repository import check_blacklist
+from core.user.repository import check_blacklist, update_last_seen
 from core.user.repository import update_status
 from core.user.repository import check_employee
 from core.user.expiration import update_expiration
 from core.utils.phone import normalize_phone
+from core.wifi.challange import hash_chap
 from core.wifi.repository import create_or_udpate_wifi_client, find_by_fp
-from core.wifi.fingerprint import hash_fingerprint
+from core.wifi.fingerprint import hash_fingerprint, update_fingerprint
 from core.wifi.repository import find_by_mac
 
 
@@ -99,3 +102,29 @@ def authenticate_by_code(session_id, mac, code, phone_number):
 
     clear_code(session_id)
     return {"status": "BAD_CODE"}
+
+
+def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
+    if True: # TODO detect RADIUS auth
+        cache = get_cache()
+        username = phone_number
+        password = secrets.token_hex(32)
+        cache.set(f"auth:token:{phone_number}", password)
+    else:
+        is_employee = check_employee(phone_number)
+        username = 'employee' if is_employee else 'guest'
+        # TODO get password OLD:current_app.config['HOTSPOT_USERS'][username].get('password')
+        password = 'supersecret' if is_employee else 'secret'
+
+    if chap_id and chap_challenge:
+        password = hash_chap(chap_id, password, chap_challenge)
+
+    if user_fp:
+        update_fingerprint(mac, user_fp)
+
+    update_last_seen(phone_number)
+
+    return {
+        "username": username,
+        "password": password
+    }
