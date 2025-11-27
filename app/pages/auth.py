@@ -1,6 +1,3 @@
-# Imports
-import secrets
-
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify
 
@@ -20,16 +17,14 @@ from flask import (
     current_app
 )
 
-from core.cache import get_cache
 from core.sms.code import send_code
 from core.utils.language import get_translate
-from core.user.repository import check_employee, update_last_seen
+from core.user.repository import check_employee
 from core.utils.phone import normalize_phone
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
 from core.wifi.auth import authenticate_by_code
-from core.wifi.challange import hash_chap
-from core.wifi.fingerprint import update_fingerprint
+from core.wifi.auth import get_credentials
 
 import logger
 
@@ -66,13 +61,6 @@ def _log_masked_session():
     return result
 
 
-@auth_bp.before_request
-def ensure_session_id():
-    if "_id" not in session:
-        sessid = secrets.token_hex(32)
-        session["_id"] = sessid
-
-
 @auth_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['link-login-only', 'link-orig', 'mac']
@@ -85,7 +73,7 @@ def index():
         else:
             redirect(session.get('link-orig'), 302)
 
-    return redirect(url_for('auth.login'), 302)
+    return redirect(url_for('pages.auth.login'), 302)
 
 
 @auth_bp.route('/test_login', methods=['GET'])
@@ -132,7 +120,7 @@ def login():
         if user_fp:
             session['user_fp'] = user_fp
 
-        return redirect(url_for('auth.sendin'), 302)
+        return redirect(url_for('pages.auth.sendin'), 302)
     elif status == "BLOCKED":
         abort(403)
     elif status in ["NOT_FOUND", "EXPIRED"]:
@@ -163,7 +151,7 @@ def code():
 
             session['mac'] = response.get('mac', mac)
 
-            return redirect(url_for('auth.sendin'), 302)
+            return redirect(url_for('pages.auth.sendin'), 302)
         elif status == "BLOCKED":
             abort(403)
             
@@ -219,33 +207,28 @@ def auth():
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
-        return redirect(url_for('auth.code'), 302)
+        return redirect(url_for('pages.auth.code'), 302)
 
     response = authenticate_by_code(session_id, mac, form_code, phone_number)
     status = response.get('status')
     if status == "OK":
-        return redirect(url_for('auth.sendin'), 302)
+        return redirect(url_for('pages.auth.sendin'), 302)
     elif status == "CODE_EXPIRED":
         session['error'] = get_translate('errors.auth.expired_code')
-        return redirect(url_for('auth.code'), 302)
+        return redirect(url_for('pages.auth.code'), 302)
     elif status == "BAD_TRY":
         session['error'] = get_translate('errors.auth.bad_code_try')
-        return redirect(url_for('auth.code'), 307)
+        return redirect(url_for('pages.auth.code'), 307)
     elif status == "BAD_CODE":
         session['error'] = get_translate('errors.auth.bad_code_all')
         session.pop('phone', None)
-        return redirect(url_for('auth.login'), 302)
+        return redirect(url_for('pages.auth.login'), 302)
     else:
         abort(500)
 
 
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():
-    return sendin_radius()
-    
-
-@auth_bp.route('/sendin/radius', methods=['POST', 'GET'])
-def sendin_radius():
     phone_number = session.get('phone')
     if not phone_number:
         abort(400)
@@ -255,100 +238,20 @@ def sendin_radius():
     chap_id = session.get('chap-id')
     chap_challenge = session.get('chap-challenge')
     mac = session.get('mac')
-
-    cache = get_cache()
-    token = secrets.token_hex(32)
-    cache.set(f"auth:token:{phone_number}", token)
+    user_fp = session.get('user_fp')
+    session.clear()
 
     if chap_id and chap_challenge:
-        token = hash_chap(chap_id, token, chap_challenge)
+        link_login_only = link_login_only.replace('https', 'http')
 
-    if user_fp := session.get('user_fp'):
-        update_fingerprint(mac, user_fp)
-    
-    update_last_seen(phone_number)
-
-    session.clear()
-    session['link-orig'] = link_orig
+    credentials = get_credentials(mac, phone_number, user_fp, chap_id, chap_challenge)
+    username = credentials.get('username')
+    password = credentials.get('password')
 
     return render_template(
         'auth/sendin.html', 
-        link_login_only=link_login_only, 
-        username=phone_number,
-        password=token,
-        link_orig=link_orig
-    )
-
-@auth_bp.route('/sendin/pap', methods=['POST', 'GET'])
-def sendin_pap():
-    phone_number = session.get('phone')
-    if not phone_number:
-        abort(400)
-
-    is_employee = check_employee(phone_number)
-
-    username = 'employee' if is_employee else 'guest'
-    password = current_app.config['HOTSPOT_USERS'][username].get('password')
-    if not password:
-        abort(500)
-
-    link_login_only = session.get('link-login-only')
-    link_orig = session.get('link-orig')
-    mac = session.get('mac')
-
-    if user_fp := session.get('user_fp'):
-        update_fingerprint(mac, user_fp)
-    
-    update_last_seen(phone_number)
-
-    session.clear()
-    session['link-orig'] = link_orig
-
-    return render_template(
-        'auth/sendin.html', 
-        link_login_only=link_login_only, 
         username=username,
         password=password,
-        link_orig=link_orig
-    )
-
-@auth_bp.route('/sendin/chap', methods=['POST', 'GET'])
-def sendin_chap():
-    phone_number = session.get('phone')
-    if not phone_number:
-        abort(400)
-
-    is_employee = check_employee(phone_number)
-
-    username = 'employee' if is_employee else 'guest'
-    password = current_app.config['HOTSPOT_USERS'][username].get('password')
-    if not password:
-        abort(500)
-
-    link_login_only = session.get('link-login-only')
-    link_orig = session.get('link-orig')
-
-    chap_id = session.get('chap-id')
-    chap_challenge = session.get('chap-challenge')
-    mac = session.get('mac')
-
-    if chap_id and chap_challenge:
-        password = hash_chap(chap_id, password, chap_challenge)
-    else:
-        abort(400)
-
-    if user_fp := session.get('user_fp'):
-        update_fingerprint(mac, user_fp)
-    
-    update_last_seen(phone_number)
-
-    session.clear()
-    session['link-orig'] = link_orig
-
-    return render_template(
-        'auth/sendin.html', 
-        link_login_only=link_login_only, 
-        username=username,
-        password=password,
+        link_login_only=link_login_only,
         link_orig=link_orig
     )

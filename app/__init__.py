@@ -1,18 +1,16 @@
 import os
 import logging
 
-from app.pages.auth import auth_bp
-from app.pages.admin import admin_bp
-from app.pages.error import error_bp
+from app.pages import pages_bp
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
+from core.cache import get_cache
+from core.db.session import create_all, get_session
 from core.utils.language import get_translate
 from logger import configure_logger
 from settings import Config
-from extensions import cache
-
 
 def check_required_env(required: list, logger=logging.getLogger()) -> bool:
     missing_vars = []
@@ -58,11 +56,10 @@ def create_app(config_class=Config):
         
         app.json = CustomJSONProvider(app)
 
-        cache.init_app(app)
+        _ = get_cache()
+        create_all()
 
-        app.register_blueprint(auth_bp)
-        app.register_blueprint(admin_bp)
-        app.register_blueprint(error_bp)
+        app.register_blueprint(pages_bp)
 
         # Добавляем контекстный процессор
         @app.context_processor
