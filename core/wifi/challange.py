@@ -17,14 +17,7 @@ def _octal_string_to_bytes(oct_string):
     return bytes(byte_nums)
 
 
-def radius_check_chap(request, stored_password):
-    # stored_password — "чистый" пароль, который должен знать сервер
-    # request — это AccessRequest из pyrad2
-
-    chap_password = request.get("CHAP-Password")[0]
-    chap_challenge_hex = request.get("CHAP-Challenge")[0]
-    chap_challenge = binascii.unhexlify(chap_challenge_hex)
-    
+def radius_check_chap(chap_password: bytes, chap_challenge: bytes, password: str):    
     # 1. Извлекаем ID
     chap_id = chap_password[0]
 
@@ -34,7 +27,7 @@ def radius_check_chap(request, stored_password):
     # 3. Делаем наш хеш
     m = hashlib.md5()
     m.update(bytes([chap_id]))
-    m.update(stored_password.encode("utf-8"))
+    m.update(password.encode("utf-8"))
     m.update(chap_challenge)
     expected_hash = m.digest()
 

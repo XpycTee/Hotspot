@@ -1,10 +1,13 @@
+import binascii
 import logging
 
 from pyrad2 import server
 from pyrad2.constants import PacketType
 
 from core.cache import get_cache
+from core.user.repository import check_employee
 from core.user.token import token_to_urlsafe
+from core.utils.phone import normalize_phone
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 from core.wifi.challange import radius_check_chap
 
@@ -26,18 +29,20 @@ class HotspotRADIUS(server.Server):
             client = authenticate_by_mac(mac)
             status = client.get('status')
             if status == "OK":
-                employee = client.get("employee")
-                reply.AddAttribute("MT-Group", "employee" if employee else "guest")
+                is_employee = client.get("employee")
+                reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
                 reply.code = PacketType.AccessAccept
         else:
-            raw_token = cache.get(f"auth:token:{username}")
-            if radius_check_chap(pkt, token_to_urlsafe(raw_token)):
-                client = authenticate_by_phone(mac, username)
-                status = client.get('status')
-                if status == "OK":
-                    employee = client.get("employee")
-                    reply.AddAttribute("MT-Group", "employee" if employee else "guest")
-                    reply.code = PacketType.AccessAccept
+            phone_number = normalize_phone(username)
+            raw_token = cache.get(f"auth:token:{phone_number}")
+            chap_password = pkt.get("CHAP-Password")[0]
+            chap_challenge_hex = pkt.get("CHAP-Challenge")[0]
+            chap_challenge = binascii.unhexlify(chap_challenge_hex)
+            
+            if radius_check_chap(chap_password, chap_challenge, token_to_urlsafe(raw_token)):
+                is_employee = check_employee(phone_number)
+                reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
+                reply.code = PacketType.AccessAccept
 
         reply.add_message_authenticator()
         self.SendReplyPacket(pkt.fd, reply)
