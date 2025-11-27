@@ -30,7 +30,7 @@ class HotspotRADIUS(server.Server):
                 reply.AddAttribute("MT-Group", "employee" if employee else "guest")
                 reply.code = PacketType.AccessAccept
         else:
-            raw_token = cache.get(f"{mac}:{username}:token")
+            raw_token = cache.get(f"auth:token:{username}")
             if radius_check_chap(pkt, token_to_urlsafe(raw_token)):
                 client = authenticate_by_phone(mac, username)
                 status = client.get('status')

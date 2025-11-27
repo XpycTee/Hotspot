@@ -263,7 +263,7 @@ def sendin():
     else:
         cache = get_cache()
         raw_token = secrets.token_bytes(32)
-        cache.set(f"{mac}:{phone_number}:token", raw_token)
+        cache.set(f"auth:token:{phone_number}", raw_token)
         password = token_to_urlsafe(raw_token)
 
     if user_fp := session.get('user_fp'):
