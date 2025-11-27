@@ -25,6 +25,7 @@ from core.sms.code import send_code
 from core.user.token import token_to_urlsafe
 from core.utils.language import get_translate
 from core.user.repository import check_employee, update_last_seen
+from core.utils.phone import normalize_phone
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
 from core.wifi.auth import authenticate_by_code
@@ -148,6 +149,7 @@ def code():
     phone_number = request.form.get('phone')
 
     if phone_number:
+        phone_number = normalize_phone(phone_number)
         mac = session.get('mac')
         hardware_fp = session.get('hardware_fp', None)
 
