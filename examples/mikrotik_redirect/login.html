@@ -16,7 +16,11 @@
                 <p class="mt-1">JavaScript is required. Enable JavaScript to continue.</p>
             </noscript>
             <!--$(endif)-->
+            $(if error)
+            <div class="error-message">$(error)</div>
+            $(else)
             <p class="mt-1">If nothing happens, an error has occurred.</p>
+            $(endif)
             <p class="mt-1">Please try connecting again later.</p>
         </center>
         <!-- This is required inputs don't remove -->
