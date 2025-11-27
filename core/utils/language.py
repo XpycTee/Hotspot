@@ -28,4 +28,4 @@ def get_translate(path, lang="en", replace=None, templates={}):
     # Возвращаем перевод, если он найден, иначе возвращаем исходный путь
     if isinstance(translation, str):
         return translation.format(**templates)
-    return replace
+    return f"{replace}" + (f"?templates={str(templates)}" if templates else "")
