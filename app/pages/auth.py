@@ -1,14 +1,9 @@
 # Imports
-import datetime
-
-from hashlib import md5
-from random import randint
 import secrets
 
 # Importing Blueprint for creating Flask blueprints
 from flask import Blueprint, jsonify
 
-from sqlalchemy.exc import IntegrityError
 
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
 from flask import (
@@ -25,16 +20,16 @@ from flask import (
     current_app
 )
 
+from core.cache import get_cache
 from core.sms.code import send_code
-from core.user.expiration import get_delay
+from core.user.token import token_to_urlsafe
 from core.utils.language import get_translate
-from core.user.repository import check_employee, get_or_create_client_phone, update_last_seen
+from core.user.repository import check_employee, update_last_seen
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
 from core.wifi.auth import authenticate_by_code
-from core.wifi.challange import _octal_string_to_bytes, hash_chap
+from core.wifi.challange import hash_chap
 from core.wifi.fingerprint import update_fingerprint
-from extensions import cache
 
 import logger
 
@@ -242,7 +237,6 @@ def auth():
     else:
         abort(500)
 
-
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():
     phone_number = session.get('phone')
@@ -261,13 +255,18 @@ def sendin():
 
     chap_id = session.get('chap-id')
     chap_challenge = session.get('chap-challenge')
-    
+    mac = session.get('mac')
+
     if chap_id and chap_challenge:
         link_login_only = link_login_only.replace('https', 'http')
         password = hash_chap(chap_id, password, chap_challenge)
+    else:
+        cache = get_cache()
+        raw_token = secrets.token_bytes(32)
+        cache.set(f"{mac}:{phone_number}:token", raw_token)
+        password = token_to_urlsafe(raw_token)
 
     if user_fp := session.get('user_fp'):
-        mac = session.get('mac')
         update_fingerprint(mac, user_fp)
     
     update_last_seen(phone_number)
