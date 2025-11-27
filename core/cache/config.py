@@ -1,4 +1,5 @@
 import logging
+import os
 from urllib.parse import urlparse
 
 from cachelib import FileSystemCache, MemcachedCache, RedisCache, SimpleCache
@@ -44,6 +45,8 @@ def configure_cache(url='simple', default_timeout=300):
         return Cache(servers=[server], default_timeout=default_timeout)
     elif scheme == 'file':
         Cache = CACHE_TYPES.get('file')
-        return Cache(parsed_url.path, default_timeout=default_timeout)
+        cwd = os.getcwd()
+        cache_path = cwd+parsed_url.path
+        return Cache(cache_path, default_timeout=default_timeout)
     else:
         raise NotImplementedError(f"Not implemented cache {scheme}")
