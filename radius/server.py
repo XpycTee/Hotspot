@@ -6,10 +6,10 @@ from pyrad2.constants import PacketType
 
 from core.cache import get_cache
 from core.user.repository import check_employee
-from core.user.token import token_to_urlsafe
 from core.utils.phone import normalize_phone
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 from core.wifi.challange import radius_check_chap
+
 
 class HotspotRADIUS(server.Server):
     def HandleAuthPacket(self, pkt):
@@ -23,9 +23,13 @@ class HotspotRADIUS(server.Server):
 
         mac = pkt.get("Calling-Station-Id", [""])[0]
         username = pkt.get("User-Name", [""])[0]
+        chap_password = pkt.get("CHAP-Password")[0]
+        chap_challenge_hex = pkt.get("CHAP-Challenge")[0]
+        chap_challenge = binascii.unhexlify(chap_challenge_hex)
+
         cache = get_cache()
 
-        if username == mac and radius_check_chap(pkt, mac):
+        if username == mac and radius_check_chap(chap_password, chap_challenge, mac):
             client = authenticate_by_mac(mac)
             status = client.get('status')
             if status == "OK":
@@ -34,12 +38,9 @@ class HotspotRADIUS(server.Server):
                 reply.code = PacketType.AccessAccept
         else:
             phone_number = normalize_phone(username)
-            raw_token = cache.get(f"auth:token:{phone_number}")
-            chap_password = pkt.get("CHAP-Password")[0]
-            chap_challenge_hex = pkt.get("CHAP-Challenge")[0]
-            chap_challenge = binascii.unhexlify(chap_challenge_hex)
-            
-            if radius_check_chap(chap_password, chap_challenge, token_to_urlsafe(raw_token)):
+            token = cache.get(f"auth:token:{phone_number}")
+    
+            if radius_check_chap(chap_password, chap_challenge, token):
                 is_employee = check_employee(phone_number)
                 reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
                 reply.code = PacketType.AccessAccept
@@ -57,4 +58,3 @@ class HotspotRADIUS(server.Server):
         # COA NAK
         reply.code = 45
         self.SendReplyPacket(pkt.fd, reply)
-
