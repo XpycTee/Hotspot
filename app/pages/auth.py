@@ -22,7 +22,6 @@ from flask import (
 
 from core.cache import get_cache
 from core.sms.code import send_code
-from core.user.token import token_to_urlsafe
 from core.utils.language import get_translate
 from core.user.repository import check_employee, update_last_seen
 from core.utils.phone import normalize_phone
@@ -239,8 +238,82 @@ def auth():
     else:
         abort(500)
 
+
 @auth_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():
+    return sendin_radius()
+    
+
+@auth_bp.route('/sendin/radius', methods=['POST', 'GET'])
+def sendin_radius():
+    phone_number = session.get('phone')
+    if not phone_number:
+        abort(400)
+
+    link_login_only = session.get('link-login-only')
+    link_orig = session.get('link-orig')
+    chap_id = session.get('chap-id')
+    chap_challenge = session.get('chap-challenge')
+    mac = session.get('mac')
+
+    cache = get_cache()
+    token = secrets.token_hex(32)
+    cache.set(f"auth:token:{phone_number}", token)
+
+    if chap_id and chap_challenge:
+        token = hash_chap(chap_id, token, chap_challenge)
+
+    if user_fp := session.get('user_fp'):
+        update_fingerprint(mac, user_fp)
+    
+    update_last_seen(phone_number)
+
+    session.clear()
+    session['link-orig'] = link_orig
+
+    return render_template(
+        'auth/sendin.html', 
+        link_login_only=link_login_only, 
+        username=phone_number,
+        password=token,
+        link_orig=link_orig
+    )
+
+@auth_bp.route('/sendin/pap', methods=['POST', 'GET'])
+def sendin_pap():
+    phone_number = session.get('phone')
+    if not phone_number:
+        abort(400)
+
+    is_employee = check_employee(phone_number)
+
+    username = 'employee' if is_employee else 'guest'
+    password = current_app.config['HOTSPOT_USERS'][username].get('password')
+    if not password:
+        abort(500)
+
+    link_login_only = session.get('link-login-only')
+    link_orig = session.get('link-orig')
+    mac = session.get('mac')
+
+    if user_fp := session.get('user_fp'):
+        update_fingerprint(mac, user_fp)
+    
+    update_last_seen(phone_number)
+
+    session.clear()
+    session['link-orig'] = link_orig
+
+    return render_template(
+        'auth/sendin.html', 
+        link_login_only=link_login_only, 
+        username=username,
+        password=password,
+        link_orig=link_orig
+    )
+
+@auth_bp.route('/sendin/chap', methods=['POST', 'GET'])
+def sendin_chap():
     phone_number = session.get('phone')
     if not phone_number:
         abort(400)
@@ -260,13 +333,9 @@ def sendin():
     mac = session.get('mac')
 
     if chap_id and chap_challenge:
-        link_login_only = link_login_only.replace('https', 'http')
         password = hash_chap(chap_id, password, chap_challenge)
     else:
-        cache = get_cache()
-        raw_token = secrets.token_bytes(32)
-        cache.set(f"auth:token:{phone_number}", raw_token)
-        password = token_to_urlsafe(raw_token)
+        abort(400)
 
     if user_fp := session.get('user_fp'):
         update_fingerprint(mac, user_fp)
