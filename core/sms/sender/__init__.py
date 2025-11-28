@@ -33,8 +33,8 @@ class BaseSender(ABC):
 
 class DebugSender(BaseSender):
     def __init__(self, *args, **kwargs):
-        logging.debug('Debug Sender used')
+        logging.debug('Debug Sender using')
 
     def send_sms(self, recipient: str, message: str):
-        logging.debug(f"{recipient}: {message}")
+        logging.info(f"{recipient}: {message}")
 
