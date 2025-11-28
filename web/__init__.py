@@ -1,13 +1,13 @@
 import os
 import logging
 
-from app.pages import pages_bp
+from web.pages import pages_bp
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
 from core.cache import get_cache
-from core.db.session import create_all, get_session
+from core import db
 from core.utils.language import get_translate
 from logger import configure_logger
 from settings import Config
@@ -57,7 +57,7 @@ def create_app(config_class=Config):
         app.json = CustomJSONProvider(app)
 
         _ = get_cache()
-        create_all()
+        db.create_all()
 
         app.register_blueprint(pages_bp)
 

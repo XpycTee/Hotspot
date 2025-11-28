@@ -11,8 +11,8 @@ from flask import (
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 import logger
-from app.database import db
-from app.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
+from web.database import db
+from web.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
 from extensions import cache
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')

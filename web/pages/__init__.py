@@ -1,7 +1,7 @@
 import uuid
-from app.pages.auth import auth_bp
-from app.pages.admin import admin_bp
-from app.pages.error import error_bp
+from web.pages.auth import auth_bp
+from web.pages.admin import admin_bp
+from web.pages.error import error_bp
 
 from flask import Blueprint, session
 
