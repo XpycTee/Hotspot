@@ -2,7 +2,7 @@ import logging
 from random import randint
 
 from core.cache import get_cache
-from core.sms.sender import DebugSender
+from core.config.sms import get_sender
 from core.utils.language import get_translate
 
 
@@ -56,9 +56,7 @@ def send_code(session_id, phone_number):
     else:
         sending_code = generate_code(session_id)
 
-    #sender = current_app.config.get('SENDER')
-    # TODO Refactor getting sender
-    sender = DebugSender()
+    sender = get_sender()
     sms_error = sender.send_sms(phone_number, get_translate('sms_code', templates={"code": sending_code}))
 
     if sms_error:

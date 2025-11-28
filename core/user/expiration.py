@@ -2,13 +2,17 @@ import datetime
 
 from sqlalchemy import select
 
-from core.db.models.wifi_client import WifiClient
-from core.db.session import get_session
+from core.config.users import GUEST_USER, STAFF_USER
+from core.database.models.wifi_client import WifiClient
+from core.database.session import get_session
 
 
 def get_delay(is_employee: bool) -> datetime.timedelta:
-    # TODO
-    return datetime.timedelta(minutes=(10 if is_employee else 5))
+    if is_employee:
+        delay = STAFF_USER.get('delay')
+    else:
+        delay = GUEST_USER.get('delay')
+    return delay
 
 def new_expiration(is_employee: bool):
     today_start = datetime.datetime.combine(

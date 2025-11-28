@@ -2,6 +2,7 @@ import datetime
 import logging
 import secrets
 
+from core.config.users import GUEST_USER, STAFF_USER
 from core.cache import get_cache
 from core.sms.code import clear_code, increment_attempts, verify_code
 from core.user.repository import check_blacklist, update_last_seen
@@ -113,8 +114,10 @@ def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challeng
     else:
         is_employee = check_employee(phone_number)
         username = 'employee' if is_employee else 'guest'
-        # TODO get password OLD:current_app.config['HOTSPOT_USERS'][username].get('password')
-        password = 'supersecret' if is_employee else 'secret'
+        if is_employee:
+            password = STAFF_USER.get('password')
+        else:
+            password = GUEST_USER.get('password')
 
     if chap_id and chap_challenge:
         password = hash_chap(chap_id, password, chap_challenge)
