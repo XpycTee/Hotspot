@@ -25,7 +25,7 @@ from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 from core.wifi.auth import authenticate_by_code
 from core.wifi.auth import get_credentials
 
-import logger
+import web.logger as logger
 
 auth_bp = Blueprint('auth', __name__)
 

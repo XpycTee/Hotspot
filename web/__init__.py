@@ -8,6 +8,7 @@ from flask.json.provider import DefaultJSONProvider
 
 from core import database
 from core.utils.language import get_translate
+from core.config.logging import configure_logger
 from web.settings import Config
 
 def check_required_env(required: list, logger=logging.getLogger()) -> bool:
@@ -41,6 +42,7 @@ def create_app(config_class=Config):
     required_env_vars = []
     
     init_logger = logging.getLogger("Init")
+
     configure_logger(init_logger)
 
     init = check_required_env(required_env_vars, init_logger)
@@ -49,8 +51,6 @@ def create_app(config_class=Config):
         app = Flask(__name__)
 
         config_class.init_app(app)
-        
-        configure_logger(app.logger)
         
         app.json = CustomJSONProvider(app)
 

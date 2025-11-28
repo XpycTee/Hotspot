@@ -1,6 +1,6 @@
-import logging
 from random import randint
 
+from core.logging.logger import logger
 from core.cache import get_cache
 from core.config.sms import get_sender
 from core.utils.language import get_translate
@@ -51,7 +51,7 @@ def send_code(session_id, phone_number):
         return resp
     
     if user_code:=get_code(session_id):
-        logging.debug(f'User cached code for {phone_number}: {user_code}')
+        logger.debug(f'User cached code for {phone_number}: {user_code}')
         sending_code = user_code
     else:
         sending_code = generate_code(session_id)
@@ -60,11 +60,11 @@ def send_code(session_id, phone_number):
     sms_error = sender.send_sms(phone_number, get_translate('sms_code', templates={"code": sending_code}))
 
     if sms_error:
-        logging.error(f"Failed to send SMS to {phone_number}")
+        logger.error(f"Failed to send SMS to {phone_number}")
         resp = {"status": "BAD_SMS"}
         return resp
     
     set_sended(session_id)
-    logging.debug(f"Send {phone_number}'s code: {sending_code}")
+    logger.debug(f"Send {phone_number}'s code: {sending_code}")
     return resp
 

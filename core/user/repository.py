@@ -1,5 +1,6 @@
 import datetime
-import logging
+
+from core.logging.logger import logger
 from sqlalchemy.exc import IntegrityError
 from core.database.models.blacklist import Blacklist
 from core.database.models.clients_number import ClientsNumber
@@ -44,7 +45,7 @@ def get_or_create_client_phone(phone_number):
                 db_phone = ClientsNumber(phone_number=phone_number, last_seen=now_time)
                 db_session.add(db_phone)
                 db_session.commit()
-                logging.debug(f"Create new number {phone_number} by time {now_time}")
+                logger.debug(f"Create new number {phone_number} by time {now_time}")
             except IntegrityError:
                 db_session.rollback()
                 db_phone = db_session.scalars(query).first()
@@ -57,7 +58,7 @@ def update_last_seen(phone_number):
         try:
             db_phone.last_seen = now_time
             db_session.commit()
-            logging.debug(f"Update time {now_time} for number {phone_number}")
+            logger.debug(f"Update time {now_time} for number {phone_number}")
         except IntegrityError:
             db_session.rollback()
-            logging.error(f"Failed to update last_seen for phone number: {phone_number}")
+            logger.error(f"Failed to update last_seen for phone number: {phone_number}")

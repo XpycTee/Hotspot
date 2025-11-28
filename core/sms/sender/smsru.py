@@ -1,7 +1,6 @@
-import logging
-
 from smsru_api import Client
 
+from core.logging.logger import logger
 from core.sms.sender import BaseSender
 
 
@@ -21,7 +20,7 @@ class SMSRUSender(BaseSender):
 
     def send_sms(self, recipient, message):
         if self._api.send(recipient, message=message).get('status') == "OK":
-            logging.info('SMS was send successfully')
+            logger.info('SMS was send successfully')
         else:
-            logging.error('Error')
+            logger.error('Error')
             return 1

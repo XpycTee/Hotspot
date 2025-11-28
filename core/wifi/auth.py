@@ -1,7 +1,7 @@
 import datetime
-import logging
 import secrets
 
+from core.logging.logger import logger
 from core.config.radius import RADIUS_ENABLED
 from core.config.users import GUEST_USER, STAFF_USER
 from core.cache import get_cache
@@ -23,22 +23,22 @@ def authenticate_by_mac(mac, hardware_fp=None):
     wifi_client = find_by_mac(mac)
     if wifi_client:
         if now_time > wifi_client.get('expiration'):
-            logging.info(f"{mac} is exired")
+            logger.info(f"{mac} is exired")
             return {"status": "EXPIRED"}
 
         phone_number = wifi_client.get('phone')
         if not phone_number:
-            logging.warning(f"{mac}'s phone not found")
+            logger.warning(f"{mac}'s phone not found")
             return {"status": "NOT_FOUND"}
         
         if check_blacklist(phone_number):
-            logging.info(f"{mac} is blocked")
+            logger.info(f"{mac} is blocked")
             return {"status": "BLOCKED"}
 
         is_employee = check_employee(phone_number)
         if wifi_client.get('employee') == is_employee:
             user_fp = hash_fingerprint(phone_number, hardware_fp)
-            logging.info(f"{mac} authing by expiration")
+            logger.info(f"{mac} authing by expiration")
             response = {
                 "status": "OK", 
                 "phone": phone_number, 
@@ -54,7 +54,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
     phone_number = normalize_phone(phone_number)
 
     if check_blacklist(phone_number):
-        logging.info(f"{mac} is blocked")
+        logger.info(f"{mac} is blocked")
         return {"status": "BLOCKED"}
 
     auth_method = "phone & mac"
@@ -76,7 +76,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
 
         update_expiration(wifi_client_mac)
 
-        logging.info(f"{mac} authing by {auth_method}")
+        logger.info(f"{mac} authing by {auth_method}")
         response = {
             "status": "OK", 
             "phone": phone_number, 
@@ -93,7 +93,7 @@ def authenticate_by_code(session_id, mac, code, phone_number):
         is_employee = check_employee(phone_number)
         create_or_udpate_wifi_client(mac, is_employee, phone_number)
         clear_code(session_id)
-        logging.debug("Auth by code")
+        logger.debug("Auth by code")
         return {"status": "OK"}
     elif verify is None:
         return {"status": "CODE_EXPIRED"}
@@ -107,7 +107,7 @@ def authenticate_by_code(session_id, mac, code, phone_number):
 
 
 def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
-    if True: # TODO detect RADIUS auth
+    if RADIUS_ENABLED:
         cache = get_cache()
         username = phone_number
         password = secrets.token_hex(32)

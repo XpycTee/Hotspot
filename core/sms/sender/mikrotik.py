@@ -1,11 +1,11 @@
 import base64
 import json
-import logging
 
 from urllib import request
 from urllib import error
 from urllib.parse import urlparse
 
+from core.logging.logger import logger
 from core.sms.sender import BaseSender
 
 
@@ -59,5 +59,5 @@ class MikrotikSMSSender(BaseSender):
             self._request(data=data)
         except error.HTTPError as e:
             res = json.loads(e.read())
-            logging.error(res.get('detail'))
+            logger.error(res.get('detail'))
             return 1

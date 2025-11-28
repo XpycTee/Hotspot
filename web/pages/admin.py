@@ -10,7 +10,7 @@ from flask import (
 
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
-import logger
+import web.logger as logger
 from web.database import db
 from web.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
 from extensions import cache

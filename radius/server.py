@@ -1,5 +1,4 @@
 import binascii
-import logging
 
 from pyrad2 import server
 from pyrad2.constants import PacketType
@@ -9,14 +8,14 @@ from core.user.repository import check_employee
 from core.utils.phone import normalize_phone
 from core.wifi.auth import authenticate_by_mac
 from core.wifi.challange import radius_check_chap
-
+from radius.logging import logger
 
 class HotspotRADIUS(server.Server):
     def HandleAuthPacket(self, pkt):
-        logging.info("Received an authentication request")
-        logging.debug("Attributes: ")
+        logger.info("Received an authentication request")
+        logger.debug("Attributes: ")
         for attr in pkt.keys():
-            logging.debug(f"{attr}: {pkt[attr]}")
+            logger.debug(f"{attr}: {pkt[attr]}")
 
         reply = self.CreateReplyPacket(pkt)
         reply.code = PacketType.AccessReject
@@ -38,7 +37,7 @@ class HotspotRADIUS(server.Server):
                 reply.code = PacketType.AccessAccept
         else:
             phone_number = normalize_phone(username)
-            token = cache.get(f"auth:token:{phone_number}")
+            token = cache.get(f"auth:token:{phone_number}") or ""
     
             if radius_check_chap(chap_password, chap_challenge, token):
                 is_employee = check_employee(phone_number)
@@ -49,10 +48,10 @@ class HotspotRADIUS(server.Server):
         self.SendReplyPacket(pkt.fd, reply)
 
     def HandleDisconnectPacket(self, pkt):
-        logging.info("Received an disconnect request")
-        logging.info("Attributes: ")
+        logger.info("Received an disconnect request")
+        logger.info("Attributes: ")
         for attr in pkt.keys():
-            logging.info(f"{attr}: {pkt[attr]}")
+            logger.info(f"{attr}: {pkt[attr]}")
 
         reply = self.CreateReplyPacket(pkt)
         # COA NAK

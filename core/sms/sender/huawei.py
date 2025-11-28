@@ -1,10 +1,10 @@
-import logging
 from urllib.parse import urlparse
 
 from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
+from core.logging.logger import logger
 from core.sms.sender import BaseSender
 
 
@@ -37,7 +37,7 @@ class HuaweiSMSSender(BaseSender):
             client = Client(connection)
 
             if client.sms.send_sms([recipient], message) == ResponseEnum.OK.value:
-                logging.info('SMS was send successfully')
+                logger.info('SMS was send successfully')
             else:
-                logging.error('Error')
+                logger.error('Error')
                 return 1

@@ -1,9 +1,9 @@
-import logging
 import os
 from urllib.parse import urlparse
 from cachelib import FileSystemCache, MemcachedCache, RedisCache, SimpleCache
 from environs import Env
 
+from core.logging.logger import logger
 
 env = Env(prefix="HOTSPOT_CACHE_")
 env.read_env()
@@ -37,7 +37,7 @@ def configure_cache(url='simple', default_timeout=300):
             db = int(path)
         except ValueError as e:
             db = 0
-            logging.error(e)
+            logger.error(e)
 
         return Cache(host=host, port=port, password=password, db=db, default_timeout=default_timeout)
     elif scheme == 'memcached+unix':
