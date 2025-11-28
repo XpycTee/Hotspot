@@ -1,5 +1,5 @@
 from cachelib import BaseCache
-from core.cache.config import configure_cache
+from core.config.cache import configure_cache
 from core.config.cache import CACHE_URL
 
 
