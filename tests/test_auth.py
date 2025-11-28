@@ -6,16 +6,16 @@ from unittest.mock import patch, MagicMock
 from flask import Flask
 from sqlalchemy import select
 
-from core import db
+from core import database
 from core.utils.language import get_translate
 from core.cache import get_cache
-from core.db.models import Model
-from core.db.models.blacklist import Blacklist
-from core.db.models.clients_number import ClientsNumber
-from core.db.models.employee import Employee
-from core.db.models.employee_phone import EmployeePhone
-from core.db.models.wifi_client import WifiClient
-from core.db.session import get_session
+from core.database.models import Model
+from core.database.models.blacklist import Blacklist
+from core.database.models.clients_number import ClientsNumber
+from core.database.models.employee import Employee
+from core.database.models.employee_phone import EmployeePhone
+from core.database.models.wifi_client import WifiClient
+from core.database.session import get_session
 from core.user.repository import check_employee
 from core.wifi.challange import _octal_string_to_bytes
 
@@ -138,7 +138,7 @@ class TestAuthViews(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        db.create_all()
+        database.create_all()
 
     def setUp(self):
         self.create_flask()

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
 
-from core.db.models import Model
+from core.database.models import Model
 
 
 class EmployeePhone(Model):

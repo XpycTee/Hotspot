@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, String
 
 from sqlalchemy.orm import relationship
 
-from core.db.models import Model
-from core.db.models.employee_phone import EmployeePhone
+from core.database.models import Model
+from core.database.models.employee_phone import EmployeePhone
 
 
 class Employee(Model):

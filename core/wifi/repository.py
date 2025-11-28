@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
-from core.db.models.wifi_client import WifiClient
-from core.db.session import get_session
+from core.database.models.wifi_client import WifiClient
+from core.database.session import get_session
 
 
 from sqlalchemy import select

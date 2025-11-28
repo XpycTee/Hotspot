@@ -1,11 +1,11 @@
 import datetime
 import logging
 from sqlalchemy.exc import IntegrityError
-from core.db.models.blacklist import Blacklist
-from core.db.models.clients_number import ClientsNumber
-from core.db.models.employee_phone import EmployeePhone
-from core.db.models.wifi_client import WifiClient
-from core.db.session import get_session
+from core.database.models.blacklist import Blacklist
+from core.database.models.clients_number import ClientsNumber
+from core.database.models.employee_phone import EmployeePhone
+from core.database.models.wifi_client import WifiClient
+from core.database.session import get_session
 
 
 from sqlalchemy import select

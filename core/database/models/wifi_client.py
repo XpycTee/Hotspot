@@ -2,8 +2,8 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 
 from sqlalchemy.orm import relationship
 
-from core.db.models import Model
-from core.db.models.clients_number import ClientsNumber
+from core.database.models import Model
+from core.database.models.clients_number import ClientsNumber
 
 
 class WifiClient(Model):

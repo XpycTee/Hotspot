@@ -19,7 +19,6 @@ from flask import (
 
 from core.sms.code import send_code
 from core.utils.language import get_translate
-from core.user.repository import check_employee
 from core.utils.phone import normalize_phone
 from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
 

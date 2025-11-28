@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String
 
-from core.db.models import Model
+from core.database.models import Model
 
 
 class Blacklist(Model):

@@ -2,8 +2,8 @@ from hashlib import sha256
 
 from sqlalchemy import select
 
-from core.db.models.wifi_client import WifiClient
-from core.db.session import get_session
+from core.database.models.wifi_client import WifiClient
+from core.database.session import get_session
 
 
 def hash_fingerprint(phone_number, hardware_fp):
