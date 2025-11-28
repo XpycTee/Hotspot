@@ -1,7 +1,7 @@
 # init_db.py
 from flask import Flask
 from web.database import db
-from settings import Config
+from web.settings import Config
 
 app = Flask("DB Initiator")
 

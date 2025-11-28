@@ -8,8 +8,7 @@ from flask.json.provider import DefaultJSONProvider
 
 from core import database
 from core.utils.language import get_translate
-from logger import configure_logger
-from settings import Config
+from web.settings import Config
 
 def check_required_env(required: list, logger=logging.getLogger()) -> bool:
     missing_vars = []

@@ -25,7 +25,7 @@ fi
 
 # Устанавливаем параметры Gunicorn из переменных окружения или используем значения по умолчанию
 GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
-GUNICORN_LOG_LEVEL=${GUNICORN_LOG_LEVEL:-info}
+GUNICORN_LOG_LEVEL=${LOG_LEVEL:-info}
 GUNICORN_PORT=${GUNICORN_PORT:-8080}
 GUNICORN_ADDR=${GUNICORN_BIND:-[::]}
 

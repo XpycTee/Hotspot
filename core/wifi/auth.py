@@ -2,6 +2,7 @@ import datetime
 import logging
 import secrets
 
+from core.config.radius import RADIUS_ENABLED
 from core.config.users import GUEST_USER, STAFF_USER
 from core.cache import get_cache
 from core.sms.code import clear_code, increment_attempts, verify_code

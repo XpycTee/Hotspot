@@ -1,7 +1,15 @@
 import json
+import logging
 import os
+from environs import Env
+from flask import Flask
 import yaml
 import bcrypt
+
+from core.config.logging import configure_logger
+
+env = Env()
+env.read_env()
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -24,14 +32,23 @@ class Config:
     DEBUG = None
 
     @classmethod
-    def init_app(cls, app):
+    def init_app(cls, app: Flask):
         cls.settings = cls.load_settings()
-        cls.ADMIN = cls.configure_admin()
-        cls.SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', cls.settings.get('flask_secret_key'))
-        cls.LANGUAGE_DEFAULT = os.environ.get('HOTSPOT_LANGUAGE', cls.settings.get('language', 'en'))
+        cls.DEBUG = env.bool('DEBUG', cls.settings.get('debug', False))
+        cls.LOG_LEVEL = env.log_level('LOG_LEVEL', logging.INFO)
+
+        configure_logger(app.logger, cls.LOG_LEVEL)
+
+        with env.prefixed("FLASK_"):
+            cls.SECRET_KEY =env.str('SECRET_KEY', cls.settings.get('flask_secret_key'))
+
+        with env.prefixed("HOTSPOT_"):
+            cls.ADMIN = cls.configure_admin()
+            with env.prefixed("WEB_"):
+                cls.LANGUAGE_DEFAULT = os.environ.get('LANGUAGE', cls.settings.get('language', 'en'))
+                cls.COMPANY_NAME = os.environ.get('COMPANY_NAME', cls.settings.get('company_name', cls.DEFAULT_COMPANY_NAME))
+
         cls.LANGUAGE_CONTENT = cls.load_language_files()
-        cls.COMPANY_NAME = os.environ.get('HOTSPOT_COMPANY_NAME', cls.settings.get('company_name', cls.DEFAULT_COMPANY_NAME))
-        cls.DEBUG = os.environ.get('DEBUG', cls.settings.get('debug', False))
 
         app.config.from_object(cls)
 
@@ -44,16 +61,18 @@ class Config:
     def configure_admin(cls):
         admin_settings = cls.settings.get('admin', {})
         admin_user = admin_settings.get('user', {})
-        username = os.environ.get('HOTSPOT_ADMIN_USERNAME', admin_user.get('username', cls.DEFAULT_ADMIN_USERNAME))
-        password = os.environ.get('HOTSPOT_ADMIN_PASSWORD', admin_user.get('password', cls.DEFAULT_ADMIN_PASSWORD))
-        max_login_attempts = os.environ.get('HOTSPOT_ADMIN_MAX_LOGIN_ATTEMPTS', admin_settings.get('max_login_attempts', cls.DEFAULT_ADMIN_MAX_LOGIN_ATTEMPTS))
-        lockout_time = os.environ.get('HOTSPOT_ADMIN_LOCKOUT_TIME', admin_settings.get('lockout_time', cls.DEFAULT_ADMIN_LOCKOUT_TIME))
+        with env.prefixed("ADMIN_"):
+            username = env.str('USERNAME', admin_user.get('username', cls.DEFAULT_ADMIN_USERNAME))
+            password = env.str('PASSWORD', admin_user.get('password', cls.DEFAULT_ADMIN_PASSWORD))
+            max_login_attempts = env.int('MAX_LOGIN_ATTEMPTS', admin_settings.get('max_login_attempts', cls.DEFAULT_ADMIN_MAX_LOGIN_ATTEMPTS))
+            lockout_time = env.int('LOCKOUT_TIME', admin_settings.get('lockout_time', cls.DEFAULT_ADMIN_LOCKOUT_TIME))
+        
         password_hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         return {
             'username': username, 
             'password': password_hashed, 
-            'max_login_attempts': int(max_login_attempts), 
-            'lockout_time': int(lockout_time)
+            'max_login_attempts': max_login_attempts, 
+            'lockout_time': lockout_time
         }
 
     @classmethod

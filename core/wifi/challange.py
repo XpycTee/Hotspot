@@ -1,5 +1,3 @@
-
-import binascii
 import hashlib
 
 def _octal_string_to_bytes(oct_string):
