@@ -59,9 +59,9 @@ class HotspotRADIUS(server.Server):
 
     def HandleDisconnectPacket(self, pkt):
         logger.info("Received an disconnect request")
-        logger.info("Attributes: ")
+        logger.debug("Attributes: ")
         for attr in pkt.keys():
-            logger.info(f"{attr}: {pkt[attr]}")
+            logger.debug(f"{attr}: {pkt[attr]}")
 
         reply = self.CreateReplyPacket(pkt)
         # COA NAK
