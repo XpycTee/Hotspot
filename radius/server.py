@@ -30,12 +30,14 @@ class HotspotRADIUS(server.Server):
         if username == mac:
             if chap_challenge_hex and chap_password and radius_check_chap(chap_password, chap_challenge, mac):
                 client = authenticate_by_mac(mac)
-                status = client.get('status')
+                status = client.get("status")
                 if status == "OK":
                     is_employee = client.get("employee")
                     reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
                     reply.code = PacketType.AccessAccept
                     logger.info("Auth by mac")
+                else:
+                    logger.info(f"Auth failed with status: {status}")
         else:
             phone_number = normalize_phone(username)
             token = cache.get(f"auth:token:{phone_number}") or ""
@@ -44,7 +46,9 @@ class HotspotRADIUS(server.Server):
                 reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
                 reply.code = PacketType.AccessAccept
                 logger.info(f"Auth by token {token[:12]}")
-
+            else:
+                logger.info(f"Auth failed bad token")
+                
         reply.add_message_authenticator()
         self.SendReplyPacket(pkt.fd, reply)
 
