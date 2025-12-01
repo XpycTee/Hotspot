@@ -4,10 +4,10 @@ from pyrad2 import server
 from pyrad2.constants import PacketType
 
 from core.cache import get_cache
-from core.user.repository import check_employee
+from core.hotspot.user.repository import check_employee
 from core.utils.phone import normalize_phone
-from core.wifi.auth import authenticate_by_mac
-from core.wifi.challange import radius_check_chap
+from core.hotspot.wifi.auth import authenticate_by_mac
+from core.hotspot.wifi.challange import radius_check_chap
 from radius.logging import logger
 
 class HotspotRADIUS(server.Server):

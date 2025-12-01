@@ -5,8 +5,8 @@ from core.database.session import get_session
 
 from sqlalchemy import select
 
-from core.user.expiration import new_expiration
-from core.user.repository import get_or_create_client_phone
+from core.hotspot.user.expiration import new_expiration
+from core.hotspot.user.repository import get_or_create_client_phone
 
 
 def find_by_mac(mac):

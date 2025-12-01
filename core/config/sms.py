@@ -1,9 +1,9 @@
 from environs import Env
 
-from core.sms.sender import DebugSender
-from core.sms.sender.huawei import HuaweiSMSSender
-from core.sms.sender.mikrotik import MikrotikSMSSender
-from core.sms.sender.smsru import SMSRUSender
+from core.hotspot.sms.sender import DebugSender
+from core.hotspot.sms.sender.huawei import HuaweiSMSSender
+from core.hotspot.sms.sender.mikrotik import MikrotikSMSSender
+from core.hotspot.sms.sender.smsru import SMSRUSender
 
 env = Env(prefix="HOTSPOT_SENDER_")
 env.read_env()

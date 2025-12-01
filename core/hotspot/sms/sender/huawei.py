@@ -5,7 +5,7 @@ from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
 from core.logging.logger import logger
-from core.sms.sender import BaseSender
+from core.hotspot.sms.sender import BaseSender
 
 
 class HuaweiSMSSender(BaseSender):

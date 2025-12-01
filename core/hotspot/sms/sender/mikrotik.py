@@ -6,7 +6,7 @@ from urllib import error
 from urllib.parse import urlparse
 
 from core.logging.logger import logger
-from core.sms.sender import BaseSender
+from core.hotspot.sms.sender import BaseSender
 
 
 class MikrotikSMSSender(BaseSender):

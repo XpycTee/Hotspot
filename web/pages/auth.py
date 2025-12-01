@@ -17,13 +17,13 @@ from flask import (
     current_app
 )
 
-from core.sms.code import send_code
+from core.hotspot.sms.code import send_code
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
-from core.wifi.auth import authenticate_by_mac, authenticate_by_phone
+from core.hotspot.wifi.auth import authenticate_by_mac, authenticate_by_phone
 
-from core.wifi.auth import authenticate_by_code
-from core.wifi.auth import get_credentials
+from core.hotspot.wifi.auth import authenticate_by_code
+from core.hotspot.wifi.auth import get_credentials
 
 import web.logger as logger
 

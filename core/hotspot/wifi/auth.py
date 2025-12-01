@@ -5,16 +5,16 @@ from core.logging.logger import logger
 from core.config.radius import RADIUS_ENABLED
 from core.config.users import GUEST_USER, STAFF_USER
 from core.cache import get_cache
-from core.sms.code import clear_code, increment_attempts, verify_code
-from core.user.repository import check_blacklist, update_last_seen
-from core.user.repository import update_status
-from core.user.repository import check_employee
-from core.user.expiration import update_expiration
+from core.hotspot.sms.code import clear_code, increment_attempts, verify_code
+from core.hotspot.user.repository import check_blacklist, update_last_seen
+from core.hotspot.user.repository import update_status
+from core.hotspot.user.repository import check_employee
+from core.hotspot.user.expiration import update_expiration
 from core.utils.phone import normalize_phone
-from core.wifi.challange import hash_chap
-from core.wifi.repository import create_or_udpate_wifi_client, find_by_fp
-from core.wifi.fingerprint import hash_fingerprint, update_fingerprint
-from core.wifi.repository import find_by_mac
+from core.hotspot.wifi.challange import hash_chap
+from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_fp
+from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
+from core.hotspot.wifi.repository import find_by_mac
 
 
 
