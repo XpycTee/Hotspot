@@ -15,7 +15,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     LANGUAGE_FOLDER = "web/static/language"
-    DEFAULT_LANGUAGE_DEFAULT = 'en'
     DEFAULT_ADMIN_USERNAME = 'admin'
     DEFAULT_ADMIN_PASSWORD = 'admin'
     DEFAULT_ADMIN_MAX_LOGIN_ATTEMPTS = 3
@@ -25,8 +24,6 @@ class Config:
     # Переменные класса для хранения конфигурации
     ADMIN = None
     SECRET_KEY = None
-    LANGUAGE_DEFAULT = None
-    LANGUAGE_CONTENT = None
     COMPANY_NAME = None
     DEBUG = None
 
@@ -43,10 +40,7 @@ class Config:
         with env.prefixed("HOTSPOT_"):
             cls.ADMIN = cls.configure_admin()
             with env.prefixed("WEB_"):
-                cls.LANGUAGE_DEFAULT = os.environ.get('LANGUAGE', cls.DEFAULT_LANGUAGE_DEFAULT)
                 cls.COMPANY_NAME = os.environ.get('COMPANY_NAME', cls.DEFAULT_COMPANY_NAME)
-
-        cls.LANGUAGE_CONTENT = cls.load_language_files()
 
         app.config.from_object(cls)
 
@@ -65,15 +59,3 @@ class Config:
             'max_login_attempts': max_login_attempts, 
             'lockout_time': lockout_time
         }
-
-    @classmethod
-    def load_language_files(cls):
-        language_content = {}
-        for filename in os.listdir(cls.LANGUAGE_FOLDER):
-            if filename.endswith(".json"):
-                file_path = os.path.join(cls.LANGUAGE_FOLDER, filename)
-                language_name = os.path.splitext(filename)[0]
-                with open(file_path, "r", encoding='utf-8') as lang_file:
-                    language_content[language_name] = json.load(lang_file)
-        return language_content
-       
