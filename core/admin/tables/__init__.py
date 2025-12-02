@@ -1,5 +1,5 @@
-from core.admin.tables.blacklist import delete_from_blacklist, get_blacklist
-from core.admin.tables.employee import delete_from_employees, get_employees
+from core.admin.tables.blacklist import get_blacklist
+from core.admin.tables.employee import get_employees
 from core.admin.tables.wifi_clients import get_wifi_clients
 
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, abort, jsonify, request
 
-from core.hotspot.user.blacklist import add_to_blacklist
+from core.hotspot.user.blacklist import add_to_blacklist_by_mac
 from core.hotspot.user.expiration import reset_expiration
 from core.utils.language import get_translate
 from web.pages.admin.utils import login_required
@@ -32,12 +32,12 @@ def block():
 
     mac_address = data.get('mac')
 
-    response = add_to_blacklist(mac_address)
+    response = add_to_blacklist_by_mac(mac_address)
     status = response.get('status')
     if status == 'OK':
         return jsonify({'success': True})
     
-    if status == 'NOT_DOUND':
+    if status == 'NOT_FOUND':
         error_message = response.get('error_message')
         abort(404, description=error_message)
 

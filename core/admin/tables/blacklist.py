@@ -19,16 +19,3 @@ def get_blacklist(page: int, rows_per_page: int, search_query):
 
         data = [entry.phone_number for entry in blacklist]
     return {'blacklist': data, 'total_rows': total_rows}
-
-
-def delete_from_blacklist(phone_number):
-    with get_session() as db_session:
-        query = select(Blacklist).where(Blacklist.phone_number==phone_number)
-        blacklist_entry = db_session.scalars(query).first()
-        if blacklist_entry:
-            db_session.delete(blacklist_entry)
-            db_session.commit()
-    return {'status': 'OK'} # TODO
-
-def update_blacklist():
-    pass

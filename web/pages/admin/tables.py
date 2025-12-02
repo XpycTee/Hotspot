@@ -1,8 +1,8 @@
 from flask import Blueprint, abort, jsonify, request
 
 from core.admin.tables import get_table
-from core.admin.tables.blacklist import delete_from_blacklist
-from core.admin.tables.employee import delete_from_employees
+from core.hotspot.user.blacklist import add_to_blacklist, delete_from_blacklist
+from core.hotspot.user.employees import add_employee, delete_from_employees, update_employee
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 from web.pages.admin.utils import login_required
@@ -21,57 +21,42 @@ def save_data(table_name):
         abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
     if table_name == 'employee':
-        emp_id = data.get('id')
-        if emp_id is not None:
-            employee = Employee.query.filter_by(id=emp_id).first()
-            if not employee:
-                abort(404, description=get_translate('errors.admin.tables.employee_not_found'))
+        employee_id = data.get('id')
+        lastname = data.get('lastname')
+        name = data.get('name')
+        phone_numbers = data.get('phone')
 
-            # Обновление существующего сотрудника
-            employee.lastname = data['lastname']
-            employee.name = data['name']
-
-            # Обновление телефонов сотрудника
-            existing_phones = {phone.phone_number for phone in employee.phones}
-            new_phones = set()
-
-            for phone_number in data['phone']:
-                phone_number = normalize_phone(phone_number)
-                new_phones.add(phone_number)
-
-            # Удаление старых телефонов
-            for phone in employee.phones:
-                if phone.phone_number not in new_phones:
-                    db.session.delete(phone)
-
-            # Добавление новых телефонов
-            for phone_number in new_phones - existing_phones:
-                new_phone = EmployeePhone(phone_number=phone_number, employee=employee)
-                db.session.add(new_phone)
+        if employee_id is not None:
+            response = update_employee(employee_id, lastname, name, phone_numbers)
+            status = response.get('status')
+            if status == 'NOT_FOUND':
+                error_message = response.get('error_message')
+                abort(404, description=error_message)
+            elif status == 'BAD_REUQEST':
+                abort(400)
+            elif status != 'OK':
+                abort(500, description=get_translate('errors.admin.tables.unknown_status'))
         else:
-            # Создание нового сотрудника
-            new_employee = Employee(lastname=data['lastname'], name=data['name'])
-            db.session.add(new_employee)
-            db.session.flush()  # Чтобы получить ID нового сотрудника
+            response = add_employee(lastname, name, phone_numbers)
+            status = response.get('status')
+            if status == 'ALREDY_EXISTS':
+                error_message = response.get('error_message')
+                abort(400, description=error_message)
+            elif status == 'OK':            
+                new_id = response.get('employee_id')
+            else:
+                abort(500, description=get_translate('errors.admin.tables.unknown_status'))
 
-            # Добавление телефонов
-            for phone_number in data['phone']:
-                phone_number = normalize_phone(phone_number)
-                if EmployeePhone.query.filter_by(phone_number=phone_number).first():
-                    abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
-                new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
-                db.session.add(new_phone)
-            new_id = new_employee.id
-        db.session.commit()
     elif table_name == 'blacklist':
-        if Blacklist.query.filter_by(phone_number=data['phone']).first():
-            abort(400, description=get_translate('errors.admin.tables.phone_number_exists'))
-        
-        phone_number = normalize_phone(data['phone'])
-
-        new_blacklist_entry = Blacklist(phone_number=phone_number)
-        db.session.add(new_blacklist_entry)
-        db.session.commit()
+        phone_number = normalize_phone(data.get('phone'))
+        response = add_to_blacklist(phone_number)
+        status = response.get('status')
+        if status == 'ALREDY_BLOCKED':
+            error_message = response.get('error_message')
+            abort(400, description=error_message)
+        elif status != 'OK':
+            abort(500, description=get_translate('errors.admin.tables.unknown_status'))
+    
     else:
         abort(404)
 
@@ -98,7 +83,7 @@ def delete_data(table_name):
         if status == 'NOT_FOUND':
             abort(404, description=get_translate('errors.admin.tables.employee_not_found'))
         elif status != 'OK':
-            abort(500, description='Unknown status')
+            abort(500, description=get_translate('errors.admin.tables.unknown_status'))
     elif table_name == 'blacklist':
         phone_number = data.get('phone')
         if not phone_number:
@@ -106,7 +91,7 @@ def delete_data(table_name):
         response = delete_from_blacklist(phone_number)
         status = response.get('status')
         if status != 'OK':
-            abort(500, description='Unknown status')
+            abort(500, description=get_translate('errors.admin.tables.unknown_status'))
     else:
         abort(404)
 

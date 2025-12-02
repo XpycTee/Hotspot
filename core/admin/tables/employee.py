@@ -32,23 +32,3 @@ def get_employees(page: int, rows_per_page: int, search_query):
             for emp in employees
         ]
     return {'employees': data, 'total_rows': total_rows}
-
-
-def delete_from_employees(employee_id):
-    with get_session() as db_session:
-        query = select(Employee).where(Employee.id==employee_id)
-        employee = db_session.scalars(query).first()
-
-        if not employee:
-            return {'status': 'NOT_FOUND'}
-
-        # Удаление всех связанных телефонов
-        for phone in employee.phones:
-            db_session.delete(phone)
-        db_session.delete(employee)
-        db_session.commit()
-    return {'status': 'OK'}
-
-
-def update_employees():
-    pass
