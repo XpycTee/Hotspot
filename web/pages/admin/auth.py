@@ -36,8 +36,8 @@ def login():
     return render_template('admin/login.html', error=error)
 
 
-@auth_bp.route('/auth', methods=['POST'])
-def auth():
+@auth_bp.route('/check', methods=['POST'])
+def check():
     username = request.form.get('username')
     password = request.form.get('password')
     client_ip = request.remote_addr
