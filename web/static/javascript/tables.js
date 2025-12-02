@@ -3,7 +3,7 @@ const tableData = {}; // Хранилище данных для таблиц (п
 
 // Инициализация таблиц
 document.addEventListener('DOMContentLoaded', function () {
-    const tables = ['wifi_clients', 'employee', 'blacklist'];
+    const tables = ['wifi_clients', 'employees', 'blacklist'];
 
     tables.forEach(tableId => {
         tableData[tableId] = { currentPage: 1, searchQuery: '' };
@@ -21,7 +21,7 @@ function changePageTo(tableId, pageNumber) {
 function loadTableData(tableId) {
     const { currentPage, searchQuery } = tableData[tableId];
 
-    fetch(`/admin/table/${tableId}?page=${currentPage}&search=${encodeURIComponent(searchQuery)}&rows_per_page=${rowsPerPage}`)
+    fetch(`/admin/tables/${tableId}?page=${currentPage}&search=${encodeURIComponent(searchQuery)}&rows_per_page=${rowsPerPage}`)
         .then(response => response.json())
         .then(data => {
             updateTable(tableId, data.data);
@@ -68,7 +68,7 @@ function generateRowHTML(tableId, row) {
                 <button class="btn btn-delete btn-controls" onclick="blockRow(this)">${getTranslate('html.admin.buttons.block')}</button>
             </td>
         `;
-    } else if (tableId === 'employee') {
+    } else if (tableId === 'employees') {
         return `
             <td data-id>${row.id}</td>
             <td data-lastname>${row.lastname}</td>
@@ -77,8 +77,8 @@ function generateRowHTML(tableId, row) {
                 <ul>${row.phones.map(phone => `<li>+${phone}</li>`).join('')}</ul>
             </td>
             <td class="column-controls">
-                <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employee')">${getTranslate('html.admin.buttons.edit')}</button>
-                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employee')">${getTranslate('html.admin.buttons.delete')}</button>
+                <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employees')">${getTranslate('html.admin.buttons.edit')}</button>
+                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employees')">${getTranslate('html.admin.buttons.delete')}</button>
             </td>
         `;
     } else if (tableId === 'blacklist') {
@@ -221,7 +221,7 @@ function addRowModal(button, type) {
             if (key === 'phone') {
                 // Заменяем префикс +7 или 8 на 7 и удаляем все нецифровые символы
                 let phone = value.replace(/\D/g, '').replace(/^(\+?7|8)/, '7');
-                if (type === 'employee') {
+                if (type === 'employees') {
                     data[key] = data[key] || [];
                     data[key].push(phone);
                 } else {
@@ -261,7 +261,7 @@ function deleteRow(button, type) {
 
     const data = {};
 
-    if (type === 'employee') {
+    if (type === 'employees') {
         const idInput = row.querySelector('input[name="id"]');
         let originalValue = row.querySelector('td[data-id]').textContent.trim();
         if (idInput) {
@@ -325,7 +325,7 @@ function saveRow(button, type) {
         if (key === 'phone') {
             // Заменяем префикс +7 или 8 на 7 и удаляем все нецифровые символы
             let phone = currentValue.replace(/\D/g, '').replace(/^(\+?7|8)/, '7');
-            if (type === 'employee') {
+            if (type === 'employees') {
                 data[key] = data[key] || [];
                 data[key].push(phone);
             } else {
@@ -385,7 +385,7 @@ function deauthRow(button) {
 
     if (!macAddress) {
         const modal = document.querySelector("#errorModal");
-        triggerModal(modal, 'Error', getTranslate('errors.admin.tabels.mac_is_missing'));
+        triggerModal(modal, 'Error', getTranslate('errors.admin.tables.mac_is_missing'));
         return;
     }
 
@@ -414,7 +414,7 @@ function blockRow(button) {
 
     if (!macAddress) {
         const modal = document.querySelector("#errorModal");
-        triggerModal(modal, 'Error', getTranslate('errors.admin.tabels.mac_is_missing'));
+        triggerModal(modal, 'Error', getTranslate('errors.admin.tables.mac_is_missing'));
         return;
     }
 
@@ -562,7 +562,7 @@ function addPhoneField(button, isModal=false) {
 
 // Функция для преобразования инпутов в ячейки
 function convertInputsToCells(inputs, data, type, row, button, new_id) {
-    if (type === 'employee') {
+    if (type === 'employees') {
         inputs.forEach(input => {
             if (input.type !== 'hidden' || input.name === 'id') {
                 const td = input.closest('td');

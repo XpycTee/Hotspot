@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, render_template, session, url_for
 
 from web.pages.admin.auth import auth_bp
-from web.pages.admin.tabels import tabels_bp
+from web.pages.admin.tables import tables_bp
 from web.pages.admin.hotspot import hotspot_bp
 from web.pages.admin.utils import login_required
 
@@ -9,7 +9,7 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 bluepints = [
     auth_bp,
-    tabels_bp,
+    tables_bp,
     hotspot_bp
 ]
 
