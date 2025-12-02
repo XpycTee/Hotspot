@@ -27,7 +27,7 @@ from core.hotspot.wifi.auth import get_credentials
 
 import web.logger as logger
 
-auth_bp = Blueprint('auth', __name__)
+hotspot_bp = Blueprint('hotspot', __name__)
 
 
 def _mask_phone(phone: str) -> str:
@@ -60,7 +60,7 @@ def _log_masked_session():
     return result
 
 
-@auth_bp.route('/', methods=['POST', 'GET'])
+@hotspot_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['link-login-only', 'link-orig', 'mac']
     has_form = all(key in set(request.form.keys()) for key in required_keys)
@@ -72,10 +72,10 @@ def index():
         else:
             redirect(session.get('link-orig'), 302)
 
-    return redirect(url_for('pages.auth.login'), 302)
+    return redirect(url_for('pages.hotspot.login'), 302)
 
 
-@auth_bp.route('/test_login', methods=['GET'])
+@hotspot_bp.route('/test_login', methods=['GET'])
 def test_login():
     if not current_app.debug:
         abort(404)
@@ -89,7 +89,7 @@ def test_login():
     return login()
 
 
-@auth_bp.route('/login', methods=['POST'])
+@hotspot_bp.route('/login', methods=['POST'])
 def login():
     error = session.pop('error', None)
 
@@ -119,16 +119,16 @@ def login():
         if user_fp:
             session['user_fp'] = user_fp
 
-        return redirect(url_for('pages.auth.sendin'), 302)
+        return redirect(url_for('pages.hotspot.sendin'), 302)
     elif status == "BLOCKED":
         abort(403)
     elif status in ["NOT_FOUND", "EXPIRED"]:
-        return render_template('auth/login.html', error=error)
+        return render_template('hotspot/login.html', error=error)
     else:
         abort(500)
 
 
-@auth_bp.route('/code', methods=['POST', 'GET'])
+@hotspot_bp.route('/code', methods=['POST', 'GET'])
 def code():
     error = session.pop('error', None)
     logger.debug(f'Session data before code: {_log_masked_session()}')
@@ -150,7 +150,7 @@ def code():
 
             session['mac'] = response.get('mac', mac)
 
-            return redirect(url_for('pages.auth.sendin'), 302)
+            return redirect(url_for('pages.hotspot.sendin'), 302)
         elif status == "BLOCKED":
             abort(403)
         elif status == 'NOT_FOUND':
@@ -171,15 +171,15 @@ def code():
 
     status = response.get('status')
     if status == "OK":
-        return render_template('auth/code.html', error=error)
+        return render_template('hotspot/code.html', error=error)
     if status == "ALREDY_SENDED":
         error = get_translate("errors.auth.code_alredy_sended")
-        return render_template('auth/code.html', error=error)
+        return render_template('hotspot/code.html', error=error)
     else:
         abort(500)
 
 
-@auth_bp.route('/resend', methods=['POST'])
+@hotspot_bp.route('/resend', methods=['POST'])
 def resend():
     phone_number = session.get('phone')
     logger.debug(f'Session data before code: {_log_masked_session()}')
@@ -198,7 +198,7 @@ def resend():
         abort(500)
 
 
-@auth_bp.route('/auth', methods=['POST'])
+@hotspot_bp.route('/auth', methods=['POST'])
 def auth():
     mac = session.get('mac')
     phone_number = session.get('phone')
@@ -210,27 +210,27 @@ def auth():
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
-        return redirect(url_for('pages.auth.code'), 302)
+        return redirect(url_for('pages.hotspot.code'), 302)
 
     response = authenticate_by_code(session_id, mac, form_code, phone_number)
     status = response.get('status')
     if status == "OK":
-        return redirect(url_for('pages.auth.sendin'), 302)
+        return redirect(url_for('pages.hotspot.sendin'), 302)
     elif status == "CODE_EXPIRED":
         session['error'] = get_translate('errors.auth.expired_code')
-        return redirect(url_for('pages.auth.code'), 302)
+        return redirect(url_for('pages.hotspot.code'), 302)
     elif status == "BAD_TRY":
         session['error'] = get_translate('errors.auth.bad_code_try')
-        return redirect(url_for('pages.auth.code'), 307)
+        return redirect(url_for('pages.hotspot.code'), 307)
     elif status == "BAD_CODE":
         session['error'] = get_translate('errors.auth.bad_code_all')
         session.pop('phone', None)
-        return redirect(url_for('pages.auth.login'), 302)
+        return redirect(url_for('pages.hotspot.login'), 302)
     else:
         abort(500)
 
 
-@auth_bp.route('/sendin', methods=['POST', 'GET'])
+@hotspot_bp.route('/sendin', methods=['POST', 'GET'])
 def sendin():
     phone_number = session.get('phone')
     if not phone_number:
@@ -252,7 +252,7 @@ def sendin():
     password = credentials.get('password')
 
     return render_template(
-        'auth/sendin.html', 
+        'hotspot/sendin.html', 
         username=username,
         password=password,
         link_login_only=link_login_only,

@@ -1,4 +1,4 @@
-{% extends 'auth/base.html' %}
+{% extends 'hotspot/base.html' %}
 
 {% block title %}
 {{ get_translate('html.code.title') }}
@@ -97,7 +97,7 @@
         <span class="modal-close" data-close-button>{{ get_translate('html.modal.close').lower() }}</span>
     </div>
     <div class="modal-content">
-      {% include "auth/privacy_policy.html" %}
+      {% include "hotspot/privacy_policy.html" %}
     </div>
 </div>
 {% endblock %}

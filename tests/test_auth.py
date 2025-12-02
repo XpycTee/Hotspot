@@ -24,7 +24,7 @@ from core.wifi.challange import _octal_string_to_bytes
 # Add the root directory of the project to the sys.path
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, root_dir)
-from web.pages.auth import auth_bp
+from web.pages.hotspot import hotspot_bp
 
 
 class TestAuthViews(unittest.TestCase):
@@ -98,7 +98,7 @@ class TestAuthViews(unittest.TestCase):
     def create_flask(self):
         self.app = Flask(__name__)
         self.app.debug = True
-        self.app.register_blueprint(auth_bp)
+        self.app.register_blueprint(hotspot_bp)
         self.app.root_path = os.path.join(root_dir, 'app')
         self.app.config['SECRET_KEY'] = 'secret'
         self.app.config['HOTSPOT_USERS'] = {
