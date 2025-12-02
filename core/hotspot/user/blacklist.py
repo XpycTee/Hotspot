@@ -1,5 +1,3 @@
-
-
 from sqlalchemy import select
 from core.database.models.blacklist import Blacklist
 from core.database.models.wifi_client import WifiClient
