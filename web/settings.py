@@ -2,8 +2,8 @@ import logging
 import os
 from environs import Env
 from flask import Flask
-import bcrypt
 
+from core.config.language import LANGUAGE_CONTENT
 from core.config.logging import configure_logger
 
 env = Env()
@@ -18,6 +18,7 @@ class Config:
     SECRET_KEY = None
     COMPANY_NAME = None
     DEBUG = None
+    LANGUAGE_CONTENT = LANGUAGE_CONTENT
 
     @classmethod
     def init_app(cls, app: Flask):
