@@ -5,7 +5,7 @@ from core.database.session import get_session
 from core.logging.logger import logger
 
 
-def get_employee(page: int, rows_per_page: int, search_query):
+def get_employees(page: int, rows_per_page: int, search_query):
     with get_session() as db_session:
         query = select(Employee)
 
@@ -33,8 +33,22 @@ def get_employee(page: int, rows_per_page: int, search_query):
         ]
     return {'employees': data, 'total_rows': total_rows}
 
-def delete_from_employee():
-    pass
 
-def update_employee():
+def delete_from_employees(employee_id):
+    with get_session() as db_session:
+        query = select(Employee).where(Employee.id==employee_id)
+        employee = db_session.scalars(query).first()
+
+        if not employee:
+            return {'status': 'NOT_FOUND'}
+
+        # Удаление всех связанных телефонов
+        for phone in employee.phones:
+            db_session.delete(phone)
+        db_session.delete(employee)
+        db_session.commit()
+    return {'status': 'OK'}
+
+
+def update_employees():
     pass

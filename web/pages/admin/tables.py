@@ -1,8 +1,8 @@
 from flask import Blueprint, abort, jsonify, request
 
-from core.admin.tables.blacklist import get_blacklist
-from core.admin.tables.employee import get_employee
-from core.admin.tables.wifi_clients import get_wifi_clients
+from core.admin.tables import get_table
+from core.admin.tables.blacklist import delete_from_blacklist
+from core.admin.tables.employee import delete_from_employees
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 from web.pages.admin.utils import login_required
@@ -11,7 +11,7 @@ from web.pages.admin.utils import login_required
 tables_bp = Blueprint('tables', __name__, url_prefix='/tables')
 
 
-@tables_bp.route('/save/<table_name>', methods=['POST'])
+@tables_bp.route('/<table_name>/save', methods=['POST'])
 @login_required
 def save_data(table_name):
     data = request.json
@@ -81,7 +81,7 @@ def save_data(table_name):
     return jsonify(response)
 
 
-@tables_bp.route('/delete/<table_name>', methods=['POST'])
+@tables_bp.route('/<table_name>/delete', methods=['POST'])
 @login_required
 def delete_data(table_name):
     data = request.json
@@ -89,26 +89,24 @@ def delete_data(table_name):
     if not data:
         abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
-    if table_name == 'employee':
-        emp_id = data.get('id')
-        if emp_id is None:
-            abort(400, description=get_translate('errors.admin.tables.employee_not_found'))
-        
-        employee = Employee.query.filter_by(id=emp_id).first()
-
-        if not employee:
+    if table_name == 'employees':
+        employee_id = data.get('id')
+        if employee_id is None:
+            abort(400, description=get_translate('errors.admin.tables.bad_employee_id'))
+        response = delete_from_employees(employee_id)
+        status = response.get('status')
+        if status == 'NOT_FOUND':
             abort(404, description=get_translate('errors.admin.tables.employee_not_found'))
-
-        # Удаление всех связанных телефонов
-        for phone in employee.phones:
-            db.session.delete(phone)
-        db.session.delete(employee)
-        db.session.commit()
+        elif status != 'OK':
+            abort(500, description='Unknown status')
     elif table_name == 'blacklist':
-        blacklist_entry = Blacklist.query.filter_by(phone_number=data['phone']).first()
-        if blacklist_entry:
-            db.session.delete(blacklist_entry)
-            db.session.commit()
+        phone_number = data.get('phone')
+        if not phone_number:
+            abort(400, description=get_translate('errors.admin.tables.phone_not_found'))
+        response = delete_from_blacklist(phone_number)
+        status = response.get('status')
+        if status != 'OK':
+            abort(500, description='Unknown status')
     else:
         abort(404)
 
@@ -117,26 +115,16 @@ def delete_data(table_name):
 
 @tables_bp.route('/<table_name>', methods=['GET'])
 @login_required
-def get_table(table_name):
+def table(table_name):
     search_query = request.args.get('search', '').lower()
     page = int(request.args.get('page', 1))
     rows_per_page = int(request.args.get('rows_per_page', 10))
 
-    if table_name == 'wifi_clients':
-        response = get_wifi_clients(page, rows_per_page, search_query)
-        data = response.get('wifi_clients')
-        total_rows = response.get('total_rows')
-    elif table_name == 'employees':
-        response = get_employee(page, rows_per_page, search_query)
-        data = response.get('employees')
-        total_rows = response.get('total_rows')
-    elif table_name == 'blacklist':
-        response = get_blacklist(page, rows_per_page, search_query)
-        data = response.get('blacklist')
-        total_rows = response.get('total_rows')
-    else:
+    response = get_table(table_name, page, rows_per_page, search_query)
+    if not response:
         abort(404)
-
+        
+    data, total_rows = response
     return jsonify({
         'data': data,
         'total_rows': total_rows,

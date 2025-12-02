@@ -43,9 +43,3 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query):
             for client in clients
         ]
     return {'wifi_clients': data, 'total_rows': total_rows}
-
-def delete_from_wifi_clients():
-    pass
-
-def update_wifi_clients():
-    pass
