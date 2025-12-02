@@ -36,5 +36,5 @@ def reset_expiration(mac):
     with get_session() as db_session:
         query = select(WifiClient).where(WifiClient.mac==mac)
         wifi_client = db_session.scalars(query).first()
-        wifi_client.expiration = datetime(1970, 1, 1)
+        wifi_client.expiration = datetime.datetime(1970, 1, 1)
         db_session.commit()

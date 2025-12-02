@@ -20,7 +20,7 @@ def save_data(table_name):
     if not data:
         abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
-    if table_name == 'employee':
+    if table_name == 'employees':
         employee_id = data.get('id')
         lastname = data.get('lastname')
         name = data.get('name')

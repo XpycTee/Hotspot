@@ -233,7 +233,7 @@ function addRowModal(button, type) {
         });
 
         // Отправляем запрос на сервер
-        fetch(`/admin/save/${type}`, {
+        fetch(`/admin/tables/${type}/save`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -275,7 +275,7 @@ function deleteRow(button, type) {
     }
 
 
-    fetch(`/admin/delete/${type}`, {
+    fetch(`/admin/tables/${type}/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -342,7 +342,7 @@ function saveRow(button, type) {
         return;
     }
 
-    fetch(`/admin/save/${type}`, {
+    fetch(`/admin/tables/${type}/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -389,7 +389,7 @@ function deauthRow(button) {
         return;
     }
 
-    fetch(`/admin/deauth`, {
+    fetch(`/admin/hotspot/deauth`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mac: macAddress })
@@ -418,7 +418,7 @@ function blockRow(button) {
         return;
     }
 
-    fetch(`/admin/block`, {
+    fetch(`/admin/hotspot/block`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mac: macAddress })
