@@ -68,7 +68,7 @@ def auth():
         _set_error_and_log(error_message, username, client_ip)
         return redirect(url_for('pages.admin.auth.login'), 302)
 
-    abort(500)
+    abort(500, description="Unknown status")
 
 
 @auth_bp.route('/logout', methods=['POST', 'GET'])
