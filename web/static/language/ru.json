@@ -42,8 +42,6 @@
       "code_alredy_sended": "Код уже отправлен, введите код"
     },
     "admin": {
-      "log": "{message} для пользователя {username} с {client_ip}",
-      "user_logged_in": "Пользователь {username} вошёл с {client_ip}",
       "wrong_credentials": "Неверный логин или пароль",
       "end_tries": "Слишком много попыток. Повторите через {lockout_time} минут.",
       "tables": {

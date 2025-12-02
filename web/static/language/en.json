@@ -42,8 +42,6 @@
       "code_alredy_sended": "Code already sent, please enter the code"
     },
     "admin": {
-      "log": "{message} for user {username} from {client_ip}",
-      "user_logged_in": "User {username} logged in from {client_ip}",
       "wrong_credentials": "Incorrect username or password",
       "end_tries": "Too many attempts. Try again in {lockout_time} minutes.",
       "tables": {
