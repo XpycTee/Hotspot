@@ -3,7 +3,7 @@ import os
 from environs import Env
 from flask import Flask
 
-from core.config.language import LANGUAGE_CONTENT
+from core.config.language import LANGUAGE_CONTENT, LANGUAGE_DEFAULT
 from core.config.logging import configure_logger
 
 env = Env()
@@ -19,6 +19,7 @@ class Config:
     COMPANY_NAME = None
     DEBUG = None
     LANGUAGE_CONTENT = LANGUAGE_CONTENT
+    LANGUAGE_DEFAULT = LANGUAGE_DEFAULT
 
     @classmethod
     def init_app(cls, app: Flask):

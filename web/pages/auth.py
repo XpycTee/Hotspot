@@ -153,7 +153,11 @@ def code():
             return redirect(url_for('pages.auth.sendin'), 302)
         elif status == "BLOCKED":
             abort(403)
-            
+        elif status == 'NOT_FOUND':
+            logger.debug('User not found. Got to send code')
+        else:
+            abort(500)
+
     # Ensure phone_number is retrieved from session if not provided in the request
     if not phone_number:
         phone_number = session.get('phone')
