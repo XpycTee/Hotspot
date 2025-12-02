@@ -1,5 +1,3 @@
-import secrets
-import bcrypt
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -8,12 +6,11 @@ from flask import (
     session, request, current_app, jsonify
 )
 
+from core.admin.auth.login import login_by_password
+from core.config.language import LANGUAGE_DEFAULT
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 import web.logger as logger
-from web.database import db
-from web.database.models import ClientsNumber, WifiClient, Employee, EmployeePhone, Blacklist
-from extensions import cache
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -44,13 +41,6 @@ def _log_masked_session():
     return result
 
 
-@admin_bp.before_request
-def ensure_session_id():
-    if "_id" not in session:
-        sessid = secrets.token_hex(32)
-        session["_id"] = sessid
-
-
 @admin_bp.route('/', methods=['POST', 'GET'])
 @login_required
 def admin():
@@ -68,38 +58,34 @@ def auth():
     username = request.form.get('username')
     password = request.form.get('password')
     client_ip = request.remote_addr
-    user_lang = request.form.get('language', current_app.config.get('LANGUAGE_DEFAULT'))  # Получаем язык из формы, по умолчанию 'en'
-    logger.debug(f'Start login by {username}')
-    # Проверка блокировки
-    lockout_until = cache.get("lockout_until")
-    lockout_time = current_app.config.get('LOCKOUT_TIME', 0)  # Установить значение по умолчанию
-    if lockout_until and datetime.now().timestamp() < float(lockout_until):
-        _set_error_and_log(
-            get_translate('errors.admin.end_tries').format(lockout_time=lockout_time),
-            username, client_ip, "warning"
-        )
-        return redirect(url_for('admin.login'), 302)
+    user_lang = request.form.get('language', LANGUAGE_DEFAULT)
 
-    app_admin = current_app.config.get('ADMIN', {})
-    if (
-            app_admin and
-            username == app_admin.get('username') and
-            _check_password(password, app_admin.get('password'))
-    ):
-        _reset_login_attempts()
+    session_id = session.get('_id')
 
+    response = login_by_password(session_id, username, password)
+    status = response.get('status')
+
+    if status == 'OK':
         session['is_authenticated'] = True
-        # Сохраняем язык пользователя в кеш
         session['user_lang'] = user_lang if user_lang != 'auto' else None
-        session.permanent = True  # Устанавливаем сессию как постоянную
-        current_app.permanent_session_lifetime = timedelta(minutes=30)  # Время жизни сессии
-        logger.info(get_translate('errors.admin.user_logged_in').format(username=username, client_ip=client_ip))
+        session.permanent = True 
+        current_app.permanent_session_lifetime = timedelta(minutes=30)
+
+        logger.info(f'User {username} logged in from {client_ip}')
         logger.debug(f'session data {_log_masked_session()}')
-        return redirect(url_for('admin.panel'), 302)
+        return redirect(url_for('pages.admin.panel'), 302)
 
-    _handle_failed_login(username, client_ip)
-    return redirect(url_for('admin.login'), 302)
+    if status == 'LOCKOUT':
+        error_message = response.get('error_message')
+        _set_error_and_log(error_message, username, client_ip)
+        return redirect(url_for('pages.admin.login'), 302)
+    
+    if status == 'BAD_LOGIN':
+        error_message = response.get('error_message')
+        _set_error_and_log(error_message, username, client_ip)
+        return redirect(url_for('pages.admin.login'), 302)
 
+    abort(500)
 
 @admin_bp.route('/panel', methods=['POST', 'GET'])
 @login_required
@@ -353,37 +339,7 @@ def get_tabel(tabel_name):
     })
 
 
-# Вспомогательные функции для повышения читаемости и повторного использования
-def _check_password(password, stored_password_hash):
-    """Проверяет хэш пароля."""
-    if not stored_password_hash:
-        return False
-    return bcrypt.checkpw(password.encode('utf-8'), stored_password_hash.encode('utf-8'))
-
-
-def _reset_login_attempts():
-    """Сбрасывает попытки входа."""
-    cache.delete("login_attempts")
-    cache.delete("lockout_until")
-
-
-def _handle_failed_login(username, client_ip):
-    """Обрабатывает неудачную попытку входа."""
-    login_attempts = cache.get("login_attempts") or 0
-    login_attempts += 1
-    admin_settings = current_app.config.get('ADMIN')
-    max_login_attempts = admin_settings.get('max_login_attempts')
-    lockout_time = admin_settings.get('lockout_time')
-    if login_attempts >= max_login_attempts:
-        lockout_until = datetime.now() + timedelta(minutes=lockout_time)
-        cache.set("lockout_until", lockout_until.timestamp(), timeout=lockout_time * 60)
-        _set_error_and_log(get_translate('errors.admin.end_tries').format(lockout_time=lockout_time), username, client_ip, "critical")
-    else:
-        cache.set("login_attempts", login_attempts, timeout=lockout_time * 60)
-        _set_error_and_log(get_translate('errors.admin.wrong_credentials'), username, client_ip, "critical")
-
-
-def _set_error_and_log(message, username, client_ip, log_level):
+def _set_error_and_log(message, username, client_ip):
     """Устанавливает сообщение об ошибке и записывает лог."""
     session['error'] = message
-    logger.error(get_translate('errors.admin.log').format(message=message, username=username, client_ip=client_ip))
+    logger.error(f"{message} for user {username} from {client_ip}")
