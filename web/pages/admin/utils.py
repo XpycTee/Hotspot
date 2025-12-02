@@ -14,6 +14,6 @@ def login_required(f):
         logger.debug(f'session data {[item for item in session.items()]}')
         if not session.get('is_authenticated'):
             logger.debug('User is not authenticated')
-            return redirect(url_for('admin.login'), 302)
+            return redirect(url_for('pages.admin.auth.login'), 302)
         return f(*args, **kwargs)
     return decorated_function
