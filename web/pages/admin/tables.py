@@ -24,7 +24,7 @@ def save_data(table_name):
         employee_id = data.get('id')
         lastname = data.get('lastname')
         name = data.get('name')
-        phone_numbers = data.get('phone')
+        phone_numbers = data.get('phone', [])
 
         if employee_id is not None:
             response = update_employee(employee_id, lastname, name, phone_numbers)

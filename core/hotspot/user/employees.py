@@ -45,8 +45,8 @@ def add_employee(lastname: str, name: str, phone_numbers: list):
     return {'status': 'OK', 'employee_id': new_id}
 
 
-def update_employee(employee_id, lastname: str=None, name: str=None, phone_numbers=[]):
-    if lastname is None and name is None and phone_number == []:
+def update_employee(employee_id, lastname: str=None, name: str=None, phone_numbers: list=[]):
+    if lastname is None and name is None and phone_numbers == []:
         return {'status': 'BAD_REUQEST'}
 
     with get_session() as db_session:
