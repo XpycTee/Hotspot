@@ -5,7 +5,7 @@ from core.database.session import get_session
 from core.logging.logger import logger
 
 
-def get_employees(page: int, rows_per_page: int, search_query):
+def get_employees(page: int, rows_per_page: int, search_query: str = None):
     with get_session() as db_session:
         query = select(Employee)
 
