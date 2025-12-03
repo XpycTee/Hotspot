@@ -1,7 +1,7 @@
 from core.admin.auth.attempts import increment_attempts, reset_attempts
 from core.admin.auth.lockout import check_lockout, update_lockout
 from core.admin.auth.security import check_password
-import web.logger as logger
+from core.logging.logger import logger
 from core.config.admin import ADMIN
 from core.utils.language import get_translate
 
