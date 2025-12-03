@@ -173,8 +173,8 @@ def code():
     if status == "OK":
         return render_template('hotspot/code.html', error=error)
     if status == "ALREDY_SENDED":
-        error = get_translate("errors.auth.code_alredy_sended")
-        return render_template('hotspot/code.html', error=error)
+        error_message = response.get('error_message')
+        return render_template('hotspot/code.html', error=error_message)
     else:
         abort(500)
 

@@ -44,11 +44,8 @@ def clear_code(session_id):
 
 
 def send_code(session_id, phone_number):
-    resp = {"status": "OK"}
-
     if code_sended(session_id):
-        resp = {"status": "ALREDY_SENDED", 'error_message': get_translate("errors.auth.code_can_not_resend")}
-        return resp
+        return {"status": "ALREDY_SENDED", 'error_message': get_translate("errors.auth.code_can_not_resend")}
     
     if user_code:=get_code(session_id):
         logger.debug(f'User cached code for {phone_number}: {user_code}')
@@ -61,10 +58,9 @@ def send_code(session_id, phone_number):
 
     if sms_error:
         logger.error(f"Failed to send SMS to {phone_number}")
-        resp = {"status": "SENDER_ERROR"}
-        return resp
+        return {"status": "SENDER_ERROR"}
     
     set_sended(session_id)
     logger.debug(f"Send {phone_number}'s code: {sending_code}")
-    return resp
+    return {"status": "OK"}
 
