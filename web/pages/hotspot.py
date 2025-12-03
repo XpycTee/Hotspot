@@ -192,8 +192,8 @@ def resend():
     if status == "OK":
         return jsonify({'success': True})
     if status == "ALREDY_SENDED":
-        error = get_translate("errors.auth.code_can_not_resend")
-        abort(400, description=error)
+        error_message = response.get('error_message')
+        abort(400, description=error_message)
     else:
         abort(500)
 
@@ -216,18 +216,17 @@ def auth():
     status = response.get('status')
     if status == "OK":
         return redirect(url_for('pages.hotspot.sendin'), 302)
-    elif status == "CODE_EXPIRED":
-        session['error'] = get_translate('errors.auth.expired_code')
-        return redirect(url_for('pages.hotspot.code'), 302)
-    elif status == "BAD_TRY":
-        session['error'] = get_translate('errors.auth.bad_code_try')
-        return redirect(url_for('pages.hotspot.code'), 307)
-    elif status == "BAD_CODE":
-        session['error'] = get_translate('errors.auth.bad_code_all')
-        session.pop('phone', None)
-        return redirect(url_for('pages.hotspot.login'), 302)
     else:
-        abort(500)
+        session['error'] = response.get('error_message')
+        if status == "CODE_EXPIRED":
+            return redirect(url_for('pages.hotspot.code'), 302)
+        elif status == "BAD_TRY":
+            return redirect(url_for('pages.hotspot.code'), 307)
+        elif status == "BAD_CODE":
+            session.pop('phone', None)
+            return redirect(url_for('pages.hotspot.login'), 302)
+        else:
+            abort(500)
 
 
 @hotspot_bp.route('/sendin', methods=['POST', 'GET'])

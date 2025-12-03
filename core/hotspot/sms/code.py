@@ -47,7 +47,7 @@ def send_code(session_id, phone_number):
     resp = {"status": "OK"}
 
     if code_sended(session_id):
-        resp = {"status": "ALREDY_SENDED"}
+        resp = {"status": "ALREDY_SENDED", 'error_message': get_translate("errors.auth.code_can_not_resend")}
         return resp
     
     if user_code:=get_code(session_id):
@@ -61,7 +61,7 @@ def send_code(session_id, phone_number):
 
     if sms_error:
         logger.error(f"Failed to send SMS to {phone_number}")
-        resp = {"status": "BAD_SMS"}
+        resp = {"status": "SENDER_ERROR"}
         return resp
     
     set_sended(session_id)

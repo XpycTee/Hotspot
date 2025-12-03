@@ -10,6 +10,7 @@ from core.hotspot.user.repository import check_blacklist, update_last_seen
 from core.hotspot.user.repository import update_status
 from core.hotspot.user.repository import check_employee
 from core.hotspot.user.expiration import update_expiration
+from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 from core.hotspot.wifi.challange import hash_chap
 from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_fp
@@ -96,14 +97,14 @@ def authenticate_by_code(session_id, mac, code, phone_number):
         logger.debug("Auth by code")
         return {"status": "OK"}
     elif verify is None:
-        return {"status": "CODE_EXPIRED"}
+        return {"status": "CODE_EXPIRED", 'error_message': get_translate('errors.auth.expired_code')}
 
     attempts = increment_attempts(session_id)
     if attempts < 3:
-        return {"status": "BAD_TRY"}
+        return {"status": "BAD_TRY", 'error_message': get_translate('errors.auth.bad_code_try')}
 
     clear_code(session_id)
-    return {"status": "BAD_CODE"}
+    return {"status": "BAD_CODE", 'error_message': get_translate('errors.auth.bad_code_all')}
 
 
 def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
