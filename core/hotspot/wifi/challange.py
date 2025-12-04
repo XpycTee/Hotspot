@@ -14,7 +14,6 @@ def _octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
-
 def radius_check_chap(chap_password: bytes, chap_challenge: bytes, password: str):    
     # 1. Извлекаем ID
     chap_id = chap_password[0]

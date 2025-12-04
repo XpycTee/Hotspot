@@ -16,13 +16,6 @@ from core.utils.language import get_translate
 
 
 class TestCoreAdminAuth(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        pass
-
-    def setUp(self):
-        pass
-
     def tearDown(self):
         cache = get_cache()
         cache.clear()
@@ -122,12 +115,6 @@ class TestCoreAdminTables(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         database.create_all()
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_get_wifi_clients(self):
         expected = {'wifi_clients': [], 'total_rows': 0}
