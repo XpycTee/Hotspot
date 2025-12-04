@@ -13,6 +13,7 @@ from core.database.models.employee import Employee
 from core.database.models.employee_phone import EmployeePhone
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
+from core.hotspot.sms.code import clear_code, code_sended, generate_code, get_code, increment_attempts, send_code, set_sended, verify_code
 from core.hotspot.wifi.auth import authenticate_by_code, authenticate_by_mac, authenticate_by_phone, get_credentials
 from core.hotspot.wifi.challange import _octal_string_to_bytes, hash_chap, radius_check_chap
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
@@ -56,8 +57,8 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
 
         with get_session() as db_session:
             non_authed_emp = Employee(
-                lastname = "NonAuthed", 
-                name = "Employee"
+                lastname = 'NonAuthed', 
+                name = 'Employee'
             )
             db_session.add(non_authed_emp)
             db_session.commit()
@@ -79,8 +80,8 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
 
         with get_session() as db_session:
             expired_emp = Employee(
-                lastname = "Expired", 
-                name = "Employee"
+                lastname = 'Expired', 
+                name = 'Employee'
             )
             db_session.add(expired_emp)
             db_session.commit()
@@ -121,7 +122,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
 
         with get_session() as db_session:
             authed_emp = Employee(
-                lastname = "Authed", name = "Employee"
+                lastname = 'Authed', name = 'Employee'
             )
             db_session.add(authed_emp)
             db_session.commit()
@@ -267,7 +268,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         self.assertFalse(result)
 
     def test_octal_string_to_bytes(self):
-        self.assertEqual(_octal_string_to_bytes("\\141\\142\\143"), b'abc')
+        self.assertEqual(_octal_string_to_bytes('\\141\\142\\143'), b'abc')
 
     def test_hash_chap(self):
         chap_id = '\\000'
@@ -394,22 +395,22 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
 
         self._db_authed_emp('AA:AA:AA:00:00:02', '79990000002', 'f344ea5b5b42f07f8885f6e154aa6d30e558d13ad7d3459611cdf410d42e1972')
         expected = {
-                "status": "OK", 
-                "phone": '79990000002', 
-                "mac": 'AA:AA:AA:00:00:02', 
-                "user_fp": 'f344ea5b5b42f07f8885f6e154aa6d30e558d13ad7d3459611cdf410d42e1972', 
-                "employee": True
+                'status': 'OK', 
+                'phone': '79990000002', 
+                'mac': 'AA:AA:AA:00:00:02', 
+                'user_fp': 'f344ea5b5b42f07f8885f6e154aa6d30e558d13ad7d3459611cdf410d42e1972', 
+                'employee': True
             }
         result = authenticate_by_mac('AA:AA:AA:00:00:02', 'abcdef02')
         self.assertDictEqual(result, expected)
 
         self._db_authed_guest('00:00:00:00:00:02', '70000000002', '73d6746e649daf41416b5b678b44e3818ae49fcd4f81a6ce7c87d98707a9b144')
         expected = {
-                "status": "OK", 
-                "phone": '70000000002', 
-                "mac": '00:00:00:00:00:02', 
-                "user_fp": '73d6746e649daf41416b5b678b44e3818ae49fcd4f81a6ce7c87d98707a9b144', 
-                "employee": False
+                'status': 'OK', 
+                'phone': '70000000002', 
+                'mac': '00:00:00:00:00:02', 
+                'user_fp': '73d6746e649daf41416b5b678b44e3818ae49fcd4f81a6ce7c87d98707a9b144', 
+                'employee': False
             }
         result = authenticate_by_mac('00:00:00:00:00:02', '12345602')
         self.assertDictEqual(result, expected)
@@ -482,22 +483,22 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         session_id = '00_test_authenticate_by_code'
 
         mock_verify_code.return_value = None
-        expected = {"status": "CODE_EXPIRED", 'error_message': get_translate('errors.auth.expired_code')}
+        expected = {'status': 'CODE_EXPIRED', 'error_message': get_translate('errors.auth.expired_code')}
         result = authenticate_by_code(session_id, None, None, None)
         self.assertDictEqual(result, expected)
 
         mock_verify_code.return_value = True
-        expected = {"status": "OK"}
+        expected = {'status': 'OK'}
         result = authenticate_by_code(session_id, 'FF:FF:FF:FF:FF:01', '1234', '79999999901')
         self.assertDictEqual(result, expected)
 
         mock_verify_code.return_value = False
         for _ in range(2):
-            expected = {"status": "BAD_TRY", 'error_message': get_translate('errors.auth.bad_code_try')}
+            expected = {'status': 'BAD_TRY', 'error_message': get_translate('errors.auth.bad_code_try')}
             result = authenticate_by_code(session_id, None, None, None)
             self.assertDictEqual(result, expected)
 
-        expected = {"status": "BAD_CODE", 'error_message': get_translate('errors.auth.bad_code_all')}
+        expected = {'status': 'BAD_CODE', 'error_message': get_translate('errors.auth.bad_code_all')}
         result = authenticate_by_code(session_id, None, None, None)
         self.assertDictEqual(result, expected)
     
@@ -538,14 +539,110 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         self.assertDictEqual(result, expected)
         self.assertEqual(mock_token, cache.get(f'auth:token:{guest_phone}'))
 
+
 class TestCoreHotpsotSMSCode(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        pass
-    
-    def setUp(self):
-        pass
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_generate_code(self, mock_get_cache):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.set = unittest.mock.MagicMock()
 
-    def tearDown(self):
-        pass
+        code = generate_code('abc123')
 
+        self.assertEqual(len(code), 4)
+        mock_cache.set.assert_any_call('sms:code:abc123', code, timeout=300)
+        mock_cache.set.assert_any_call('sms:attempts:abc123', 0, timeout=300)
+        mock_cache.set.assert_any_call('sms:sended:abc123', False, timeout=60)
+
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_get_code(self, mock_get_cache):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.get.return_value = '1234'
+
+        result = get_code('sid1')
+        self.assertEqual(result, '1234')
+        mock_cache.get.assert_called_once_with('sms:code:sid1')
+
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_set_sended(self, mock_get_cache):
+        mock_cache = mock_get_cache.return_value
+
+        set_sended('sid2')
+        mock_cache.set.assert_called_once_with('sms:sended:sid2', True, timeout=60)
+
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_increment_attempts(self, mock_get_cache):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.get.return_value = 1
+
+        result = increment_attempts('sid3')
+
+        mock_cache.inc.assert_called_once_with('sms:attempts:sid3')
+        self.assertEqual(result, 1)
+
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_verify_code(self, mock_get_cache):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.get.return_value = '1111'
+
+        self.assertTrue(verify_code('s1', '1111'))
+        self.assertFalse(verify_code('s1', '2222'))
+
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_code_sended(self, mock_get_cache):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.get.return_value = True
+
+        self.assertTrue(code_sended('s2'))
+        mock_cache.get.assert_called_once_with('sms:sended:s2')
+
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_clear_code(self, mock_get_cache):
+        mock_cache = mock_get_cache.return_value
+
+        clear_code('s3')
+
+        mock_cache.delete.assert_any_call('sms:code:s3')
+        mock_cache.delete.assert_any_call('sms:attempts:s3')
+        mock_cache.delete.assert_any_call('sms:sended:s3')
+
+    @patch('core.hotspot.sms.code.get_sender')
+    @patch('core.hotspot.sms.code.get_cache')
+    def test_send_code_already_sended(self, mock_get_cache, mock_get_sender):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.get.return_value = True  # code_sended = True
+
+        result = send_code('sid', '79990000000')
+        self.assertEqual(result['status'], 'ALREDY_SENDED')
+
+    @patch('core.hotspot.sms.code.get_sender')
+    @patch('core.hotspot.sms.code.get_cache')
+    @patch('core.hotspot.sms.code.get_translate', return_value='SMS: 1234')
+    def test_send_code_sends_correctly(self, mock_translate, mock_get_cache, mock_get_sender):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.get.side_effect = [False, None]  # not sent, no cached code
+
+        mock_sender = mock_get_sender.return_value
+        mock_sender.send_sms.return_value = None  # no error
+
+        result = send_code('sid55', '79990000000')
+
+        self.assertEqual(result['status'], 'OK')
+        mock_sender.send_sms.assert_called_once()
+
+    @patch('core.hotspot.sms.code.get_sender')
+    @patch('core.hotspot.sms.code.get_cache')
+    @patch('core.hotspot.sms.code.get_translate', return_value='SMS: 1234')
+    def test_send_code_sender_error(self, mock_translate, mock_get_cache, mock_get_sender):
+        mock_cache = mock_get_cache.return_value
+        mock_cache.get.side_effect = [False, None]
+
+        mock_sender = mock_get_sender.return_value
+        mock_sender.send_sms.return_value = 'ERROR'
+
+        result = send_code('sid66', '79990000000')
+
+        self.assertEqual(result['status'], 'SENDER_ERROR')
+
+
+class TestCoreHotpsotUser(unittest.TestCase):
+    pass
