@@ -13,7 +13,7 @@ from core.database.session import get_session
 from core.hotspot.user.employees import add_employee, check_employee, delete_from_employees, update_employee, update_employee_status
 
 
-class TestCoreHotpsotUserBlacklist(unittest.TestCase):
+class TestCoreHotpsotUserEmployees(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         database.create_all()
