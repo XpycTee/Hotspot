@@ -21,15 +21,13 @@ def configure_logger(logger: Logger, level=None):
             level = env.log_level("LOG_LEVEL", logging.WARNING)
 
         logger.setLevel(level)
+        handler = logging.StreamHandler()
+
         if logger.hasHandlers():
             for h in logger.handlers:
                 if isinstance(h, logging.StreamHandler):
                     handler = h
                     break
-                else:
-                    handler = logging.StreamHandler()
-        else:
-            handler = logging.StreamHandler()
 
         formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s")
         handler.setFormatter(formatter)
