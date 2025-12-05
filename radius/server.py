@@ -56,6 +56,7 @@ class HotspotRADIUS(server.Server):
     def HandleAcctPacket(self, pkt):
         reply = self.CreateReplyPacket(pkt)
         reply.code = PacketType.AccountingResponse
+        reply.add_message_authenticator()
         self.SendReplyPacket(pkt.fd, reply)
 
     def HandleDisconnectPacket(self, pkt):
@@ -67,4 +68,6 @@ class HotspotRADIUS(server.Server):
         reply = self.CreateReplyPacket(pkt)
         # COA NAK
         reply.code = 45
+
+        reply.add_message_authenticator()
         self.SendReplyPacket(pkt.fd, reply)
