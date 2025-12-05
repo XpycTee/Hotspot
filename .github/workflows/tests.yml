@@ -37,5 +37,6 @@ jobs:
       env: 
         LOG_LEVEL: debug
         DB_URL: "sqlite:///:memory:"
+        CAHCE_URL: simple
       run: |
         pytest tests
