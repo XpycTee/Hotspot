@@ -2,20 +2,22 @@
 
 DEBUG=${DEBUG:-false}
 
-# Путь к файлу-маркеру
-INIT_FLAG="/hotspot/.db_initialized"
+CACHE_SIZE=${CACHE_SIZE:-1024}
 
-# Проверяем, была ли уже выполнена инициализация
-if [ ! -f "$INIT_FLAG" ]; then
-    echo "Initializing the database for the first time..."
-    python ./init_database.py
-    echo "Database initialized. Creating marker file."
-    touch "$INIT_FLAG"
+if [ -z "$HOTSPOT_CACHE_URL" ]; then
+    echo "Using local memcached"
+    #memcached -d -u nobody -m $CACHE_SIZE -s "/tmp/memcached.sock"
 else
-    echo "Database already initialized. Skipping initialization."
+    echo "Using external cache: $HOTSPOT_CACHE_URL"
 fi
 
-# Проверяем наличие переменной окружения SECRET_KEY
+if [ "$HOTSPOT_RADIUS_ENABLED" = "true" ]; then
+    echo "Start RADIUS Auth Server"
+    python radrun.py &
+fi
+
+
+# Проверяем наличие переменной окружения FLASK_SECRET_KEY
 if [ -z "$FLASK_SECRET_KEY" ]; then
     echo "SECRET_KEY not found. Generating a new one..."
     FLASK_SECRET_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
@@ -26,21 +28,8 @@ fi
 # Устанавливаем параметры Gunicorn из переменных окружения или используем значения по умолчанию
 GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
 GUNICORN_LOG_LEVEL=${LOG_LEVEL:-info}
-GUNICORN_PORT=${GUNICORN_PORT:-8080}
+GUNICORN_PORT=${GUNICORN_PORT:-3000}
 GUNICORN_ADDR=${GUNICORN_BIND:-[::]}
 
-CACHE_SIZE=${CACHE_SIZE:-1024}
-
-if [ -z "$CACHE_URL" ]; then
-    echo "Using local memcached"
-    memcached -d -u nobody -m $CACHE_SIZE -s "/tmp/memcached.sock"
-else
-    echo "Using external cache: $CACHE_URL"
-fi
-
-# Проверяем значение переменной DEBUG
-if [ "$DEBUG" = "true" ]; then
-    exec gunicorn -w "$GUNICORN_WORKERS" -b "$GUNICORN_ADDR:$GUNICORN_PORT" --reload --log-level=debug main:flask_app
-else
-    exec gunicorn -w "$GUNICORN_WORKERS" -b "$GUNICORN_ADDR:$GUNICORN_PORT" --log-level="$GUNICORN_LOG_LEVEL" main:flask_app
-fi
+echo "Start GUNICORN Server"
+exec gunicorn -w "$GUNICORN_WORKERS" -b "$GUNICORN_ADDR:$GUNICORN_PORT" --log-level="$GUNICORN_LOG_LEVEL" webrun:flask_app
