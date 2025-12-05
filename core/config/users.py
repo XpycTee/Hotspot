@@ -17,7 +17,7 @@ def convert_delay(delay):
     return datetime.timedelta(**{suffixes[suffix]: amount})
 
 with env.prefixed("STAFF_"):
-    STAFF_USER: dict = {'password': env.str("PASS"), 'delay': convert_delay(env.str("DELAY"))}
+    STAFF_USER: dict = {'password': env.str("PASS", 'supersecret'), 'delay': convert_delay(env.str("DELAY", '30d'))}
 
 with env.prefixed("GUEST_"):
-    GUEST_USER: dict = {'password': env.str("PASS"), 'delay': convert_delay(env.str("DELAY"))}
+    GUEST_USER: dict = {'password': env.str("PASS", 'secret'), 'delay': convert_delay(env.str("DELAY", '1d'))}

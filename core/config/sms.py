@@ -16,7 +16,7 @@ def get_sender() -> BaseSender:
         "huawei": HuaweiSMSSender,
         "debug": DebugSender
     }
-    sender_type = env.str("TYPE")
+    sender_type = env.str("TYPE", 'debug')
     Sender = senders.get(sender_type.lower(), DebugSender)
 
     with env.prefixed(f'{sender_type}_'):

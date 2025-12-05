@@ -18,7 +18,7 @@ def configure_logger(logger: Logger, level=None):
         logger.propagate = False
     else:
         if level is None:
-            level = env.log_level("LOG_LEVEL")
+            level = env.log_level("LOG_LEVEL", logging.WARNING)
 
         logger.setLevel(level)
         if logger.hasHandlers():
