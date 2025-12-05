@@ -34,5 +34,8 @@ jobs:
         pip install pytest
 
     - name: Run tests
+      env: 
+        LOG_LEVEL: debug
+        DB_URL: "sqlite:///:memory:"
       run: |
         pytest tests
