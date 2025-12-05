@@ -1,5 +1,7 @@
 import hashlib
 
+from core.cache import get_cache
+
 def _octal_string_to_bytes(oct_string):
     if not oct_string:
         return b''
@@ -14,7 +16,11 @@ def _octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
-def radius_check_chap(chap_password: bytes, chap_challenge: bytes, password: str):    
+
+def radius_check_chap(phone_number: str, chap_password: bytes, chap_challenge: bytes):
+    cache = get_cache()
+    token = cache.get(f"auth:token:{phone_number}") or ""
+
     # 1. Извлекаем ID
     chap_id = chap_password[0]
 
@@ -24,7 +30,7 @@ def radius_check_chap(chap_password: bytes, chap_challenge: bytes, password: str
     # 3. Делаем наш хеш
     m = hashlib.md5()
     m.update(bytes([chap_id]))
-    m.update(password.encode("utf-8"))
+    m.update(token.encode("utf-8"))
     m.update(chap_challenge)
     expected_hash = m.digest()
 
@@ -41,3 +47,23 @@ def hash_chap(chap_id, password, chap_challenge):
     hash_chap = m.hexdigest()
 
     return hash_chap
+
+
+def radius_check_pap(phone_number: str, encrypted_token: str, secret: bytes, authenticator: bytes) -> str:
+    cache = get_cache()
+    token = cache.get(f"auth:token:{phone_number}") or ""
+    
+    enc_pw = bytes.fromhex(encrypted_token)
+    password = b""
+    last_block = authenticator
+
+    for i in range(0, len(enc_pw), 16):
+        block = enc_pw[i:i+16]
+        md5_hash = hashlib.md5(secret + last_block).digest()
+        decrypted_block = bytes(a ^ b for a, b in zip(block, md5_hash))
+        password += decrypted_block
+        last_block = block 
+        
+    decoded = password.rstrip(b'\x00').decode()
+
+    return decoded == token

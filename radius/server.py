@@ -3,18 +3,18 @@ import binascii
 from pyrad2 import server
 from pyrad2.constants import PacketType
 
-from core.cache import get_cache
 from core.hotspot.user.employees import check_employee
 from core.utils.phone import normalize_phone
 from core.hotspot.wifi.auth import authenticate_by_mac
-from core.hotspot.wifi.challange import radius_check_chap
+from core.hotspot.wifi.challange import radius_check_chap, radius_check_pap
 from radius.logging import logger
 
 
+
 class HotspotRADIUS(server.Server):
-    def HandleAuthPacket(self, pkt):
+    def HandleAuthPacket(self, pkt: PacketType.AccessRequest):
         logger.info("Received an authentication request")
-        logger.debug("Attributes: ")
+        logger.debug("Attributes:")
         for attr in pkt.keys():
             logger.debug(f"{attr}: {pkt[attr]}")
 
@@ -23,10 +23,12 @@ class HotspotRADIUS(server.Server):
 
         mac = pkt.get("Calling-Station-Id", [""])[0]
         username = pkt.get("User-Name", [""])[0]
+        
         chap_password = pkt.get("CHAP-Password", [""])[0]
         chap_challenge_hex = pkt.get("CHAP-Challenge", [""])[0]
         chap_challenge = binascii.unhexlify(chap_challenge_hex)
-        cache = get_cache()
+
+        user_password = pkt.get("User-Password", [""])[0]
 
         if username == mac:
             if chap_challenge_hex and chap_password and radius_check_chap(chap_password, chap_challenge, mac):
@@ -41,14 +43,19 @@ class HotspotRADIUS(server.Server):
                     logger.info(f"Auth failed with status: {status}")
         else:
             phone_number = normalize_phone(username)
-            token = cache.get(f"auth:token:{phone_number}") or ""
-            if chap_challenge_hex and chap_password and radius_check_chap(chap_password, chap_challenge, token):
+
+            if chap_challenge_hex and chap_password:
+                auth_success = radius_check_chap(phone_number, chap_password, chap_challenge)
+            elif user_password:
+                auth_success = radius_check_pap(phone_number, user_password, pkt.secret, pkt.authenticator)
+
+            if auth_success:
                 is_employee = check_employee(phone_number)
                 reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
                 reply.code = PacketType.AccessAccept
-                logger.info(f"Auth by token {token[:12]}")
+                logger.info('Auth by token')
             else:
-                logger.info(f"Auth failed bad token")
+                logger.info('Auth failed bad token')
                 
         reply.add_message_authenticator()
         self.SendReplyPacket(pkt.fd, reply)
