@@ -29,12 +29,16 @@ def get_or_create_clients_number(phone_number):
 
 def update_clients_numbers_last_seen(phone_number):
     now_time = datetime.datetime.now()
-    db_phone = get_or_create_clients_number(phone_number)
     with get_session() as db_session:
-        try:
-            db_phone.last_seen = now_time
-            db_session.commit()
-            logger.debug(f"Update time {now_time} for number {phone_number}")
-        except IntegrityError:
-            db_session.rollback()
-            logger.error(f"Failed to update last_seen for phone number: {phone_number}")
+        query = select(ClientsNumber).where(ClientsNumber.phone_number==phone_number)
+        db_phone = db_session.scalars(query).first()
+        if db_phone:
+            try:
+                db_phone.last_seen = now_time
+                db_session.commit()
+                logger.debug(f"Update time {now_time} for number {phone_number}")
+            except IntegrityError:
+                db_session.rollback()
+                logger.error(f"Failed to update last_seen for phone number: {phone_number}")
+        else:
+            logger.error(f"{phone_number} Not Found")
