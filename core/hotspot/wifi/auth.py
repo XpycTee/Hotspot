@@ -1,14 +1,15 @@
 import datetime
 import secrets
 
+from core.hotspot.user.blacklist import check_blacklist
 from core.logging.logger import logger
 from core.config.radius import RADIUS_ENABLED
 from core.config.users import GUEST_USER, STAFF_USER
 from core.cache import get_cache
 from core.hotspot.sms.code import clear_code, increment_attempts, verify_code
-from core.hotspot.user.repository import check_blacklist, update_last_seen
-from core.hotspot.user.repository import update_status
-from core.hotspot.user.repository import check_employee
+from core.hotspot.user.repository import update_clients_numbers_last_seen
+from core.hotspot.user.employees import update_employee_status
+from core.hotspot.user.employees import check_employee
 from core.hotspot.user.expiration import update_expiration
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
@@ -73,7 +74,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
         wifi_client_mac = wifi_client.get('mac')
 
         if wifi_client.get('employee') != is_employee:
-            update_status(wifi_client_mac, is_employee)
+            update_employee_status(wifi_client_mac, is_employee)
 
         update_expiration(wifi_client_mac)
 
@@ -127,7 +128,7 @@ def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challeng
     if user_fp:
         update_fingerprint(mac, user_fp)
 
-    update_last_seen(phone_number)
+    update_clients_numbers_last_seen(phone_number)
 
     return {
         "username": username,

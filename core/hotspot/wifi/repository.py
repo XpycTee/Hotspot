@@ -6,7 +6,7 @@ from core.database.session import get_session
 from sqlalchemy import select
 
 from core.hotspot.user.expiration import new_expiration
-from core.hotspot.user.repository import get_or_create_client_phone
+from core.hotspot.user.repository import get_or_create_clients_number
 
 
 def find_by_mac(mac):
@@ -41,7 +41,7 @@ def find_by_fp(user_fp):
 
 def create_or_udpate_wifi_client(mac, is_employee, phone_number):
     """Создать запись WiFi клиента по MAC-адресу, если нету."""
-    db_phone = get_or_create_client_phone(phone_number)
+    db_phone = get_or_create_clients_number(phone_number)
     expiration = new_expiration(is_employee)
     with get_session() as db_session:
         query = select(WifiClient).where(WifiClient.mac==mac)

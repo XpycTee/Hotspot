@@ -1,5 +1,6 @@
 from core.database.models.employee import Employee
 from core.database.models.employee_phone import EmployeePhone
+from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
 
 
@@ -81,3 +82,18 @@ def update_employee(employee_id, lastname: str=None, name: str=None, phone_numbe
             db_session.add(new_phone)
 
     return {'status': 'OK'}
+
+
+def check_employee(phone_number) -> bool:
+    with get_session() as db_session:
+        query = select(EmployeePhone).where(EmployeePhone.phone_number==phone_number)
+        employee_phone = db_session.scalars(query).first()
+        return employee_phone is not None
+
+
+def update_employee_status(mac, new_status: bool):
+    with get_session() as db_session:
+        query = select(WifiClient).where(WifiClient.mac==mac)
+        wifi_client = db_session.scalars(query).first()
+        wifi_client.employee = new_status
+        db_session.commit()

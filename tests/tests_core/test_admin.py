@@ -6,7 +6,6 @@ from core.admin.auth.attempts import increment_attempts, reset_attempts
 from core.admin.auth.lockout import check_lockout, update_lockout
 from core.admin.auth.login import handle_failed_login, login_by_password
 from core.admin.auth.security import check_password
-from core.admin.tables import get_table
 from core.admin.tables.blacklist import get_blacklist
 from core.admin.tables.employee import get_employees
 from core.admin.tables.wifi_clients import get_wifi_clients

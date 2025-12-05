@@ -2,39 +2,14 @@ import datetime
 
 from core.logging.logger import logger
 from sqlalchemy.exc import IntegrityError
-from core.database.models.blacklist import Blacklist
 from core.database.models.clients_number import ClientsNumber
-from core.database.models.employee_phone import EmployeePhone
-from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
 
 
 from sqlalchemy import select
 
 
-def check_employee(phone_number) -> bool:
-    with get_session() as db_session:
-        query = select(EmployeePhone).where(EmployeePhone.phone_number==phone_number)
-        employee_phone = db_session.scalars(query).first()
-        return employee_phone is not None
-
-
-def update_status(mac, new_status: bool):
-    with get_session() as db_session:
-        query = select(WifiClient).where(WifiClient.mac==mac)
-        wifi_client = db_session.scalars(query).first()
-        wifi_client.employee = new_status
-        db_session.commit()
-
-
-def check_blacklist(phone_number) -> bool:
-    with get_session() as db_session:
-        query = select(Blacklist).where(Blacklist.phone_number==phone_number)
-        blocked_client = db_session.scalars(query).first()
-        return blocked_client
-
-
-def get_or_create_client_phone(phone_number):
+def get_or_create_clients_number(phone_number):
     """Получить или создать запись клиента по номеру телефона."""
     with get_session() as db_session:
         now_time = datetime.datetime.now()
@@ -51,9 +26,10 @@ def get_or_create_client_phone(phone_number):
                 db_phone = db_session.scalars(query).first()
         return db_phone
 
-def update_last_seen(phone_number):
+
+def update_clients_numbers_last_seen(phone_number):
     now_time = datetime.datetime.now()
-    db_phone = get_or_create_client_phone(phone_number)
+    db_phone = get_or_create_clients_number(phone_number)
     with get_session() as db_session:
         try:
             db_phone.last_seen = now_time
