@@ -26,7 +26,6 @@ class TestCoreHotpsotUserBlacklist(unittest.TestCase):
                 db_session.execute(table.delete())
             db_session.commit()
 
-
     @staticmethod
     def _db_non_blocked(mac=None, phone_number=None):
         if not mac:
