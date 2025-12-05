@@ -6,6 +6,7 @@ from environs import Env
 env = Env()
 env.read_env()
 
+LOG_LEVEL = env.log_level("LOG_LEVEL", logging.WARNING)
 
 def is_gunicorn():
     return env.str("SERVER_SOFTWARE", "").startswith("gunicorn")
@@ -18,7 +19,7 @@ def configure_logger(logger: Logger, level=None):
         logger.propagate = False
     else:
         if level is None:
-            level = env.log_level("LOG_LEVEL", logging.WARNING)
+            level = LOG_LEVEL
 
         logger.setLevel(level)
         handler = logging.StreamHandler()

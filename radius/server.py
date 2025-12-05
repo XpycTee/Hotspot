@@ -10,6 +10,7 @@ from core.hotspot.wifi.auth import authenticate_by_mac
 from core.hotspot.wifi.challange import radius_check_chap
 from radius.logging import logger
 
+
 class HotspotRADIUS(server.Server):
     def HandleAuthPacket(self, pkt):
         logger.info("Received an authentication request")

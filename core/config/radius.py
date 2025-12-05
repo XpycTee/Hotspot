@@ -5,13 +5,16 @@ env.read_env()
 
 RADIUS_ENABLED = env.bool('ENABLED', False)
 
-RADIUS_HOST = env.str('HOST', '0.0.0.0')
-RADIUS_PORT = env.int('PORT', 1812)
+RADIUS_ADDRESSES = env.list('ADDRESSES', ['::'])
+RADIUS_AUTH_PORT = env.int('AUTH_PORT', 1812)
+RADIUS_ACCT_PORT = env.int('ACCT_PORT', 1813)
+RADIUS_COA_PORT = env.int('COA_PORT', 3799)
 
-RADIUS_CLIENT = env.str('CLIENT', None)
+def configure_clients():
+    return [{
+        'name': 'all',
+        'host': '0.0.0.0',
+        'secret': b'Kah3choteereethiejeimaeziecumi'
+    }]
 
-secret = env.str('SECRET', None)
-if isinstance(secret, str):
-    secret = secret.encode()
-    
-RADIUS_SECRET = secret
+RADIUS_CLIENTS = configure_clients()
