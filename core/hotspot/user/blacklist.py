@@ -53,4 +53,4 @@ def check_blacklist(phone_number) -> bool:
     with get_session() as db_session:
         query = select(Blacklist).where(Blacklist.phone_number==phone_number)
         blocked_client = db_session.scalars(query).first()
-        return blocked_client
+        return blocked_client is not None
