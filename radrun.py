@@ -1,5 +1,3 @@
-import logging
-
 from pyrad2 import dictionary, server
 
 from core import database
@@ -16,7 +14,7 @@ if __name__ == "__main__":
     for client in RADIUS_CLIENTS:
         name = client.get('name')
         host = client.get('host')
-        secret = client.get('secret')
+        secret = client.get('secret').encode()
         hosts[host] = server.RemoteHost(
             host, secret, name
         )
