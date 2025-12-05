@@ -2,6 +2,7 @@ import datetime
 import secrets
 
 from core.hotspot.user.blacklist import check_blacklist
+from core.hotspot.user.token import generate_token
 from core.logging.logger import logger
 from core.config.radius import RADIUS_ENABLED
 from core.config.users import GUEST_USER, STAFF_USER
@@ -110,10 +111,8 @@ def authenticate_by_code(session_id, mac, code, phone_number):
 
 def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
     if RADIUS_ENABLED:
-        cache = get_cache()
         username = phone_number
-        password = secrets.token_hex(32)
-        cache.set(f"auth:token:{phone_number}", password)
+        password = generate_token(phone_number)
     else:
         is_employee = check_employee(phone_number)
         username = 'employee' if is_employee else 'guest'

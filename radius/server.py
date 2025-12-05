@@ -1,18 +1,21 @@
 import binascii
+from typing import OrderedDict
 
-from pyrad2 import server
+from pyrad2 import server, packet
 from pyrad2.constants import PacketType
 
+from core.cache import get_cache
 from core.hotspot.user.employees import check_employee
+from core.hotspot.user.token import check_token
 from core.utils.phone import normalize_phone
 from core.hotspot.wifi.auth import authenticate_by_mac
-from core.hotspot.wifi.challange import radius_check_chap, radius_check_pap
+from core.hotspot.wifi.challange import radius_check_chap, radius_check_mac, radius_check_pap
 from radius.logging import logger
 
 
 
 class HotspotRADIUS(server.Server):
-    def HandleAuthPacket(self, pkt: PacketType.AccessRequest):
+    def HandleAuthPacket(self, pkt: packet.Packet):
         logger.info("Received an authentication request")
         logger.debug("Attributes:")
         for attr in pkt.keys():
@@ -31,7 +34,7 @@ class HotspotRADIUS(server.Server):
         user_password = pkt.get("User-Password", [""])[0]
 
         if username == mac:
-            if chap_challenge_hex and chap_password and radius_check_chap(chap_password, chap_challenge, mac):
+            if chap_challenge_hex and chap_password and radius_check_mac(mac, chap_password, chap_challenge):
                 client = authenticate_by_mac(mac)
                 status = client.get("status")
                 if status == "OK":
@@ -47,7 +50,8 @@ class HotspotRADIUS(server.Server):
             if chap_challenge_hex and chap_password:
                 auth_success = radius_check_chap(phone_number, chap_password, chap_challenge)
             elif user_password:
-                auth_success = radius_check_pap(phone_number, user_password, pkt.secret, pkt.authenticator)
+                password = pkt.PwDecrypt(bytes.fromhex(user_password))
+                auth_success = check_token(phone_number, password)
 
             if auth_success:
                 is_employee = check_employee(phone_number)

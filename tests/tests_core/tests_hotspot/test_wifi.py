@@ -254,16 +254,18 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             db_session.commit()
 
     def test_radius_check_chap(self):
+        phone_number = '70000000001'
+        cache = get_cache()
+        cache.set(f'auth:token:{phone_number}', 'secret')
         chap_id = b'\x00'
         chap_challenge = b'\x00\x01\x02\x03\x04\x05\x06\x07'
-        hash_password = b'\xa8\xd3\x16(c\xbd}\xa4>\x8c\x85$.\xb7\xe18'
-        good_password = 'secret'
-        bad_password = 'qwertyuiop'
+        good_hash_password = b'\xa8\xd3\x16(c\xbd}\xa4>\x8c\x85$.\xb7\xe18'
+        bad_hash_password = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
 
-        result = radius_check_chap(chap_id+hash_password, chap_challenge, good_password)
+        result = radius_check_chap(phone_number, chap_id+good_hash_password, chap_challenge)
         self.assertTrue(result)
 
-        result = radius_check_chap(chap_id+hash_password, chap_challenge, bad_password)
+        result = radius_check_chap(phone_number, chap_id+bad_hash_password, chap_challenge)
         self.assertFalse(result)
 
     def test_octal_string_to_bytes(self):
@@ -502,9 +504,9 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         result = authenticate_by_code(session_id, None, None, None)
         self.assertDictEqual(result, expected)
     
-    @patch('core.hotspot.wifi.auth.secrets')
+    @patch('core.hotspot.wifi.auth.generate_token')
     @patch('core.hotspot.wifi.auth.RADIUS_ENABLED')
-    def test_get_credentials(self, mock_radius_enabled, mock_secrets):
+    def test_get_credentials(self, mock_radius_enabled, mock_generate_token):
         cache = get_cache()
         staff_mac = 'AA:AA:AA:00:00:02'
         staff_phone = '79990000002'
@@ -527,7 +529,9 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
 
         mock_radius_enabled.__bool__.return_value = True
         mock_token = 'a' * 64
-        mock_secrets.token_hex.return_value = mock_token
+        mock_generate_token.return_value = mock_token
+        cache.set(f'auth:token:{staff_phone}', mock_token)
+        cache.set(f'auth:token:{guest_phone}', mock_token)
 
         expected = {'username': staff_phone, 'password': mock_token}
         result = get_credentials(staff_mac, staff_phone)
