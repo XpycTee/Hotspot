@@ -18,6 +18,9 @@ def _octal_string_to_bytes(oct_string):
 
 
 def radius_check_mac(mac: str, chap_password: bytes, chap_challenge: bytes):
+    if not chap_password or not chap_challenge:
+        return False
+    
     # 1. Извлекаем ID
     chap_id = chap_password[0]
 
@@ -35,6 +38,9 @@ def radius_check_mac(mac: str, chap_password: bytes, chap_challenge: bytes):
 
 
 def radius_check_chap(phone_number: str, chap_password: bytes, chap_challenge: bytes):
+    if not chap_password or not chap_challenge:
+        return False
+    
     cache = get_cache()
     token = cache.get(f"auth:token:{phone_number}") or ""
 

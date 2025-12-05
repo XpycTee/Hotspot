@@ -34,7 +34,7 @@ class HotspotRADIUS(server.Server):
         user_password = pkt.get("User-Password", [""])[0]
 
         if username == mac:
-            if chap_challenge_hex and chap_password and radius_check_mac(mac, chap_password, chap_challenge):
+            if radius_check_mac(mac, chap_password, chap_challenge):
                 client = authenticate_by_mac(mac)
                 status = client.get("status")
                 if status == "OK":
@@ -47,9 +47,8 @@ class HotspotRADIUS(server.Server):
         else:
             phone_number = normalize_phone(username)
 
-            if chap_challenge_hex and chap_password:
-                auth_success = radius_check_chap(phone_number, chap_password, chap_challenge)
-            elif user_password:
+            auth_success = radius_check_chap(phone_number, chap_password, chap_challenge)
+            if not auth_success and user_password:
                 password = pkt.PwDecrypt(bytes.fromhex(user_password))
                 auth_success = check_token(phone_number, password)
 
