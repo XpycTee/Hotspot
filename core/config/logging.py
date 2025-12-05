@@ -26,6 +26,8 @@ def configure_logger(logger: Logger, level=None):
                 if isinstance(h, logging.StreamHandler):
                     handler = h
                     break
+                else:
+                    handler = logging.StreamHandler()
         else:
             handler = logging.StreamHandler()
 
