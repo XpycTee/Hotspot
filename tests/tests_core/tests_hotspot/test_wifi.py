@@ -477,12 +477,13 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         result = authenticate_by_phone('00:00:00:FF:FF:01', '70000000001', '12345601')
         self.assertDictEqual(result, expected)
 
+    @patch('core.hotspot.wifi.auth.get_translate', return_value='ERROR_TEXT')
     @patch('core.hotspot.wifi.auth.verify_code')
-    def test_authenticate_by_code(self, mock_verify_code):
+    def test_authenticate_by_code(self, mock_verify_code, *args):
         session_id = '00_test_authenticate_by_code'
 
         mock_verify_code.return_value = None
-        expected = {'status': 'CODE_EXPIRED', 'error_message': get_translate('errors.auth.expired_code')}
+        expected = {'status': 'CODE_EXPIRED', 'error_message': 'ERROR_TEXT'}
         result = authenticate_by_code(session_id, None, None, None)
         self.assertDictEqual(result, expected)
 
@@ -493,11 +494,11 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
 
         mock_verify_code.return_value = False
         for _ in range(2):
-            expected = {'status': 'BAD_TRY', 'error_message': get_translate('errors.auth.bad_code_try')}
+            expected = {'status': 'BAD_TRY', 'error_message': 'ERROR_TEXT'}
             result = authenticate_by_code(session_id, None, None, None)
             self.assertDictEqual(result, expected)
 
-        expected = {'status': 'BAD_CODE', 'error_message': get_translate('errors.auth.bad_code_all')}
+        expected = {'status': 'BAD_CODE', 'error_message': 'ERROR_TEXT'}
         result = authenticate_by_code(session_id, None, None, None)
         self.assertDictEqual(result, expected)
     
