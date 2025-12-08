@@ -9,107 +9,35 @@ from core.utils.phone import normalize_phone
 from core.hotspot.wifi.auth import authenticate_by_mac
 from radius.logging import logger
 
+class BasePacket(packet.Packet):
+    def debug_log_attributes(self):
+        logger.debug('Attributes:')
+        for attr in self.keys():
+            logger.debug(f'{attr}: {self[attr]}')
 
-class HotspotRADIUS(server.Server):
-    @staticmethod
-    def _get_attribute(packet, key, default=None):
-        return packet.get(key, [default])[0]
+    def get_attribute(self, key, default=None):
+        return self.get(key, [default])[0]
 
-    def _check_password(self, packet: packet.Packet, password: str):
-        if 'User-Password' in packet:
-            encrypted_user_password = self._get_attribute(packet, 'User-Password')
-            user_password = packet.PwDecrypt(encrypted_user_password)
+
+class HotspotAuthPacket(BasePacket, packet.AuthPacket):
+    def verify_password(self, password: str):
+        if 'User-Password' in self:
+            encrypted_user_password = self.get_attribute('User-Password')
+            user_password = self.PwDecrypt(encrypted_user_password)
             auth_success = user_password == password
-        elif 'CHAP-Password' in packet:
-            auth_success = packet.VerifyChapPasswd(password)
+        elif 'CHAP-Password' in self:
+            auth_success = self.VerifyChapPasswd(password)
         else:
             auth_success = False
             logger.warning('No password attribute')
         return auth_success
-    
-    @staticmethod
-    def _debug_log_attributes(packet: packet.Packet):
-        logger.debug('Attributes:')
-        for attr in packet.keys():
-            logger.debug(f'{attr}: {packet[attr]}')
 
-    @staticmethod
-    def _set_accept_reply(reply: packet.Packet, is_employee: bool):
-        reply.AddAttribute('MT-Group', 'employee' if is_employee else 'guest')
-        reply.code = PacketType.AccessAccept
 
-    def HandleAuthPacket(self, packet: packet.Packet):
-        logger.info('Received an authentication request')
-        self._debug_log_attributes(packet)
+class HotspotAcctPacket(BasePacket, packet.AcctPacket):
+    pass
 
-        reply = self.CreateReplyPacket(packet)
-        reply.code = PacketType.AccessReject
 
-        if packet.verify_message_authenticator():
-            mac = self._get_attribute(packet, 'Calling-Station-Id')
-            username = self._get_attribute(packet, 'User-Name')
-
-            if username == mac:
-                if self._check_password(packet, mac):
-                    client = authenticate_by_mac(mac)
-                    status = client.get('status')
-                    if status == 'OK':
-                        is_employee = client.get('employee')
-                        self._set_accept_reply(reply, is_employee)
-                        logger.info('Auth by mac')
-                    else:
-                        logger.info(f'Auth failed with status: {status}')
-                else:
-                    logger.info('Auth failed bad token')
-            else:
-                phone_number = normalize_phone(username)
-                token = get_token(phone_number)
-
-                if token and self._check_password(packet, token):
-                    is_employee = check_employee(phone_number)
-                    self._set_accept_reply(reply, is_employee)
-                    logger.info('Auth by token')
-                else:
-                    logger.info('Auth failed bad token')
-        else:
-            logger.warning('Bad Message-Authentificator')
-
-        reply.add_message_authenticator()
-        self.SendReplyPacket(packet.fd, reply)
-
-    def HandleAcctPacket(self, packet):
-        logger.info('Received an accounting request')
-        self._debug_log_attributes(packet)
-
-        status = False
-        status_type = self._get_attribute(packet, 'Acct-Status-Type')
-        mac = self._get_attribute(packet, 'Calling-Station-Id')
-        location = self._get_attribute(packet, 'WISPr-Location-Name')
-        ip_address = self._get_attribute(packet, 'Framed-IP-Address')
-
-        if status_type in ['Start', 'Alive']:
-            status = True
-        elif status_type == 'Stop':
-            status = False
-
-        update_statistic(mac, status, location, ip_address)
-
-        reply = self.CreateReplyPacket(packet)
-        reply.code = PacketType.AccountingResponse
-        reply.add_message_authenticator()
-        self.SendReplyPacket(packet.fd, reply)
-
-    def HandleDisconnectPacket(self, packet):
-        logger.info('Received an disconnect request')
-        self._debug_log_attributes(packet)
-
-        reply = self.CreateReplyPacket(packet)
-        # COA NAK
-        reply.code = 45
-
-        reply.add_message_authenticator()
-        self.SendReplyPacket(packet.fd, reply)
-
+class BaseServer(server.Server):
     def BindToAddress(self, addr: str) -> None:
         addrFamily = self._GetAddrInfo(addr)
         for family, address in addrFamily:
@@ -133,3 +61,88 @@ class HotspotRADIUS(server.Server):
                 coafd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
                 coafd.bind((address, self.coaport))
                 self.coafds.append(coafd)
+
+    def CreateAuthPacket(self, **args) -> packet.Packet:
+        return HotspotAuthPacket(dict=self.dict, **args)
+
+    def CreateAcctPacket(self, **args) -> packet.Packet:
+        return HotspotAcctPacket(dict=self.dict, **args)
+
+
+class HotspotRADIUS(BaseServer):
+    @staticmethod
+    def _set_accept_reply(reply: packet.Packet, is_employee: bool):
+        reply.AddAttribute('MT-Group', 'employee' if is_employee else 'guest')
+        reply.code = PacketType.AccessAccept
+
+    def HandleAuthPacket(self, packet: HotspotAuthPacket):
+        logger.info('Received an authentication request')
+        packet.debug_log_attributes()
+
+        reply = self.CreateReplyPacket(packet)
+        reply.code = PacketType.AccessReject
+
+        if packet.verify_message_authenticator():
+            mac = packet.get_attribute('Calling-Station-Id')
+            username = packet.get_attribute('User-Name')
+
+            if username == mac:
+                if packet.verify_password(mac):
+                    client = authenticate_by_mac(mac)
+                    status = client.get('status')
+                    if status == 'OK':
+                        is_employee = client.get('employee')
+                        self._set_accept_reply(reply, is_employee)
+                        logger.info('Auth by mac')
+                    else:
+                        logger.info(f'Auth failed with status: {status}')
+                else:
+                    logger.info('Auth failed bad token')
+            else:
+                phone_number = normalize_phone(username)
+                token = get_token(phone_number)
+
+                if token and packet.verify_password(token):
+                    is_employee = check_employee(phone_number)
+                    self._set_accept_reply(reply, is_employee)
+                    logger.info('Auth by token')
+                else:
+                    logger.info('Auth failed bad token')
+        else:
+            logger.warning('Bad Message-Authentificator')
+
+        reply.add_message_authenticator()
+        self.SendReplyPacket(packet.fd, reply)
+
+    def HandleAcctPacket(self, packet: HotspotAcctPacket):
+        logger.info('Received an accounting request')
+        packet.debug_log_attributes()
+
+        status = False
+        status_type = packet.get_attribute('Acct-Status-Type')
+        mac = packet.get_attribute('Calling-Station-Id')
+        location = packet.get_attribute('WISPr-Location-Name')
+        ip_address = packet.get_attribute('Framed-IP-Address')
+
+        if status_type in ['Start', 'Alive']:
+            status = True
+        elif status_type == 'Stop':
+            status = False
+
+        update_statistic(mac, status, location, ip_address)
+
+        reply = self.CreateReplyPacket(packet)
+        reply.code = PacketType.AccountingResponse
+        reply.add_message_authenticator()
+        self.SendReplyPacket(packet.fd, reply)
+
+    def HandleDisconnectPacket(self, packet):
+        logger.info('Received an disconnect request')
+        packet.debug_log_attributes()
+
+        reply = self.CreateReplyPacket(packet)
+        # COA NAK
+        reply.code = 45
+
+        reply.add_message_authenticator()
+        self.SendReplyPacket(packet.fd, reply)
