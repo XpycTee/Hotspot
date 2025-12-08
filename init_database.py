@@ -1,8 +1,11 @@
-# init_db.py
-from flask import Flask
-from web.database import db
-from web.settings import Config
+from core.database.models import Model
+from core.database.session import engine
 
-app = Flask("DB Initiator")
+import core.database.models.employee
+import core.database.models.employee_phone
+import core.database.models.wifi_client
+import core.database.models.clients_number
+import core.database.models.blacklist
 
-Config.init_db(app, db)
+Model.metadata.create_all(engine)
+

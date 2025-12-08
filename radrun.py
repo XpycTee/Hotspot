@@ -1,15 +1,11 @@
 from pyrad2 import dictionary, server
 
-from core import database
 from core.logging.logger import logger
 from core.config.radius import RADIUS_ACCT_PORT, RADIUS_ADDRESSES, RADIUS_AUTH_PORT, RADIUS_CLIENTS, RADIUS_COA_PORT
 from radius.server import HotspotRADIUS
 
 
 if __name__ == "__main__":
-    database.create_all()
-    logger.info("DB loaded")
-
     hosts = {}
     for client in RADIUS_CLIENTS:
         name = client.get('name')

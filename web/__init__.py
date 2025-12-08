@@ -6,7 +6,6 @@ from web.pages import pages_bp
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
-from core import database
 from core.utils.language import get_translate
 from core.config.logging import configure_logger
 from web.settings import Config
@@ -53,8 +52,6 @@ def create_app(config_class=Config):
         config_class.init_app(app)
         
         app.json = CustomJSONProvider(app)
-
-        database.create_all()
 
         app.register_blueprint(pages_bp)
 
