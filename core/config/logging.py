@@ -29,8 +29,10 @@ def configure_logger(logger: Logger, level=None):
                 if isinstance(h, logging.StreamHandler):
                     handler = h
                     break
-
-        formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s")
+        
+        fmt = "[%(asctime)s] [%(process)d] [%(levelname)s] [%(name)s] %(message)s"
+        datefmt = "%Y-%m-%d %H:%M:%S %z"
+        formatter = logging.Formatter(fmt, datefmt)
         handler.setFormatter(formatter)
 
         if not logger.hasHandlers():
