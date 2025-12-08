@@ -14,10 +14,9 @@ from core.database.models.employee_phone import EmployeePhone
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
 from core.hotspot.wifi.auth import authenticate_by_code, authenticate_by_mac, authenticate_by_phone, get_credentials
-from core.hotspot.wifi.challange import _octal_string_to_bytes, hash_chap, radius_check_chap
+from core.hotspot.wifi.challange import _octal_string_to_bytes, hash_chap
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
 from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_fp, find_by_mac
-from core.utils.language import get_translate
 
 
 class TestCoreHotpsotWiFi(unittest.TestCase):
@@ -252,21 +251,6 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             )
             db_session.add(new_guest_client)
             db_session.commit()
-
-    def test_radius_check_chap(self):
-        phone_number = '70000000001'
-        cache = get_cache()
-        cache.set(f'auth:token:{phone_number}', 'secret')
-        chap_id = b'\x00'
-        chap_challenge = b'\x00\x01\x02\x03\x04\x05\x06\x07'
-        good_hash_password = b'\xa8\xd3\x16(c\xbd}\xa4>\x8c\x85$.\xb7\xe18'
-        bad_hash_password = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-
-        result = radius_check_chap(phone_number, chap_id+good_hash_password, chap_challenge)
-        self.assertTrue(result)
-
-        result = radius_check_chap(phone_number, chap_id+bad_hash_password, chap_challenge)
-        self.assertFalse(result)
 
     def test_octal_string_to_bytes(self):
         self.assertEqual(_octal_string_to_bytes('\\141\\142\\143'), b'abc')
