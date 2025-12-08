@@ -1,83 +1,89 @@
-import binascii
-from typing import OrderedDict
-
 from pyrad2 import server, packet
 from pyrad2.constants import PacketType
 
-from core.cache import get_cache
 from core.hotspot.user.employees import check_employee
-from core.hotspot.user.token import check_token
+from core.hotspot.user.token import get_token
 from core.utils.phone import normalize_phone
 from core.hotspot.wifi.auth import authenticate_by_mac
-from core.hotspot.wifi.challange import radius_check_chap, radius_check_mac, radius_check_pap
 from radius.logging import logger
 
 
-
 class HotspotRADIUS(server.Server):
-    def HandleAuthPacket(self, pkt: packet.Packet):
-        logger.info("Received an authentication request")
-        logger.debug("Attributes:")
-        for attr in pkt.keys():
-            logger.debug(f"{attr}: {pkt[attr]}")
+    def _check_password(self, packet: packet.Packet, password: str):
+        if 'User-Password' in packet:
+            encrypted_user_password = packet.get('User-Password', [''])[0]
+            user_password = packet.PwDecrypt(encrypted_user_password)
+            auth_success = user_password == password
+        elif 'CHAP-Password' in packet:
+            auth_success = packet.VerifyChapPasswd(password)
+        else:
+            auth_success = False
+            logger.warning('No password attribute')
+        return auth_success
 
-        reply = self.CreateReplyPacket(pkt)
+    def _debug_log_attributes(self, packet: packet.Packet):
+        logger.debug('Attributes:')
+        for attr in packet.keys():
+            logger.debug(f'{attr}: {packet[attr]}')
+
+    def _set_accept_reply(self, reply: packet.Packet, is_employee: bool):
+        reply.AddAttribute('MT-Group', 'employee' if is_employee else 'guest')
+        reply.code = PacketType.AccessAccept
+
+    def HandleAuthPacket(self, packet: packet.Packet):
+        logger.info('Received an authentication request')
+        self._debug_log_attributes(packet)
+
+        reply = self.CreateReplyPacket(packet)
         reply.code = PacketType.AccessReject
 
-        mac = pkt.get("Calling-Station-Id", [""])[0]
-        username = pkt.get("User-Name", [""])[0]
-        
-        chap_password = pkt.get("CHAP-Password", [""])[0]
-        chap_challenge_hex = pkt.get("CHAP-Challenge", [""])[0]
-        chap_challenge = binascii.unhexlify(chap_challenge_hex)
+        if packet.verify_message_authenticator():
+            mac = packet.get('Calling-Station-Id', [''])[0]
+            username = packet.get('User-Name', [''])[0]
 
-        user_password = pkt.get("User-Password", [""])[0]
-
-        if username == mac:
-            if radius_check_mac(mac, chap_password, chap_challenge):
-                client = authenticate_by_mac(mac)
-                status = client.get("status")
-                if status == "OK":
-                    is_employee = client.get("employee")
-                    reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
-                    reply.code = PacketType.AccessAccept
-                    logger.info("Auth by mac")
+            if username == mac:
+                if self._check_password(packet, mac):
+                    client = authenticate_by_mac(mac)
+                    status = client.get('status')
+                    if status == 'OK':
+                        is_employee = client.get('employee')
+                        self._set_accept_reply(reply, is_employee)
+                        logger.info('Auth by mac')
+                    else:
+                        logger.info(f'Auth failed with status: {status}')
                 else:
-                    logger.info(f"Auth failed with status: {status}")
-        else:
-            phone_number = normalize_phone(username)
-
-            auth_success = radius_check_chap(phone_number, chap_password, chap_challenge)
-            if not auth_success and user_password:
-                password = pkt.PwDecrypt(bytes.fromhex(user_password))
-                auth_success = check_token(phone_number, password)
-
-            if auth_success:
-                is_employee = check_employee(phone_number)
-                reply.AddAttribute("MT-Group", "employee" if is_employee else "guest")
-                reply.code = PacketType.AccessAccept
-                logger.info('Auth by token')
+                    logger.info('Auth failed bad token')
             else:
-                logger.info('Auth failed bad token')
-                
-        reply.add_message_authenticator()
-        self.SendReplyPacket(pkt.fd, reply)
+                phone_number = normalize_phone(username)
+                token = get_token(phone_number)
 
-    def HandleAcctPacket(self, pkt):
-        reply = self.CreateReplyPacket(pkt)
+                if token and self._check_password(packet, token):
+                    is_employee = check_employee(phone_number)
+                    self._set_accept_reply(reply, is_employee)
+                    logger.info('Auth by token')
+                else:
+                    logger.info('Auth failed bad token')
+        else:
+            logger.warning('Bad Message-Authentificator')
+
+        reply.add_message_authenticator()
+        self.SendReplyPacket(packet.fd, reply)
+
+    def HandleAcctPacket(self, packet):
+        logger.info('Received an accounting request')
+        self._debug_log_attributes(packet)
+        reply = self.CreateReplyPacket(packet)
         reply.code = PacketType.AccountingResponse
         reply.add_message_authenticator()
-        self.SendReplyPacket(pkt.fd, reply)
+        self.SendReplyPacket(packet.fd, reply)
 
-    def HandleDisconnectPacket(self, pkt):
-        logger.info("Received an disconnect request")
-        logger.debug("Attributes: ")
-        for attr in pkt.keys():
-            logger.debug(f"{attr}: {pkt[attr]}")
+    def HandleDisconnectPacket(self, packet):
+        logger.info('Received an disconnect request')
+        self._debug_log_attributes(packet)
 
-        reply = self.CreateReplyPacket(pkt)
+        reply = self.CreateReplyPacket(packet)
         # COA NAK
         reply.code = 45
 
         reply.add_message_authenticator()
-        self.SendReplyPacket(pkt.fd, reply)
+        self.SendReplyPacket(packet.fd, reply)

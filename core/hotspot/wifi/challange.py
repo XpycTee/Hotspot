@@ -1,6 +1,5 @@
 import hashlib
 
-from core.cache import get_cache
 
 def _octal_string_to_bytes(oct_string):
     if not oct_string:
@@ -16,48 +15,6 @@ def _octal_string_to_bytes(oct_string):
     # Convert the list of decimal values to bytes
     return bytes(byte_nums)
 
-
-def radius_check_mac(mac: str, chap_password: bytes, chap_challenge: bytes):
-    if not chap_password or not chap_challenge:
-        return False
-    
-    # 1. Извлекаем ID
-    chap_id = chap_password[0]
-
-    # 2. Извлекаем хеш
-    received_hash = chap_password[1:]   # 16 байт
-
-    # 3. Делаем наш хеш
-    m = hashlib.md5()
-    m.update(bytes([chap_id]))
-    m.update(mac.encode("utf-8"))
-    m.update(chap_challenge)
-    expected_hash = m.digest()
-
-    return received_hash == expected_hash
-
-
-def radius_check_chap(phone_number: str, chap_password: bytes, chap_challenge: bytes):
-    if not chap_password or not chap_challenge:
-        return False
-    
-    cache = get_cache()
-    token = cache.get(f"auth:token:{phone_number}") or ""
-
-    # 1. Извлекаем ID
-    chap_id = chap_password[0]
-
-    # 2. Извлекаем хеш
-    received_hash = chap_password[1:]   # 16 байт
-
-    # 3. Делаем наш хеш
-    m = hashlib.md5()
-    m.update(bytes([chap_id]))
-    m.update(token.encode("utf-8"))
-    m.update(chap_challenge)
-    expected_hash = m.digest()
-
-    return received_hash == expected_hash
 
 def hash_chap(chap_id, password, chap_challenge):
     chap_id = _octal_string_to_bytes(chap_id)

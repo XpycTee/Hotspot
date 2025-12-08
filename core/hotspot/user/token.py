@@ -13,3 +13,9 @@ def check_token(phone_number, token):
     cache = get_cache()
     cache_token = cache.get(f"auth:token:{phone_number}") or ""
     return token == cache_token
+
+
+def get_token(phone_number):
+    cache = get_cache()
+    cache_token = cache.get(f"auth:token:{phone_number}") or ""
+    return cache_token

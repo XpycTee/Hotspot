@@ -60,7 +60,7 @@ $INCLUDE dictionary.wispr
 #	Following are the proper new names. Use these.
 #
 ATTRIBUTE	User-Name		1	string
-ATTRIBUTE	User-Password		2	string
+ATTRIBUTE	User-Password		2	octets
 ATTRIBUTE	CHAP-Password		3	octets
 ATTRIBUTE	NAS-IP-Address		4	ipaddr
 ATTRIBUTE	NAS-Port		5	integer
@@ -113,7 +113,7 @@ ATTRIBUTE	Acct-Input-Gigawords    52      integer
 ATTRIBUTE	Acct-Output-Gigawords   53      integer
 ATTRIBUTE	Event-Timestamp         55      date
 
-ATTRIBUTE	CHAP-Challenge		60	string
+ATTRIBUTE	CHAP-Challenge		60	octets
 ATTRIBUTE	NAS-Port-Type		61	integer
 ATTRIBUTE	Port-Limit		62	integer
 ATTRIBUTE	Login-LAT-Port		63	integer
