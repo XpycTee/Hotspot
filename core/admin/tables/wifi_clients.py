@@ -38,7 +38,10 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None):
                 'mac': client.mac,
                 'expiration': client.expiration,
                 'employee': client.employee,
-                'phone': client.phone.phone_number if client.phone else None
+                'phone': client.phone.phone_number if client.phone else None,
+                'online': client.online,
+                'last_location': client.last_location,
+                'last_ipv4_address': client.last_ipv4_address
             }
             for client in clients
         ]

@@ -116,8 +116,11 @@
             "expire": "Access Expiry",
             "is_employee": "Employee",
             "phone": "Phone Number",
-            "is_employee_yes": "Yes",
-            "is_employee_no": "No"
+            "yes": "Yes",
+            "no": "No",
+            "online": "Online",
+            "last_location": "Last Location",
+            "last_ipv4_address": "Last IP"
           },
           "employees": {
             "title": "Employee List",

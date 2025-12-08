@@ -61,8 +61,11 @@ function generateRowHTML(tableId, row) {
         return `
             <td>${row.mac}</td>
             <td>${formattedExpiration}</td>
-            <td>${row.employee ? getTranslate('html.admin.panel.tables.wifi_clients.is_employee_yes') : getTranslate('html.admin.panel.tables.wifi_clients.is_employee_no') }</td>
+            <td>${row.employee ? getTranslate('html.admin.panel.tables.wifi_clients.yes') : getTranslate('html.admin.panel.tables.wifi_clients.no') }</td>
             <td>+${row.phone}</td>
+            <td>${row.online ? getTranslate('html.admin.panel.tables.wifi_clients.yes') : getTranslate('html.admin.panel.tables.wifi_clients.no')}</td>
+            <td>${row.last_location}</td>
+            <td>${row.last_ipv4_address}</td>
             <td class="column-controls">
                 <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('html.admin.buttons.deauth')}</button>
                 <button class="btn btn-delete btn-controls" onclick="blockRow(this)">${getTranslate('html.admin.buttons.block')}</button>

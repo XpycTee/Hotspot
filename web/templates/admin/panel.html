@@ -22,6 +22,9 @@
                         <th>{{ get_translate('html.admin.panel.tables.wifi_clients.expire') }}</th>
                         <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee') }}</th>
                         <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.online') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_location') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_ipv4_address') }}</th>
                         <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
                     </tr>
                 </thead>
@@ -32,6 +35,9 @@
                         <td>{{ client.get('expiration') }}</td>
                         <td>{{ client.get('employee') }}</td>
                         <td>{{ client.get('phone') }}</td>
+                        <td>{{ client.get('online') }}</td>
+                        <td>{{ client.get('last_location') }}</td>
+                        <td>{{ client.get('last_ipv4_address') }}</td>
                         <td class="column-controls">
                             <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">{{ get_translate('html.admin.buttons.deauth') }}</button>
                         </td>

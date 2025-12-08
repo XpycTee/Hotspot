@@ -3,6 +3,7 @@ from pyrad2 import server, packet
 from pyrad2.constants import PacketType
 
 from core.hotspot.user.employees import check_employee
+from core.hotspot.user.statistic import update_statistic
 from core.hotspot.user.token import get_token
 from core.utils.phone import normalize_phone
 from core.hotspot.wifi.auth import authenticate_by_mac
@@ -10,9 +11,13 @@ from radius.logging import logger
 
 
 class HotspotRADIUS(server.Server):
+    @staticmethod
+    def _get_attribute(packet, key, default=None):
+        return packet.get(key, [default])[0]
+
     def _check_password(self, packet: packet.Packet, password: str):
         if 'User-Password' in packet:
-            encrypted_user_password = packet.get('User-Password', [''])[0]
+            encrypted_user_password = self._get_attribute(packet, 'User-Password')
             user_password = packet.PwDecrypt(encrypted_user_password)
             auth_success = user_password == password
         elif 'CHAP-Password' in packet:
@@ -21,13 +26,15 @@ class HotspotRADIUS(server.Server):
             auth_success = False
             logger.warning('No password attribute')
         return auth_success
-
-    def _debug_log_attributes(self, packet: packet.Packet):
+    
+    @staticmethod
+    def _debug_log_attributes(packet: packet.Packet):
         logger.debug('Attributes:')
         for attr in packet.keys():
             logger.debug(f'{attr}: {packet[attr]}')
 
-    def _set_accept_reply(self, reply: packet.Packet, is_employee: bool):
+    @staticmethod
+    def _set_accept_reply(reply: packet.Packet, is_employee: bool):
         reply.AddAttribute('MT-Group', 'employee' if is_employee else 'guest')
         reply.code = PacketType.AccessAccept
 
@@ -39,8 +46,8 @@ class HotspotRADIUS(server.Server):
         reply.code = PacketType.AccessReject
 
         if packet.verify_message_authenticator():
-            mac = packet.get('Calling-Station-Id', [''])[0]
-            username = packet.get('User-Name', [''])[0]
+            mac = self._get_attribute(packet, 'Calling-Station-Id')
+            username = self._get_attribute(packet, 'User-Name')
 
             if username == mac:
                 if self._check_password(packet, mac):
@@ -73,6 +80,20 @@ class HotspotRADIUS(server.Server):
     def HandleAcctPacket(self, packet):
         logger.info('Received an accounting request')
         self._debug_log_attributes(packet)
+
+        status = False
+        status_type = self._get_attribute(packet, 'Acct-Status-Type')
+        mac = self._get_attribute(packet, 'Calling-Station-Id')
+        location = self._get_attribute(packet, 'WISPr-Location-Name')
+        ip_address = self._get_attribute(packet, 'Framed-IP-Address')
+
+        if status_type in ['Start', 'Alive']:
+            status = True
+        elif status_type == 'Stop':
+            status = False
+
+        update_statistic(mac, status, location, ip_address)
+
         reply = self.CreateReplyPacket(packet)
         reply.code = PacketType.AccountingResponse
         reply.add_message_authenticator()

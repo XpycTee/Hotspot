@@ -116,8 +116,11 @@
             "expire": "Срок доступа",
             "is_employee": "Сотрудник",
             "phone": "Номер телефона",
-            "is_employee_yes": "Да",
-            "is_employee_no": "Нет"
+            "yes": "Да",
+            "no": "Нет",
+            "online": "Онлайн",
+            "last_location": "Последня локация",
+            "last_ipv4_address": "Последний IP"
           },
           "employees": {
             "title": "Список сотрудников",
