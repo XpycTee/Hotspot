@@ -1,20 +1,20 @@
 {% extends 'hotspot/base.html' %}
 
 {% block title %}
-{{ get_translate('html.login.title') }}
+{{ get_translate('html.login.title', session.user_lang) }}
 {% endblock %}
 
 {% block content %}
 <form class="form form-login" action="/code" method="post">
 
-    <label for="phone">{{ get_translate('html.login.label_phone') }}</label>
-    <input class="input input-auth" type="tel" id="phone" name="phone" data-tel-input placeholder="{{ get_translate('html.login.placeholder_phone') }}">
+    <label for="phone">{{ get_translate('html.login.label_phone', session.user_lang) }}</label>
+    <input class="input input-auth" type="tel" id="phone" name="phone" data-tel-input placeholder="{{ get_translate('html.login.placeholder_phone', session.user_lang) }}">
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
-    <input class="btn btn-submit" type="submit" value="{{ get_translate('html.login.submit_button') }}">
+    <input class="btn btn-submit" type="submit" value="{{ get_translate('html.login.submit_button', session.user_lang) }}">
 
-    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label') }}</label>
+    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </form>
 {% endblock %}
 
@@ -23,8 +23,8 @@
 
 <div id="privacyPolicyModal" class="modal modal-large">
     <div class="modal-header">
-        <h2 class="modal-title">{{ get_translate('html.privacy_policy_label') }}</h2>
-        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close').lower() }}</span>
+        <h2 class="modal-title">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</h2>
+        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close', session.user_lang).lower() }}</span>
     </div>
     <div class="modal-content">{% include "hotspot/privacy_policy.html" %}</div>
 </div>

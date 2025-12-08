@@ -1,31 +1,31 @@
 {% extends 'admin/base.html' %}
 
 {% block title %}
-{{ get_translate('html.admin.panel.title') }}
+{{ get_translate('html.admin.panel.title', session.user_lang) }}
 {% endblock %}
 
 {% block content %}
 <div class="admin-dashboard">
-    <a href="{{ url_for('pages.admin.auth.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout') }}</a>
+    <a href="{{ url_for('pages.admin.auth.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout', session.user_lang) }}</a>
     <ul class="nav-tabs">
-        <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title') }}</a></li>
-        <li><a href="#employees">{{ get_translate('html.admin.panel.tables.employees.title') }}</a></li>
-        <li><a href="#blacklist">{{ get_translate('html.admin.panel.tables.blacklist.title') }}</a></li>
+        <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title', session.user_lang) }}</a></li>
+        <li><a href="#employees">{{ get_translate('html.admin.panel.tables.employees.title', session.user_lang) }}</a></li>
+        <li><a href="#blacklist">{{ get_translate('html.admin.panel.tables.blacklist.title', session.user_lang) }}</a></li>
     </ul>
     <div class="table-container">
         <div id="wifi_clients" class="content-tab table-container">
-            <input type="text" id="wifi_clients_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
+            <input type="text" id="wifi_clients_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
             <table>
                 <thead>
                     <tr>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.mac') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.expire') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.online') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_location') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_ipv4_address') }}</th>
-                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.mac', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.expire', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.online', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_location', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_ipv4_address', session.user_lang) }}</th>
+                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
                     </tr>
                 </thead>
                 <tbody id="wifi_clients_body">
@@ -39,33 +39,33 @@
                         <td>{{ client.get('last_location') }}</td>
                         <td>{{ client.get('last_ipv4_address') }}</td>
                         <td class="column-controls">
-                            <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">{{ get_translate('html.admin.buttons.deauth') }}</button>
+                            <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">{{ get_translate('html.admin.buttons.deauth', session.user_lang) }}</button>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
             <div class="pagination">
-                <button class="btn btn-prev" onclick="changePage('wifi_clients', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                <button class="btn btn-prev" onclick="changePage('wifi_clients', -1)">{{ get_translate('html.admin.buttons.prev', session.user_lang) }}</button>
                 <div class="page_numbers">
                     <!--button class="btn btn-number" onclick="changePageTo('wifi_clients', X)">X</button-->
                 </div>
-                <button class="btn btn-next" onclick="changePage('wifi_clients', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                <button class="btn btn-next" onclick="changePage('wifi_clients', 1)">{{ get_translate('html.admin.buttons.next', session.user_lang) }}</button>
                 <span id="wifi_clients_page_info"></span>
             </div>
         </div>
 
         <div id="employees" class="content-tab table-container" style="display: none;">
-            <input type="text" id="employees_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
+            <input type="text" id="employees_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
 
             <table>
                 <thead>
                     <tr>
-                        <th>{{ get_translate('html.admin.panel.tables.employees.id') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.employees.lastname') }}</th>
-                        <th>{{ get_translate('html.admin.panel.tables.employees.name') }}</th>
-                        <th class="column-phones">{{ get_translate('html.admin.panel.tables.employees.phones') }}</th>
-                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.employees.id', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.employees.lastname', session.user_lang) }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.employees.name', session.user_lang) }}</th>
+                        <th class="column-phones">{{ get_translate('html.admin.panel.tables.employees.phones', session.user_lang) }}</th>
+                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
                     </tr>
                 </thead>
                 <tbody id="employees_body">
@@ -82,33 +82,33 @@
                             </ul>
                         </td>
                         <td class="column-controls">
-                            <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employeess')">{{ get_translate('html.admin.buttons.edit') }}</button>
-                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employees')">{{ get_translate('html.admin.buttons.delete') }}</button>
+                            <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employeess')">{{ get_translate('html.admin.buttons.edit', session.user_lang) }}</button>
+                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employees')">{{ get_translate('html.admin.buttons.delete', session.user_lang) }}</button>
                         </td>
                     </tr>
                     {% endfor %}
                     <tr class="add_row_button">
-                        <td colspan="5"><button class="btn btn-add" onclick="addRowModal(this, 'employees')">{{ get_translate('html.admin.buttons.add') }}</button></td>
+                        <td colspan="5"><button class="btn btn-add" onclick="addRowModal(this, 'employees')">{{ get_translate('html.admin.buttons.add', session.user_lang) }}</button></td>
                     </tr>
                 </tbody>
             </table>
             <div class="pagination">
-                <button class="btn btn-prev" onclick="changePage('employees', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                <button class="btn btn-prev" onclick="changePage('employees', -1)">{{ get_translate('html.admin.buttons.prev', session.user_lang) }}</button>
                 <div class="page_numbers">
                     <!--button class="btn btn-number" onclick="changePageTo('employee', X)">X</button-->
                 </div>
-                <button class="btn btn-next" onclick="changePage('employees', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                <button class="btn btn-next" onclick="changePage('employees', 1)">{{ get_translate('html.admin.buttons.next', session.user_lang) }}</button>
                 <span id="employees_page_info"></span>
             </div>
         </div>
 
         <div id="blacklist" class="content-tab table-container" style="display: none;">
-            <input type="text" id="blacklist_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search') }}">
+            <input type="text" id="blacklist_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
             <table>
                 <thead>
                     <tr>
-                        <th>{{ get_translate('html.admin.panel.tables.blacklist.phone') }}</th>
-                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls') }}</th>
+                        <th>{{ get_translate('html.admin.panel.tables.blacklist.phone', session.user_lang) }}</th>
+                        <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
                     </tr>
                 </thead>
                 <tbody id="blacklist_body">
@@ -116,21 +116,21 @@
                     <tr>
                         <td class="blocked-phone">+{{ blocked }}</td>
                         <td class="column-controls">
-                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.delete') }}</button>
+                            <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.delete', session.user_lang) }}</button>
                         </td>
                     </tr>
                     {% endfor %}
                     <tr class="add_row_button">
-                        <td colspan="2"><button class="btn btn-add" onclick="addRowModal(this, 'blacklist')">{{ get_translate('html.admin.buttons.add') }}</button></td>
+                        <td colspan="2"><button class="btn btn-add" onclick="addRowModal(this, 'blacklist')">{{ get_translate('html.admin.buttons.add', session.user_lang) }}</button></td>
                     </tr>
                 </tbody>
             </table>
             <div class="pagination">
-                <button class="btn btn-prev" onclick="changePage('blacklist', -1)">{{ get_translate('html.admin.buttons.prev') }}</button>
+                <button class="btn btn-prev" onclick="changePage('blacklist', -1)">{{ get_translate('html.admin.buttons.prev', session.user_lang) }}</button>
                 <div class="page_numbers">
                     <!--button class="btn btn-number" onclick="changePageTo('blacklist', X)">X</button-->
                 </div>
-                <button class="btn btn-next" onclick="changePage('blacklist', 1)">{{ get_translate('html.admin.buttons.next') }}</button>
+                <button class="btn btn-next" onclick="changePage('blacklist', 1)">{{ get_translate('html.admin.buttons.next', session.user_lang) }}</button>
                 <span id="blacklist_page_info"></span>
             </div>
         </div>

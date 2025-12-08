@@ -1,26 +1,26 @@
 {% extends 'hotspot/base.html' %}
 
 {% block title %}
-{{ get_translate('html.code.title') }}
+{{ get_translate('html.code.title', session.user_lang) }}
 {% endblock %}
 
 {% block content %}
 <form class="form form-login" action="/auth" method="post" id="codeForm">
 
     <label for="code">
-        {{ get_translate('html.code.label_code') }}<br><br>
-        {{ get_translate('html.code.validity_message') }}
+        {{ get_translate('html.code.label_code', session.user_lang) }}<br><br>
+        {{ get_translate('html.code.validity_message', session.user_lang) }}
     </label>
-    <input class="input input-auth" type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ get_translate('html.code.placeholder_code') }}">
+    <input class="input input-auth" type="tel" id="code" name="code" maxlength="4" oninput="checkCodeForm()" placeholder="{{ get_translate('html.code.placeholder_code', session.user_lang) }}">
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
-    <input class="btn btn-submit" type="submit" value="{{ get_translate('html.code.submit_button') }}">
+    <input class="btn btn-submit" type="submit" value="{{ get_translate('html.code.submit_button', session.user_lang) }}">
 
-    <p id="resendMessage">{{ get_translate('html.code.resend_message') }} <span id="timer">60</span> {{ get_translate('html.code.seconds') }}</p>
-    <a class="text-center mt-2 link-line" href="/resend" id="resendLink" style="display:none;">{{ get_translate('html.code.resend_link') }}</a>
+    <p id="resendMessage">{{ get_translate('html.code.resend_message', session.user_lang) }} <span id="timer">60</span> {{ get_translate('html.code.seconds', session.user_lang) }}</p>
+    <a class="text-center mt-2 link-line" href="/resend" id="resendLink" style="display:none;">{{ get_translate('html.code.resend_link', session.user_lang) }}</a>
 
-    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label') }}</label>
+    <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </form>
 <script>
     function checkCodeForm() {
@@ -93,8 +93,8 @@
 
 <div id="privacyPolicyModal" class="modal modal-large">
     <div class="modal-header">
-        <h2 class="modal-title">{{ get_translate('html.privacy_policy_label') }}</h2>
-        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close').lower() }}</span>
+        <h2 class="modal-title">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</h2>
+        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close', session.user_lang).lower() }}</span>
     </div>
     <div class="modal-content">
       {% include "hotspot/privacy_policy.html" %}

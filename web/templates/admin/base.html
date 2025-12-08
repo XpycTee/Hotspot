@@ -22,14 +22,14 @@
     </div>
     <div class="modal-content">Content</div>
     <div class="modal-footer">
-        <button class="btn btn-modal-close" data-close-button>{{ get_translate('html.modal.close') }}</button>
+        <button class="btn btn-modal-close" data-close-button>{{ get_translate('html.modal.close', session.user_lang) }}</button>
     </div>
 </div>
 
 <div id="addRowModal" class="modal modal-medium">
     <div class="modal-header">
         <h2 class="modal-title"></h2>
-        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close').lower() }}</span>
+        <span class="modal-close" data-close-button>{{ get_translate('html.modal.close', session.user_lang).lower() }}</span>
     </div>
     <div class="modal-content">
     </div>
