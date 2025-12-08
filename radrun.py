@@ -1,34 +1,45 @@
-from pyrad2 import dictionary, server
+# radrun_launcher.py
+import subprocess
+import argparse
+import os
+import sys
 
-from core.logging.logger import logger
-from core.config.radius import RADIUS_ACCT_PORT, RADIUS_ADDRESSES, RADIUS_AUTH_PORT, RADIUS_CLIENTS, RADIUS_COA_PORT
-from radius.server import HotspotRADIUS
+from core.config.radius import RADIUS_ACCT_PORT, RADIUS_ADDRESSES, RADIUS_AUTH_PORT, RADIUS_COA_PORT
+from radius.logging import logger
 
 
-if __name__ == "__main__":
-    hosts = {}
-    for client in RADIUS_CLIENTS:
-        name = client.get('name')
-        host = client.get('host')
-        secret = client.get('secret').encode()
-        hosts[host] = server.RemoteHost(
-            host, secret, name
-        )
-
-    srv = HotspotRADIUS(
-        addresses=RADIUS_ADDRESSES,
-        authport=RADIUS_AUTH_PORT,
-        acctport=RADIUS_ACCT_PORT,
-        coaport=RADIUS_COA_PORT,
-        hosts=hosts,
-        dict=dictionary.Dictionary("radius/dictionary"), 
-        coa_enabled=True
+def main():
+    parser = argparse.ArgumentParser(description='Launcher for RADIUS server workers')
+    parser.add_argument(
+        '-w', '--workers',
+        type=int,
+        default=int(os.getenv('RADIUS_WORKERS', 4)),
+        help='Number of RADIUS worker processes to start'
     )
-    logger.info("Created server")
-    
-    logger.info(f"Start Auth RADIUS server on { 
-        '; '.join(
-            [f'[{addr}]:{RADIUS_AUTH_PORT}' for addr in RADIUS_ADDRESSES]
-        ) 
-    }")
-    srv.Run()
+    args = parser.parse_args()
+    num_workers = args.workers
+
+    logger.info(f'Starting RADIUS server with {num_workers} workers...')
+    for address in RADIUS_ADDRESSES:
+        logger.info(f'RADIUS Auth server Listening at: {address}:{RADIUS_AUTH_PORT}')
+        logger.info(f'RADIUS Accounting  Listening at: {address}:{RADIUS_ACCT_PORT}')
+        logger.info(f'RADIUS CoA server  Listening at: {address}:{RADIUS_COA_PORT}')
+
+    processes = []
+    try:
+        for i in range(num_workers):
+            cmd = ['python', '-m', 'radius.run', "--worker-id", str(i)]
+            p = subprocess.Popen(cmd)
+            processes.append(p)
+
+        # Ждём завершения всех процессов
+        for p in processes:
+            p.wait()
+    except KeyboardInterrupt:
+        logger.info('Shutting down workers...')
+        for p in processes:
+            p.terminate()
+        sys.exit(0)
+
+if __name__ == '__main__':
+    main()

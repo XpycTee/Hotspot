@@ -31,9 +31,10 @@ python init_database.py
 # 3. RADIUS Server
 #########################################
 
+RADIUS_WORKERS=${RADIUS_WORKERS:-4}
+
 if [ "$HOTSPOT_RADIUS_ENABLED" = "true" ]; then
-    echo "Starting RADIUS Auth Server..."
-    python radrun.py &
+    python radrun.py -w "$RADIUS_WORKERS" &
     RADIUS_PID=$!
 else
     echo "RADIUS disabled"

@@ -1,3 +1,4 @@
+import socket
 from pyrad2 import server, packet
 from pyrad2.constants import PacketType
 
@@ -87,3 +88,27 @@ class HotspotRADIUS(server.Server):
 
         reply.add_message_authenticator()
         self.SendReplyPacket(packet.fd, reply)
+
+    def BindToAddress(self, addr: str) -> None:
+        addrFamily = self._GetAddrInfo(addr)
+        for family, address in addrFamily:
+            if self.auth_enabled:
+                authfd = socket.socket(family, socket.SOCK_DGRAM)
+                authfd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                authfd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                authfd.bind((address, self.authport))
+                self.authfds.append(authfd)
+
+            if self.acct_enabled:
+                acctfd = socket.socket(family, socket.SOCK_DGRAM)
+                acctfd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                acctfd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                acctfd.bind((address, self.acctport))
+                self.acctfds.append(acctfd)
+
+            if self.coa_enabled:
+                coafd = socket.socket(family, socket.SOCK_DGRAM)
+                coafd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                coafd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                coafd.bind((address, self.coaport))
+                self.coafds.append(coafd)

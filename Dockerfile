@@ -40,6 +40,7 @@ EXPOSE 8080
 
 EXPOSE 1812/udp
 EXPOSE 1813/udp
+EXPOSE 3799/udp
 
 VOLUME /hotspot/config
 
