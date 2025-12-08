@@ -18,13 +18,9 @@ if __name__ == "__main__":
     worker_id = args.worker_id
     
     hosts = {}
-    for client in RADIUS_CLIENTS:
-        name = client.get('name')
-        host = client.get('host')
-        secret = client.get('secret').encode()
-        hosts[host] = server.RemoteHost(
-            host, secret, name
-        )
+    for host, parametres in RADIUS_CLIENTS.items():
+        parametres['secret'] = parametres.get('secret').encode()
+        hosts[host] = server.RemoteHost(**parametres)
 
     srv = HotspotRADIUS(
         addresses=RADIUS_ADDRESSES,
