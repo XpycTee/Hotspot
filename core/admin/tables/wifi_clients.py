@@ -13,6 +13,7 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None):
         if search_query:
             query = query.filter(
                 WifiClient.mac.ilike(f'%{search_query}%') |
+                WifiClient.last_location.ilike(f'%{search_query}%') |
                 WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{search_query}%'))
             )
 
