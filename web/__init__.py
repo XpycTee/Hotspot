@@ -33,11 +33,7 @@ class CustomJSONProvider(DefaultJSONProvider):
 
 
 def create_app(config_class=Config):
-    log_dir = 'logs'
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
-
-     # Check for required environment variables
+    # Check for required environment variables
     required_env_vars = []
     
     init_logger = logging.getLogger("Init")
