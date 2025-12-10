@@ -16,6 +16,6 @@ class WifiClient(Model):
     employee = Column(Boolean)
     phone_id = Column(Integer, ForeignKey(ClientsNumber.id))
     phone = relationship(ClientsNumber, backref='phones')
-    online = Column(Boolean)
+    online = Column(Boolean, server_default=False)
     last_location = Column(String(64))
     last_ipv4_address = Column(String(15))

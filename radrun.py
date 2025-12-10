@@ -21,6 +21,7 @@ def main():
 
     logger.info(f'Starting RADIUS server with {num_workers} workers...')
     for address in RADIUS_ADDRESSES:
+        address = f'[{address}]' if ':' in address else address
         logger.info(f'RADIUS Auth server Listening at: {address}:{RADIUS_AUTH_PORT}')
         logger.info(f'RADIUS Accounting  Listening at: {address}:{RADIUS_ACCT_PORT}')
         logger.info(f'RADIUS CoA server  Listening at: {address}:{RADIUS_COA_PORT}')
