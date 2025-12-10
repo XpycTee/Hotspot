@@ -10,12 +10,6 @@ settings:
   # Cache backend URL
   # cache_url:   # Default: memcached over UNIX socket memcached+unix:///var/run/memcached.sock
 
-  # Debug mode flag
-  # debug: true
-
-  # Log level for application output
-  log_level: WARNING
-
   # Admin panel credentials and security parameters
   admin:
     username: admin          # Default admin login name
@@ -42,9 +36,8 @@ settings:
     # type: smsru
     # api_key: YOUR-API-KEY    # API key for sms.ru service
 
-  # RADIUS server configuration
+  # RADIUS server configuration if RADIUS_ENABLED is True
   radius:
-    enabled: true            # Enables RADIUS server
     addresses:
       - 0.0.0.0              # Bind addresses for RADIUS server
     ports:

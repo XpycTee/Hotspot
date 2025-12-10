@@ -2,7 +2,7 @@
 set -e
 
 DEBUG=${DEBUG:-false}
-CACHE_SIZE=${HOTSPOT_CACHE_SIZE:-1024}
+CACHE_SIZE=${CACHE_SIZE:-1024}
 
 echo "=== HOTSPOT ENTRYPOINT STARTED ==="
 
@@ -31,9 +31,10 @@ python init_database.py
 # 3. RADIUS Server
 #########################################
 
+RADIUS_ENABLED=${RADIUS_ENABLED:-true}
 RADIUS_WORKERS=${RADIUS_WORKERS:-4}
 
-if [ "$HOTSPOT_RADIUS_ENABLED" = "true" ]; then
+if [ "$RADIUS_ENABLED" = "true" ]; then
     python radrun.py -w "$RADIUS_WORKERS" &
     RADIUS_PID=$!
 else
