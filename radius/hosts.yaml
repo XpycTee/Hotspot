@@ -1,8 +1,0 @@
-hosts:
-  0.0.0.0:
-    address: 0.0.0.0
-    secret: Kah3choteereethiejeimaeziecumi
-    name: all
-    authport: 1812
-    acctport: 1813
-    coaport: 3799

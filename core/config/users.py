@@ -1,23 +1,22 @@
-import datetime
 from environs import Env
 
-env = Env(prefix="HOTSPOT_USERS_")
+from core.config import SETTINGS, convert_delay
+
+env = Env(prefix='HOTSPOT_USERS_')
 env.read_env()
 
-def convert_delay(delay):
-    suffixes = {
-        'w': 'weeks',
-        'd': 'days',
-        'h': 'hours',
-        'm': 'minutes',
-        's': 'seconds'
+users = SETTINGS.get('hotspot_users', {})
+
+with env.prefixed('STAFF_'):
+    staff_user = users.get('staff', {})
+    STAFF_USER: dict = {
+        'password': env.str('PASS', staff_user.get('password', 'supersecret')), 
+        'delay': convert_delay(env.str('DELAY', staff_user.get('delay', '30d')))
     }
 
-    amount, suffix = (int(delay[:-1]), delay[-1]) if delay[-1] in suffixes else (int(delay), 'h')
-    return datetime.timedelta(**{suffixes[suffix]: amount})
-
-with env.prefixed("STAFF_"):
-    STAFF_USER: dict = {'password': env.str("PASS", 'supersecret'), 'delay': convert_delay(env.str("DELAY", '30d'))}
-
-with env.prefixed("GUEST_"):
-    GUEST_USER: dict = {'password': env.str("PASS", 'secret'), 'delay': convert_delay(env.str("DELAY", '1d'))}
+with env.prefixed('GUEST_'):
+    guest_user = users.get('guest', {})
+    GUEST_USER: dict = {
+        'password': env.str('PASS', guest_user.get('password', 'secret')), 
+        'delay': convert_delay(env.str('DELAY', guest_user.get('delay', '1d')))
+    }

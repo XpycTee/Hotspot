@@ -1,21 +1,23 @@
 from environs import Env
 import yaml
 
-env = Env(prefix="HOTSPOT_RADIUS_")
+from core.config import SETTINGS
+
+env = Env(prefix='HOTSPOT_RADIUS_')
 env.read_env()
 
-RADIUS_ENABLED = env.bool('ENABLED', False)
 
-RADIUS_ADDRESSES = env.list('ADDRESSES', ['::'])
-RADIUS_AUTH_PORT = env.int('AUTH_PORT', 1812)
-RADIUS_ACCT_PORT = env.int('ACCT_PORT', 1813)
-RADIUS_COA_PORT = env.int('COA_PORT', 3799)
+radius: dict = SETTINGS.get('radius', {})
+ports: dict = radius.get('ports', {})
 
-def configure_hosts():
-    path = 'radius/hosts.yaml'
-    with open(path, mode='r') as hosts:
-        data = yaml.safe_load(hosts)
+RADIUS_ENABLED = env.bool('ENABLED', radius.get('enabled', True))
+RADIUS_ADDRESSES = env.list('ADDRESSES', radius.get('addresses', ['0.0.0.0']))
+RADIUS_AUTH_PORT = env.int('AUTH_PORT', ports.get('auth', 1812))
+RADIUS_ACCT_PORT = env.int('ACCT_PORT', ports.get('acct', 1813))
+RADIUS_COA_PORT = env.int('COA_PORT', ports.get('CoA', 3799))
 
-    return data.get('hosts')
+def configure_hosts() -> dict:    
+    with open('config/hosts.yaml', mode='r') as hosts:
+        return yaml.safe_load(hosts)
 
-RADIUS_CLIENTS = configure_hosts()
+RADIUS_CLIENTS = radius.get('hosts', configure_hosts())

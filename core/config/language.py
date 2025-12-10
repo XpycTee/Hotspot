@@ -3,6 +3,8 @@ import os
 
 from environs import Env
 
+from core.config import SETTINGS
+
 
 env = Env()
 env.read_env()
@@ -20,5 +22,5 @@ def load_language_files():
     return language_content
 
 
-LANGUAGE_DEFAULT = env.str('HOTSPOT_LANGUAGE', 'en')
+LANGUAGE_DEFAULT = env.str('HOTSPOT_LANGUAGE', SETTINGS.get('language', 'en'))
 LANGUAGE_CONTENT = load_language_files()

@@ -1,15 +1,21 @@
 from logging import Logger, getLogger
 import logging
 
+from core.config import DEBUG, SETTINGS
+
 from environs import Env
 
 env = Env()
 env.read_env()
 
-LOG_LEVEL = env.log_level("LOG_LEVEL", logging.WARNING)
+level_name = SETTINGS.get('log_level', 'DEBUG' if DEBUG else 'WARNING')
+mapping = logging.getLevelNamesMapping()
+level = mapping.get(level_name.upper())
+
+LOG_LEVEL = env.log_level('LOG_LEVEL', level)
 
 def is_gunicorn():
-    return env.str("SERVER_SOFTWARE", "").startswith("gunicorn")
+    return env.str('SERVER_SOFTWARE', '').startswith('gunicorn')
 
 def configure_logger(logger: Logger, level=None):
     if is_gunicorn():
@@ -30,8 +36,8 @@ def configure_logger(logger: Logger, level=None):
                     handler = h
                     break
         
-        fmt = "[%(asctime)s] [%(process)d] [%(levelname)s] [%(name)s] %(message)s"
-        datefmt = "%Y-%m-%d %H:%M:%S %z"
+        fmt = '[%(asctime)s] [%(process)d] [%(levelname)s] [%(name)s] %(message)s'
+        datefmt = '%Y-%m-%d %H:%M:%S %z'
         formatter = logging.Formatter(fmt, datefmt)
         handler.setFormatter(formatter)
 
