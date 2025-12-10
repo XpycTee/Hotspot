@@ -14,3 +14,4 @@ Dockerfile
 .vscode/
 .venv/
 *.code-workspace
+.env
