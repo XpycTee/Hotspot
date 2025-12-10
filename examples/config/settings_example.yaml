@@ -1,14 +1,20 @@
-# Hotspot DEBUG configurations
+# Hotspot configuration example
 
 settings:
   # Base application language
-  language: ru
+  language: en
+
+  # SQLAlchemy connection string
+  # db_url:   # Default: SQLite DB stored as hotspot.db sqlite:///hotspot.db
+
+  # Cache backend URL
+  # cache_url:   # Default: memcached over UNIX socket memcached+unix:///var/run/memcached.sock
 
   # Debug mode flag
-  debug: true
+  # debug: true
 
   # Log level for application output
-  log_level: DEBUG
+  log_level: WARNING
 
   # Admin panel credentials and security parameters
   admin:
@@ -25,6 +31,16 @@ settings:
     staff:
       password: supersecret  # Password for staff accounts
       delay: 30d             # Access duration; default unit is hours if suffix omitted
+
+  # Message sender configuration
+  sender:
+    type: mikrotik              # Supported: smsru, mikrotik, huawei, debug
+    url: https://admin:admin@10.55.0.1/    # MikroTik REST API URL (RoS >= 7.9)
+    # Alternative sender configurations:
+    # type: huawei
+    # url: http://admin:admin@192.168.8.1/   # Huawei modem API URL
+    # type: smsru
+    # api_key: YOUR-API-KEY    # API key for sms.ru service
 
   # RADIUS server configuration
   radius:
