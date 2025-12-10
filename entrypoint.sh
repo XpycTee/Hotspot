@@ -32,10 +32,11 @@ python init_database.py
 #########################################
 
 RADIUS_ENABLED=${RADIUS_ENABLED:-true}
+RADIUS_LOG_LEVEL=${LOG_LEVEL:-info}
 RADIUS_WORKERS=${RADIUS_WORKERS:-4}
 
 if [ "$RADIUS_ENABLED" = "true" ]; then
-    python radrun.py -w "$RADIUS_WORKERS" &
+    python radrun.py -w "$RADIUS_WORKERS" --log-level "$RADIUS_LOG_LEVEL" &
     RADIUS_PID=$!
 else
     echo "RADIUS disabled"
