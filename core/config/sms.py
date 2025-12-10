@@ -19,7 +19,7 @@ def get_sender() -> BaseSender:
     sender_type = env.str("TYPE", 'debug')
     Sender = senders.get(sender_type.lower(), DebugSender)
 
-    with env.prefixed(f'{sender_type}_'):
+    with env.prefixed(f'{sender_type.upper()}_'):
         url = env.url('URL', None)
         apikey = env.str("APIKEY", None)
 
