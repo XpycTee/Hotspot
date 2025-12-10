@@ -22,14 +22,14 @@ def main():
         '--log-level',
         type=str.upper,
         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-        default=LOG_LEVEL,
+        default='WARNING',
         help='Set the logging level'
     )
     args = parser.parse_args()
     num_workers = args.workers
 
     mapping = logging.getLevelNamesMapping()
-    level = mapping.get(args.log_level)
+    level = mapping.get(args.log_level, LOG_LEVEL)
     logger.setLevel(level)
 
     logger.info(f'Starting RADIUS server with {num_workers} workers...')
