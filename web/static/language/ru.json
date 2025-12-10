@@ -136,7 +136,7 @@
         },
         "edit": {
           "title": {
-            "employee": "Добавить нового сотрудника",
+            "employees": "Добавить нового сотрудника",
             "blacklist": "Заблокировть"
           },
           "lastname_palceholder": "Фамилия",

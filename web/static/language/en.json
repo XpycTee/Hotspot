@@ -136,7 +136,7 @@
         },
         "edit": {
           "title": {
-            "employee": "Add new employee",
+            "employees": "Add new employee",
             "blacklist": "Block"
           },
           "lastname_palceholder": "lastname",

@@ -173,7 +173,7 @@ function addRowModal(button, type) {
 
     // Генерация HTML формы для модального окна
     const templates = {
-        employee: `
+        employees: `
             <form class="form form-modal" id="addRowForm">
                 <input class="input modal-input" type="text" name="lastname" placeholder="${getTranslate('html.admin.panel.edit.lastname_palceholder')}" required>
                 <input class="input modal-input" type="text" name="name" placeholder="${getTranslate('html.admin.panel.edit.name_palceholder')}" required>
