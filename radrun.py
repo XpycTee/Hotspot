@@ -42,7 +42,7 @@ def main():
     processes = []
     try:
         for i in range(num_workers):
-            cmd = ['python', '-m', 'radius.run', "--worker-id", str(i)]
+            cmd = ['python', '-m', 'radius.run', '--worker-id', str(i), '--log-level', args.log_level]
             p = subprocess.Popen(cmd)
             processes.append(p)
 

@@ -1,7 +1,9 @@
 import argparse
+import logging
 import os
 from pyrad2 import dictionary, server
 
+from core.config.logging import LOG_LEVEL
 from core.config.radius import RADIUS_ACCT_PORT, RADIUS_ADDRESSES, RADIUS_AUTH_PORT, RADIUS_CLIENTS, RADIUS_COA_PORT
 from radius.server import HotspotRADIUS
 from radius.logging import logger
@@ -14,8 +16,19 @@ if __name__ == "__main__":
         type=int,
         help='RADIUS Server worker ID'
     )
+    parser.add_argument(
+        '--log-level',
+        type=str.upper,
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        default='WARNING',
+        help='Set the logging level'
+    )
     args = parser.parse_args()
     worker_id = args.worker_id
+    
+    mapping = logging.getLevelNamesMapping()
+    level = mapping.get(args.log_level, LOG_LEVEL)
+    logger.setLevel(level)
     
     hosts = {}
     for host, parametres in RADIUS_CLIENTS.items():
