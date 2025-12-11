@@ -102,7 +102,13 @@ class HotspotRADIUS(BaseServer):
         reply = self.CreateReplyPacket(packet)
         reply.code = PacketType.AccessReject
 
-        if packet.verify_message_authenticator():
+        try:
+            verify_packet = packet.verify_message_authenticator()
+        except Exception as e:
+            reply.AddAttribute('Reply-Message', e)
+            logger.error(e)
+
+        if verify_packet:
             mac = packet.get_attribute('Calling-Station-Id')
             username = packet.get_attribute('User-Name')
 
