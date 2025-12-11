@@ -115,6 +115,7 @@ class HotspotRADIUS(BaseServer):
                         self._set_accept_reply(reply, is_employee)
                         logger.info('Auth by mac')
                     else:
+                        reply.AddAttribute('Reply-Message', f'Auth failed with status: {status}')
                         logger.info(f'Auth failed with status: {status}')
                 else:
                     logger.info('Auth failed bad token')
@@ -127,16 +128,18 @@ class HotspotRADIUS(BaseServer):
                     self._set_accept_reply(reply, is_employee)
                     logger.info('Auth by token')
                 else:
+                    reply.AddAttribute('Reply-Message', 'Auth failed bad token')
                     logger.info('Auth failed bad token')
         else:
+            reply.AddAttribute('Reply-Message', 'Bad Message-Authentificator')
             logger.warning('Bad Message-Authentificator')
 
         reply.add_message_authenticator()
         self.SendReplyPacket(packet.fd, reply)
 
     def HandleAcctPacket(self, packet: HotspotAcctPacket):
-        logger.info('Received an accounting request')
-        packet.debug_log_attributes()
+        #logger.info('Received an accounting request')
+        #packet.debug_log_attributes()
 
         status = False
         status_type = packet.get_attribute('Acct-Status-Type')
@@ -156,7 +159,7 @@ class HotspotRADIUS(BaseServer):
         reply.add_message_authenticator()
         self.SendReplyPacket(packet.fd, reply)
 
-    def HandleDisconnectPacket(self, packet):
+    def HandleDisconnectPacket(self, packet: BasePacket):
         logger.info('Received an disconnect request')
         packet.debug_log_attributes()
 
