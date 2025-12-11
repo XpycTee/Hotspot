@@ -1,6 +1,8 @@
+import ipaddress
 import socket
 from pyrad2 import server, packet
 from pyrad2.constants import PacketType
+from pyrad2.exceptions import ServerPacketError
 
 from core.hotspot.user.employees import check_employee
 from core.hotspot.user.statistic import update_statistic
@@ -38,6 +40,24 @@ class HotspotAcctPacket(BasePacket, packet.AcctPacket):
 
 
 class BaseServer(server.Server):
+    @staticmethod
+    def _unmapped_ip(ip: str) -> str:
+        addr = ipaddress.ip_address(ip)
+
+        if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped:
+            return str(addr.ipv4_mapped)
+
+        return str(addr)
+
+    def _AddSecret(self, pkt: packet.Packet) -> None:
+        host_address = self._unmapped_ip(pkt.source[0])
+        if host_address in self.hosts:
+            pkt.secret = self.hosts[host_address].secret
+        elif "0.0.0.0" in self.hosts:
+            pkt.secret = self.hosts["0.0.0.0"].secret
+        else:
+            raise ServerPacketError("Received packet from unknown host")
+        
     def BindToAddress(self, addr: str) -> None:
         addrFamily = self._GetAddrInfo(addr)
         for family, address in addrFamily:
