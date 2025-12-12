@@ -1,6 +1,7 @@
 from flask import Blueprint, abort, jsonify, request
 
 from core.admin.tables import get_table
+from core.admin.tables.wifi_clients import get_wifi_clients
 from core.hotspot.user.blacklist import add_to_blacklist, delete_from_blacklist
 from core.hotspot.user.employees import add_employee, delete_from_employees, update_employee
 from core.utils.language import get_translate
@@ -96,6 +97,36 @@ def delete_data(table_name):
         abort(404)
 
     return jsonify({'success': True})
+
+@tables_bp.route('/wifi_clients', methods=['GET'])
+@login_required
+def wifi_clients_table():
+    search_query = request.args.get('search', '').lower()
+    online = request.args.get('online', 'all')
+    employee = request.args.get('employee', 'all')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    location = request.args.get('location')
+
+    page = int(request.args.get('page', 1))
+    rows_per_page = int(request.args.get('rows_per_page', 10))
+
+    response = get_wifi_clients(
+        page, rows_per_page, 
+        search_query, 
+        online, employee, 
+        date_from, date_to, 
+        location
+    )
+    if not response:
+        abort(404)
+        
+    return jsonify({
+        'data': response.get('wifi_clients'),
+        'total_rows': response.get('total_rows'),
+        'current_page': page,
+        'rows_per_page': rows_per_page
+    })
 
 
 @tables_bp.route('/<table_name>', methods=['GET'])

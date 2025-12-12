@@ -31,7 +31,7 @@ function loadTableData(tableId) {
 
     let url = `/admin/tables/${tableId}?page=${currentPage}&rows_per_page=${rowsPerPage}`;
 
-    if (searchQuery) {
+    if (searchQuery.length >= 3) {
         url += `&search=${encodeURIComponent(searchQuery)}`;
     }
 
@@ -210,11 +210,9 @@ function changePage(tableId, direction) {
 function setupSearch(tableId) {
     const searchInput = document.getElementById(`${tableId}_search`);
     searchInput.addEventListener('input', () => {
-        if (searchInput.value.length >= 3) {
-            tableData[tableId].searchQuery = searchInput.value;
-            tableData[tableId].currentPage = 1; // Сброс на первую страницу
-            loadTableData(tableId);
-        }
+        tableData[tableId].searchQuery = searchInput.value;
+        tableData[tableId].currentPage = 1; // Сброс на первую страницу
+        loadTableData(tableId);
     });
 }
 
