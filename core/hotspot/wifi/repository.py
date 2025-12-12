@@ -3,7 +3,7 @@ from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
 
 
-from sqlalchemy import select
+from sqlalchemy import distinct, select
 
 from core.hotspot.user.expiration import new_expiration
 from core.hotspot.user.repository import get_or_create_clients_number
@@ -62,3 +62,10 @@ def create_or_udpate_wifi_client(mac, is_employee, phone_number):
                 db_session.commit()
             except IntegrityError:
                 db_session.rollback()
+
+def get_locations():
+    with get_session() as db_session:
+        query = distinct(WifiClient.last_location)
+        locations = db_session.query(query).order_by(WifiClient.last_location.asc()).all()
+        list_locations = [v[0] for v in locations]
+        return list_locations

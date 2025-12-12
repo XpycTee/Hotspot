@@ -1,5 +1,6 @@
 from flask import Blueprint, redirect, render_template, session, url_for
 
+from core.hotspot.wifi.repository import get_locations
 from web.pages.admin.auth import auth_bp
 from web.pages.admin.tables import tables_bp
 from web.pages.admin.hotspot import hotspot_bp
@@ -27,4 +28,5 @@ def admin():
 @login_required
 def panel():
     error = session.pop('error', None)
-    return render_template('admin/panel.html', error=error)
+    locations = get_locations()
+    return render_template('admin/panel.html', error=error, locations=locations)

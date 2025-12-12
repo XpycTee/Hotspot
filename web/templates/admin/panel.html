@@ -49,9 +49,9 @@
                     <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.last_location', session.user_lang) }}:</label>
                     <select id="wifi_clients_last_location" class="filter-select">
                         <option>None</option>
-                        <option>City 1</option>
-                        <option>City 2</option>
-                        <option>City 3</option>
+                        {% for location in locations %}
+                        <option>{{ location }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
