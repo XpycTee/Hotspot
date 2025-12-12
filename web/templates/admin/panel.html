@@ -40,6 +40,7 @@
                         <td>{{ client.get('last_ipv4_address') }}</td>
                         <td class="column-controls">
                             <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">{{ get_translate('html.admin.buttons.deauth', session.user_lang) }}</button>
+                            <button class="btn btn-delete btn-controls" onclick="blockRow(this)">{{ get_translate('html.admin.buttons.block', session.user_lang) }})}</button>
                         </td>
                     </tr>
                     {% endfor %}

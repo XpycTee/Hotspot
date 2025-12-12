@@ -21,7 +21,13 @@ function changePageTo(tableId, pageNumber) {
 function loadTableData(tableId) {
     const { currentPage, searchQuery } = tableData[tableId];
 
-    fetch(`/admin/tables/${tableId}?page=${currentPage}&search=${encodeURIComponent(searchQuery)}&rows_per_page=${rowsPerPage}`)
+    if (searchQuery) {
+        url = `/admin/tables/${tableId}?page=${currentPage}&search=${encodeURIComponent(searchQuery)}&rows_per_page=${rowsPerPage}`
+    } else {
+        url = `/admin/tables/${tableId}?page=${currentPage}&rows_per_page=${rowsPerPage}`
+    }
+
+    fetch(url)
         .then(response => response.json())
         .then(data => {
             updateTable(tableId, data.data);
@@ -161,9 +167,11 @@ function changePage(tableId, direction) {
 function setupSearch(tableId) {
     const searchInput = document.getElementById(`${tableId}_search`);
     searchInput.addEventListener('input', () => {
-        tableData[tableId].searchQuery = searchInput.value;
-        tableData[tableId].currentPage = 1; // Сброс на первую страницу
-        loadTableData(tableId);
+        if (searchInput.value.length >= 3) {
+            tableData[tableId].searchQuery = searchInput.value;
+            tableData[tableId].currentPage = 1; // Сброс на первую страницу
+            loadTableData(tableId);
+        }
     });
 }
 
