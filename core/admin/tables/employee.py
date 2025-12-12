@@ -20,7 +20,8 @@ def get_employees(page: int, rows_per_page: int, search_query: str = None):
         logger.debug(query)
         
         employees = db_session.scalars(query).all()
-        total_rows = len(employees)
+        
+        total_rows = db_session.query(Employee).count()
 
         data = [
             {

@@ -15,7 +15,8 @@ def get_blacklist(page: int, rows_per_page: int, search_query: str = None):
         logger.debug(query)
         
         blacklist = db_session.scalars(query).all()
-        total_rows = len(blacklist)
+        
+        total_rows = db_session.query(Blacklist).count()
 
         data = [entry.phone_number for entry in blacklist]
     return {'blacklist': data, 'total_rows': total_rows}

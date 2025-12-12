@@ -32,7 +32,8 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None):
         logger.debug(query)
 
         clients = db_session.scalars(query).all()
-        total_rows = len(clients)
+
+        total_rows = db_session.query(WifiClient).count()
 
         data = [
             {
