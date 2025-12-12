@@ -1,5 +1,12 @@
 const rowsPerPage = 15; // Количество строк на странице
 const tableData = {}; // Хранилище данных для таблиц (пагинация и поиск)
+const activeFilters = {
+    online: 'all',
+    employee: 'all',
+    date_from: null,
+    date_to: null,
+    location: null,
+};
 
 // Инициализация таблиц
 document.addEventListener('DOMContentLoaded', function () {
@@ -10,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
         loadTableData(tableId);
         setupSearch(tableId);
     });
+    setupFilters();
 });
 
 function changePageTo(tableId, pageNumber) {
@@ -21,10 +29,31 @@ function changePageTo(tableId, pageNumber) {
 function loadTableData(tableId) {
     const { currentPage, searchQuery } = tableData[tableId];
 
+    let url = `/admin/tables/${tableId}?page=${currentPage}&rows_per_page=${rowsPerPage}`;
+
     if (searchQuery) {
-        url = `/admin/tables/${tableId}?page=${currentPage}&search=${encodeURIComponent(searchQuery)}&rows_per_page=${rowsPerPage}`
-    } else {
-        url = `/admin/tables/${tableId}?page=${currentPage}&rows_per_page=${rowsPerPage}`
+        url += `&search=${encodeURIComponent(searchQuery)}`;
+    }
+
+    // Filters
+    if (activeFilters.online && activeFilters.online !== 'all') {
+        url += `&online=${activeFilters.online}`;
+    }
+
+    if (activeFilters.employee && activeFilters.employee !== 'all') {
+        url += `&employee=${activeFilters.employee}`;
+    }
+
+    if (activeFilters.date_from) {
+        url += `&date_from=${activeFilters.date_from}`;
+    }
+
+    if (activeFilters.date_to) {
+        url += `&date_to=${activeFilters.date_to}`;
+    }
+
+    if (activeFilters.location) {
+        url += `&location=${encodeURIComponent(activeFilters.location)}`;
     }
 
     fetch(url)
@@ -188,7 +217,6 @@ function setupSearch(tableId) {
         }
     });
 }
-
 
 function addRowModal(button, type) {
     const modal = document.getElementById('addRowModal')
@@ -630,4 +658,56 @@ function convertInputsToCells(inputs, data, type, row, button, new_id) {
     }
     
     button.remove();
+}
+
+function setupFilters() {
+    // Трехпозиционные переключатели Online / Employee
+    document.querySelectorAll('.tri-toggle').forEach(toggle => {
+        const target = toggle.dataset.target;
+
+        toggle.querySelectorAll('.tri-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                activeFilters[target] = opt.dataset.value;
+                reloadWifiTable();
+            });
+        });
+    });
+
+    // Выбор локации
+    const locationSelect = document.querySelector('.filter-select');
+    if (locationSelect) {
+        locationSelect.addEventListener('change', () => {
+            activeFilters.location =
+                locationSelect.value === 'None' ? null : locationSelect.value;
+            reloadWifiTable();
+        });
+    }
+
+    // Дата (дельта)
+    const dateInputStart = document.getElementById('wifi_clients_daterange_start');
+    const dateInputStop = document.getElementById('wifi_clients_daterange_stop');
+    if (dateInputStart && dateInputStop) {
+        dateInputStart.addEventListener('change', () => {
+            if (dateInputStart) {
+                activeFilters.date_from = dateInputStart.value;
+            } else {
+                activeFilters.date_to = null;
+            }
+            reloadWifiTable();
+        });
+        dateInputStop.addEventListener('change', () => {
+            if (dateInputStop) {
+                activeFilters.date_to = dateInputStop.value;
+            } else {
+                activeFilters.date_to = null;
+            }
+            reloadWifiTable();
+        });
+    }
+}
+
+// Перезагрузка всех таблиц
+function reloadWifiTable() {
+    tableData['wifi_clients'].currentPage = 1;
+    loadTableData('wifi_clients');
 }

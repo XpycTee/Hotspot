@@ -1,0 +1,70 @@
+.filters-panel {
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filters-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+}
+
+.filter-label {
+    font-weight: 600;
+    min-width: 120px;
+}
+
+.filter-input,
+.filter-select {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* Tri-state toggle */
+.tri-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 260px;
+    background: #f1f1f1;
+    padding: 5px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.tri-option {
+    flex: 1;
+    text-align: center;
+    z-index: 2;
+    padding: 6px 0;
+    font-size: 14px;
+    user-select: none;
+}
+
+.tri-slider {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 3);
+    height: calc(100% - 8px);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    transition: left 0.25s ease;
+}
+
+.tri-toggle[data-state="1"] .tri-slider { left: 4px; }
+.tri-toggle[data-state="2"] .tri-slider { left: calc(33.33% + 4px); }
+.tri-toggle[data-state="3"] .tri-slider { left: calc(66.66% + 4px); }
