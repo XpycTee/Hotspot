@@ -105,6 +105,8 @@ function generateRowHTML(tableId, row) {
 // Функция для обновления пагинации
 function updatePagination(tableId, currentPage, totalPages) {
     const paginationContainer = document.querySelector(`#${tableId} .page_numbers`);
+    const prevButton = document.querySelector(`#${tableId} .btn-prev`);
+    const nextButton = document.querySelector(`#${tableId} .btn-next`);
     const pageInfo = document.getElementById(`${tableId}_page_info`);
     pageInfo.textContent = getTranslate(
         'html.admin.panel.tables.page_counter', 
@@ -125,6 +127,18 @@ function updatePagination(tableId, currentPage, totalPages) {
         button.onclick = () => changePageTo(tableId, page);
         return button;
     };
+
+    // Видимость кнопок Вперед\Назад
+    if (currentPage == 1) {
+        prevButton.style.visibility = 'hidden'
+    } else {
+        prevButton.style.visibility = ''
+    }
+    if (currentPage == totalPages) {
+        nextButton.style.visibility = 'hidden'
+    } else {
+        nextButton.style.visibility = ''
+    }
 
     // Добавление первой страницы
     if (currentPage > 3) {
