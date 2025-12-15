@@ -21,6 +21,8 @@
     </div>
 
 </div>
+<script src="{{ url_for('static', filename='javascript/tables.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/filters.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.nav-tabs a');
@@ -34,16 +36,19 @@
         if (savedTab) {
             document.querySelector(savedTab).style.display = 'block';
             document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
+            loadTableData(savedTab.slice(1));
         } else {
             // Default to first tab if no saved tab
             contentTabs[0].style.display = 'block';
             tabs[0].classList.add('active');
+            loadTableData('wifi_clients');
         }
 
         tabs.forEach(tab => {
             tab.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = this.getAttribute('href');
+                loadTableData(target.slice(1));
 
                 // Hide all content tabs
                 contentTabs.forEach(content => content.style.display = 'none');
@@ -61,6 +66,4 @@
         });
     });
 </script>
-<script src="{{ url_for('static', filename='javascript/tables.js') }}"></script>
-<script src="{{ url_for('static', filename='javascript/filters.js') }}"></script>
 {% endblock %}

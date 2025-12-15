@@ -10,11 +10,10 @@ const activeFilters = {
 
 // Инициализация таблиц
 document.addEventListener('DOMContentLoaded', function () {
-    const tables = ['wifi_clients', 'employees', 'blacklist'];
+    const tables = ['wifi_clients', 'employees', 'blacklist', 'settings'];
 
     tables.forEach(tableId => {
         tableData[tableId] = { currentPage: 1, searchQuery: '' };
-        loadTableData(tableId);
         setupSearch(tableId);
     });
     setupFilters();
@@ -28,39 +27,52 @@ function changePageTo(tableId, pageNumber) {
 // Функция для загрузки данных с сервера
 function loadTableData(tableId) {
     const { currentPage, searchQuery } = tableData[tableId];
+    let url = `/admin/tables/${tableId}`;
+    let url_query = [];
 
-    let url = `/admin/tables/${tableId}?page=${currentPage}&rows_per_page=${rowsPerPage}`;
+    if (tableId != 'settings') {
+        url_query.push(`page=${currentPage}`, `rows_per_page=${rowsPerPage}`);
+    }
 
     if (searchQuery.length >= 3) {
-        url += `&search=${encodeURIComponent(searchQuery)}`;
+        url_query.push(`search=${encodeURIComponent(searchQuery)}`);
     }
 
     // Filters
-    if (activeFilters.online && activeFilters.online !== 'all') {
-        url += `&online=${activeFilters.online}`;
-    }
+    if (tableId === 'wifi_clients'){
+        if (activeFilters.online && activeFilters.online !== 'all') {
+            url_query.push(`online=${activeFilters.online}`);
+        }
 
-    if (activeFilters.employee && activeFilters.employee !== 'all') {
-        url += `&employee=${activeFilters.employee}`;
-    }
+        if (activeFilters.employee && activeFilters.employee !== 'all') {
+            url_query.push(`employee=${activeFilters.employee}`);
+        }
 
-    if (activeFilters.date_from) {
-        url += `&date_from=${activeFilters.date_from}`;
-    }
+        if (activeFilters.date_from) {
+            url_query.push(`date_from=${activeFilters.date_from}`);
+        }
 
-    if (activeFilters.date_to) {
-        url += `&date_to=${activeFilters.date_to}`;
-    }
+        if (activeFilters.date_to) {
+            url_query.push(`date_to=${activeFilters.date_to}`);
+        }
 
-    if (activeFilters.location) {
-        url += `&location=${encodeURIComponent(activeFilters.location)}`;
+        if (activeFilters.location) {
+            url_query.push(`location=${encodeURIComponent(activeFilters.location)}`);
+        }
+    }
+    if (url_query.length > 0) {
+        url += `?${url_query.join('&')}`
     }
 
     fetch(url)
         .then(response => response.json())
         .then(data => {
             updateTable(tableId, data.data);
-            updatePagination(tableId, data.current_page, Math.ceil(data.total_rows / rowsPerPage));
+            updatePagination(
+                tableId, 
+                data.current_page ? data.current_page : 1, 
+                Math.ceil(data.total_rows / rowsPerPage) ? data.total_rows : 0
+            );
         })
         .catch(error => console.error('Error loading table data:', error));
 }
@@ -129,7 +141,6 @@ function generateRowHTML(tableId, row) {
     }
     return '';
 }
-
 
 // Функция для обновления пагинации
 function updatePagination(tableId, currentPage, totalPages) {
@@ -459,7 +470,6 @@ function deauthRow(button) {
     .catch(error => console.error('Error:', error));
 }
 
-
 // Функция для блокировки клиента
 function blockRow(button) {
     const row = button.closest('tr');
@@ -488,7 +498,6 @@ function blockRow(button) {
     })
     .catch(error => console.error('Error:', error));
 }
-
 
 // Функция для создания скрытого инпута
 function createHiddenInput(cell, name) {

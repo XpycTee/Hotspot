@@ -52,21 +52,6 @@
             </tr>
         </thead>
         <tbody id="wifi_clients_body">
-            {% for client in wifi_clients %}
-            <tr>
-                <td>{{ client.get('mac') }}</td>
-                <td>{{ client.get('expiration') }}</td>
-                <td>{{ client.get('employee') }}</td>
-                <td>{{ client.get('phone') }}</td>
-                <td>{{ client.get('online') }}</td>
-                <td>{{ client.get('last_location') }}</td>
-                <td>{{ client.get('last_ipv4_address') }}</td>
-                <td class="column-controls">
-                    <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">{{ get_translate('html.admin.buttons.deauth', session.user_lang) }}</button>
-                    <button class="btn btn-delete btn-controls" onclick="blockRow(this)">{{ get_translate('html.admin.buttons.block', session.user_lang) }}</button>
-                </td>
-            </tr>
-            {% endfor %}
         </tbody>
     </table>
     <div class="pagination">

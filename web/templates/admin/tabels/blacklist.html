@@ -8,14 +8,6 @@
             </tr>
         </thead>
         <tbody id="blacklist_body">
-            {% for blocked in blacklist %}
-            <tr>
-                <td class="blocked-phone">+{{ blocked }}</td>
-                <td class="column-controls">
-                    <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">{{ get_translate('html.admin.buttons.delete', session.user_lang) }}</button>
-                </td>
-            </tr>
-            {% endfor %}
             <tr class="add_row_button">
                 <td colspan="2"><button class="btn btn-add" onclick="addRowModal(this, 'blacklist')">{{ get_translate('html.admin.buttons.add', session.user_lang) }}</button></td>
             </tr>

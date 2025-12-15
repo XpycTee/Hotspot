@@ -1,6 +1,7 @@
 from flask import Blueprint, abort, jsonify, request
 
 from core.admin.tables import get_table
+from core.admin.tables.settings import get_settings
 from core.admin.tables.wifi_clients import get_wifi_clients
 from core.hotspot.user.blacklist import add_to_blacklist, delete_from_blacklist
 from core.hotspot.user.employees import add_employee, delete_from_employees, update_employee
@@ -126,6 +127,18 @@ def wifi_clients_table():
         'total_rows': response.get('total_rows'),
         'current_page': page,
         'rows_per_page': rows_per_page
+    })
+
+
+@tables_bp.route('/settings', methods=['GET'])
+@login_required
+def settings_table():
+    search_query = request.args.get('search', '').lower()
+
+    data = get_settings(search_query)
+
+    return jsonify({
+        'data': data
     })
 
 

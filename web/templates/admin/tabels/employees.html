@@ -12,24 +12,6 @@
             </tr>
         </thead>
         <tbody id="employees_body">
-            {% for employee in employees %}
-            <tr>
-                <td data-id>{{ employee.get('id') }}</td>
-                <td data-lastname>{{ employee.get('lastname') }}</td>
-                <td data-name>{{ employee.get('name') }}</td>
-                <td data-phones class="column-phones">
-                    <ul>
-                        {% for phone in employee.get('phones') %}
-                        <li>+{{ phone }}</li>
-                        {% endfor %}
-                    </ul>
-                </td>
-                <td class="column-controls">
-                    <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employees')">{{ get_translate('html.admin.buttons.edit', session.user_lang) }}</button>
-                    <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employees')">{{ get_translate('html.admin.buttons.delete', session.user_lang) }}</button>
-                </td>
-            </tr>
-            {% endfor %}
             <tr class="add_row_button">
                 <td colspan="5"><button class="btn btn-add" onclick="addRowModal(this, 'employees')">{{ get_translate('html.admin.buttons.add', session.user_lang) }}</button></td>
             </tr>
