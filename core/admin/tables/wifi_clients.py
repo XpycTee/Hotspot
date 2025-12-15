@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 
 from core.database.models.clients_number import ClientsNumber
 from core.database.models.wifi_client import WifiClient
@@ -12,7 +12,7 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
                     date_from=None, date_to=None, 
                     location=None):
     with get_session() as db_session:
-        query = select(WifiClient)
+        base_query = select(WifiClient)
 
         filters = []
 
@@ -43,15 +43,19 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
             filters.append(WifiClient.last_location==location)
 
         if filters:
-            query = query.filter(and_(*filters))
+            base_query = base_query.filter(and_(*filters))
 
+        count_query = select(func.count()).select_from(WifiClient)
 
-        query = query.offset((page - 1) * rows_per_page).limit(rows_per_page)
-        logger.debug(query)
+        if filters:
+            count_query = count_query.where(and_(*filters))
 
-        clients = db_session.scalars(query).all()
+        total_rows = db_session.scalar(count_query)
 
-        total_rows = db_session.query(WifiClient).count()
+        data_query = base_query.offset((page - 1) * rows_per_page).limit(rows_per_page)
+        logger.debug(data_query)
+
+        clients = db_session.scalars(data_query).all()
 
         data = [
             {
