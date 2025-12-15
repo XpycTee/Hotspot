@@ -39,7 +39,7 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
             date_to = datetime.datetime.fromisoformat(date_to)
             date_to += datetime.timedelta(hours=12)
             filters.append(WifiClient.expiration<=date_to)
-        if location:
+        if location != 'all':
             filters.append(WifiClient.last_location==location)
 
         if filters:

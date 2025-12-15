@@ -106,7 +106,7 @@ def wifi_clients_table():
     employee = request.args.get('employee', 'all')
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
-    location = request.args.get('location')
+    location = request.args.get('location', 'all')
 
     page = int(request.args.get('page', 1))
     rows_per_page = int(request.args.get('rows_per_page', 10))
