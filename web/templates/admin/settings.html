@@ -8,14 +8,16 @@
 <div class="admin-dashboard">
     <a href="{{ url_for('pages.admin.auth.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout', session.user_lang) }}</a>
     <ul class="nav-tabs">
-        <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title', session.user_lang) }}</a></li>
-        <li><a href="#employees">{{ get_translate('html.admin.panel.tables.employees.title', session.user_lang) }}</a></li>
-        <li><a href="#blacklist">{{ get_translate('html.admin.panel.tables.blacklist.title', session.user_lang) }}</a></li>
+        <li><a href="#radius">{{ get_translate('html.admin.panel.settings.radius.title', session.user_lang) }}</a></li>
+        <li><a href="#hotspot">{{ get_translate('html.admin.panel.settings.hotspot.title', session.user_lang) }}</a></li>
+        <li><a href="#sender">{{ get_translate('html.admin.panel.settings.sender.title', session.user_lang) }}</a></li>
+        <li><a href="#web">{{ get_translate('html.admin.panel.settings.web.title', session.user_lang) }}</a></li>
     </ul>
     <div class="table-container">
-        {% include "admin/tabels/wifi_clients.html" %}
-        {% include "admin/tabels/employees.html" %}
-        {% include "admin/tabels/blacklist.html" %}
+        {% include "admin/settings/radius.html" %}
+        {% include "admin/settings/hotspot.html" %}
+        {% include "admin/settings/sender.html" %}
+        {% include "admin/settings/web.html" %}
     </div>
 
 </div>
@@ -30,7 +32,7 @@
         contentTabs.forEach(content => content.style.display = 'none');
 
         // Check localStorage for saved tab
-        const savedTab = localStorage.getItem('activePanelTab');
+        const savedTab = localStorage.getItem('activeSettingsTab');
         if (savedTab) {
             document.querySelector(savedTab).style.display = 'block';
             document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
@@ -59,7 +61,7 @@
                 this.classList.add('active');
 
                 // Save the active tab to localStorage
-                localStorage.setItem('activePanelTab', target);
+                localStorage.setItem('activeSettingsTab', target);
             });
         });
     });

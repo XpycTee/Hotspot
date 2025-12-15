@@ -31,3 +31,9 @@ def panel():
     error = session.pop('error', None)
     locations = get_locations()
     return render_template('admin/panel.html', error=error, locations=locations, settings={})
+
+@admin_bp.route('/settings', methods=['POST', 'GET'])
+@login_required
+def settings():
+    error = session.pop('error', None)
+    return render_template('admin/settings.html', error=error)

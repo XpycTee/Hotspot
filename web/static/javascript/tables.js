@@ -24,57 +24,94 @@ function changePageTo(tableId, pageNumber) {
     loadTableData(tableId);
 }
 
-// Функция для загрузки данных с сервера
-function loadTableData(tableId) {
-    const { currentPage, searchQuery } = tableData[tableId];
-    let url = `/admin/tables/${tableId}`;
-    let url_query = [];
+function loadWifiData() {
+    const { currentPage, searchQuery } = tableData['wifi_clients'];
+    let url = '/admin/tables/wifi_clients';
+    let url_query = [`page=${currentPage}`, `rows_per_page=${rowsPerPage}`];
 
-    if (tableId != 'settings') {
-        url_query.push(`page=${currentPage}`, `rows_per_page=${rowsPerPage}`);
-    }
-
+    // Filters
     if (searchQuery.length >= 3) {
         url_query.push(`search=${encodeURIComponent(searchQuery)}`);
     }
 
-    // Filters
-    if (tableId === 'wifi_clients'){
-        if (activeFilters.online && activeFilters.online !== 'all') {
-            url_query.push(`online=${activeFilters.online}`);
-        }
-
-        if (activeFilters.employee && activeFilters.employee !== 'all') {
-            url_query.push(`employee=${activeFilters.employee}`);
-        }
-
-        if (activeFilters.date_from) {
-            url_query.push(`date_from=${activeFilters.date_from}`);
-        }
-
-        if (activeFilters.date_to) {
-            url_query.push(`date_to=${activeFilters.date_to}`);
-        }
-
-        if (activeFilters.location) {
-            url_query.push(`location=${encodeURIComponent(activeFilters.location)}`);
-        }
+    if (activeFilters.online && activeFilters.online !== 'all') {
+        url_query.push(`online=${activeFilters.online}`);
     }
+
+    if (activeFilters.employee && activeFilters.employee !== 'all') {
+        url_query.push(`employee=${activeFilters.employee}`);
+    }
+
+    if (activeFilters.date_from) {
+        url_query.push(`date_from=${activeFilters.date_from}`);
+    }
+
+    if (activeFilters.date_to) {
+        url_query.push(`date_to=${activeFilters.date_to}`);
+    }
+
+    if (activeFilters.location) {
+        url_query.push(`location=${encodeURIComponent(activeFilters.location)}`);
+    }
+
+    // Compile Query
     if (url_query.length > 0) {
         url += `?${url_query.join('&')}`
     }
 
     fetch(url)
         .then(response => response.json())
-        .then(data => {
-            updateTable(tableId, data.data);
+        .then(data => { 
+            updateTable('wifi_clients', data.data);
             updatePagination(
-                tableId, 
-                data.current_page ? data.current_page : 1, 
-                Math.ceil(data.total_rows / rowsPerPage) ? data.total_rows : 0
+                'wifi_clients', 
+                data.current_page, 
+                Math.ceil(data.total_rows / rowsPerPage)
             );
-        })
+         })
         .catch(error => console.error('Error loading table data:', error));
+}
+
+// Функция для загрузки данных с сервера
+function loadTableData(tableId) {
+    if (tableId === 'settings') {
+        fetch('/admin/tables/settings')
+            .then(response => response.json())
+            .then(data => { updateSettingsTabel(data.data); })
+            .catch(error => console.error('Error loading table data:', error));        
+    } else if (tableId === 'wifi_clients'){
+        loadWifiData();
+    } else {
+        const { currentPage, searchQuery } = tableData[tableId];
+        let url = `/admin/tables/${tableId}`;
+        let url_query = [`page=${currentPage}`, `rows_per_page=${rowsPerPage}`];
+
+        // Filters
+        if (searchQuery.length >= 3) {
+            url_query.push(`search=${encodeURIComponent(searchQuery)}`);
+        }
+
+        // Compile Query
+        if (url_query.length > 0) {
+            url += `?${url_query.join('&')}`
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => { 
+                updateTable(tableId, data.data);
+                updatePagination(
+                    tableId, 
+                    data.current_page, 
+                    Math.ceil(data.total_rows / rowsPerPage)
+                );
+            })
+            .catch(error => console.error('Error loading table data:', error));
+    }
+}
+
+function updateSettingsTabel(settings) {
+
 }
 
 // Функция для обновления таблицы
@@ -718,5 +755,5 @@ function setupFilters() {
 // Перезагрузка всех таблиц
 function reloadWifiTable() {
     tableData['wifi_clients'].currentPage = 1;
-    loadTableData('wifi_clients');
+    loadWifiData();
 }
