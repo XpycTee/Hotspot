@@ -116,6 +116,7 @@
             "expire": "Access Expiry",
             "is_employee": "Employee",
             "phone": "Phone Number",
+            "all": "All",
             "yes": "Yes",
             "no": "No",
             "online": "Online",
