@@ -10,7 +10,7 @@ const activeFilters = {
 
 // Инициализация таблиц
 document.addEventListener('DOMContentLoaded', function () {
-    const tables = ['wifi_clients', 'employees', 'blacklist', 'settings'];
+    const tables = ['wifi_clients', 'employees', 'blacklist'];
 
     tables.forEach(tableId => {
         tableData[tableId] = { currentPage: 1, searchQuery: '' };
