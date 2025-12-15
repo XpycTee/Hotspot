@@ -421,6 +421,8 @@ function editRow(button, type) {
             createHiddenInput(cell, 'id');
         } else if (cell.hasAttribute('data-lastname') || cell.hasAttribute('data-name')) {
             createTextInput(cell, cell.hasAttribute('data-lastname') ? 'lastname' : 'name');
+        } else if (cell.hasAttribute('data-value')) {
+            createTextInput(cell, cell.hasAttribute('data-value'));
         } else if (cell.hasAttribute('data-phones')) {
             editPhoneList(cell);
         }

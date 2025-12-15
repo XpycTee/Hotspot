@@ -1,0 +1,23 @@
+<div id="settings" class="content-tab table-container" style="display: none;">
+    <input type="text" id="settings_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
+    <table>
+        <thead>
+            <tr>
+                <th>{{ get_translate('html.admin.panel.tables.settings.name', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.tables.settings.value', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.tables.settings.control', session.user_lang) }}</th>
+            </tr>
+        </thead>
+        <tbody id="settings_body">
+            {% for name, value in settings.items() %}
+            <tr>
+                <td data-setting>{{ name }}</td>
+                <td data-value>{{ value }}</td>
+                <td class="column-controls">
+                    <button class="btn btn-edit btn-controls" onclick="editRow(this, 'settings')">{{ get_translate('html.admin.buttons.edit', session.user_lang) }}</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -1,9 +1,11 @@
 from flask import Blueprint, redirect, render_template, session, url_for
 
+from core.config import SETTINGS
 from core.hotspot.wifi.repository import get_locations
 from web.pages.admin.auth import auth_bp
 from web.pages.admin.tables import tables_bp
 from web.pages.admin.hotspot import hotspot_bp
+from web.pages.admin.settings import settings_bp
 from web.pages.admin.utils import login_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
@@ -11,7 +13,8 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 bluepints = [
     auth_bp,
     tables_bp,
-    hotspot_bp
+    hotspot_bp,
+    settings_bp
 ]
 
 for bp in bluepints:
@@ -29,4 +32,5 @@ def admin():
 def panel():
     error = session.pop('error', None)
     locations = get_locations()
-    return render_template('admin/panel.html', error=error, locations=locations)
+    settings = SETTINGS
+    return render_template('admin/panel.html', error=error, locations=locations, settings=settings)

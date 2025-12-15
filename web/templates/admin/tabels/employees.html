@@ -1,0 +1,46 @@
+<div id="employees" class="content-tab table-container" style="display: none;">
+    <input type="text" id="employees_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
+
+    <table>
+        <thead>
+            <tr>
+                <th>{{ get_translate('html.admin.panel.tables.employees.id', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.tables.employees.lastname', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.tables.employees.name', session.user_lang) }}</th>
+                <th class="column-phones">{{ get_translate('html.admin.panel.tables.employees.phones', session.user_lang) }}</th>
+                <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
+            </tr>
+        </thead>
+        <tbody id="employees_body">
+            {% for employee in employees %}
+            <tr>
+                <td data-id>{{ employee.get('id') }}</td>
+                <td data-lastname>{{ employee.get('lastname') }}</td>
+                <td data-name>{{ employee.get('name') }}</td>
+                <td data-phones class="column-phones">
+                    <ul>
+                        {% for phone in employee.get('phones') %}
+                        <li>+{{ phone }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td class="column-controls">
+                    <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employees')">{{ get_translate('html.admin.buttons.edit', session.user_lang) }}</button>
+                    <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employees')">{{ get_translate('html.admin.buttons.delete', session.user_lang) }}</button>
+                </td>
+            </tr>
+            {% endfor %}
+            <tr class="add_row_button">
+                <td colspan="5"><button class="btn btn-add" onclick="addRowModal(this, 'employees')">{{ get_translate('html.admin.buttons.add', session.user_lang) }}</button></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="pagination">
+        <button class="btn btn-prev" onclick="changePage('employees', -1)">{{ get_translate('html.admin.buttons.prev', session.user_lang) }}</button>
+        <div class="page_numbers">
+            <!--button class="btn btn-number" onclick="changePageTo('employee', X)">X</button-->
+        </div>
+        <button class="btn btn-next" onclick="changePage('employees', 1)">{{ get_translate('html.admin.buttons.next', session.user_lang) }}</button>
+        <span id="employees_page_info"></span>
+    </div>
+</div>
