@@ -144,11 +144,8 @@ def code():
         response = authenticate_by_phone(mac, phone_number, hardware_fp)
         status = response.get('status')
         if status == "OK":
-            user_fp = response.get('user_fp')
-            if user_fp:
+            if user_fp:=response.get('user_fp'):
                 session['user_fp'] = user_fp
-
-            session['mac'] = response.get('mac', mac)
 
             return redirect(url_for('pages.hotspot.sendin'), 302)
         elif status == "BLOCKED":

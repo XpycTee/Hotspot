@@ -69,3 +69,11 @@ def get_locations():
         locations = db_session.query(query).order_by(WifiClient.last_location.asc()).all()
         list_locations = [v[0] for v in locations]
         return list_locations
+    
+    
+def update_mac(old, new):
+    with get_session() as db_session:
+        query = select(WifiClient).where(WifiClient.mac==old)
+        wifi_client = db_session.scalars(query).first()
+        wifi_client.mac = new
+        db_session.commit()

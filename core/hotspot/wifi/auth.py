@@ -15,7 +15,7 @@ from core.hotspot.user.expiration import update_expiration
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 from core.hotspot.wifi.challange import hash_chap
-from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_fp
+from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_fp, update_mac
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
 from core.hotspot.wifi.repository import find_by_mac
 
@@ -60,14 +60,14 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
         logger.info(f"{mac} is blocked")
         return {"status": "BLOCKED"}
 
-    auth_method = "phone & mac"
+    use_fp = False
     wifi_client = find_by_mac(mac)
     
     user_fp = hash_fingerprint(phone_number, hardware_fp)
 
     if not wifi_client and user_fp:
         wifi_client = find_by_fp(user_fp)
-        auth_method = "phone & fp"
+        use_fp = True
 
     if wifi_client and (phone:= wifi_client.get('phone')) and phone == phone_number:
         is_employee = check_employee(phone_number)
@@ -78,12 +78,14 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
             update_employee_status(wifi_client_mac, is_employee)
 
         update_expiration(wifi_client_mac)
+        
+        if user_fp:
+            update_mac(wifi_client_mac, mac)
 
-        logger.info(f"{mac} authing by {auth_method}")
+        logger.info(f"{mac} authing by {'phone & fp' if use_fp else 'phone & mac'}")
         response = {
             "status": "OK", 
             "phone": phone_number, 
-            "mac": wifi_client_mac, 
             "user_fp": user_fp, 
             "employee": is_employee
         }
