@@ -7,7 +7,6 @@ import sys
 
 from core.config import SETTINGS
 from core.config.logging import LOG_LEVEL
-from core.config.radius import RADIUS_ACCT_PORT, RADIUS_ADDRESSES, RADIUS_AUTH_PORT, RADIUS_COA_PORT
 from radius.logging import logger
 
 
