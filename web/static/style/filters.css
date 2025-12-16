@@ -68,3 +68,30 @@
 .tri-toggle[data-state="1"] .tri-slider { left: 4px; }
 .tri-toggle[data-state="2"] .tri-slider { left: calc(33.33% + 4px); }
 .tri-toggle[data-state="3"] .tri-slider { left: calc(66.66% + 4px); }
+
+/* Collapsible filters */
+.filters-header {
+    justify-content: space-between;
+}
+
+
+.filters-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+.filters-body {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    gap: 15px;
+}
+
+
+.filters-body[hidden] {
+    display: none;
+}

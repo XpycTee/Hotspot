@@ -2,40 +2,42 @@
     <div class="filters-panel">
         <div class="filters-row">
             <input type="text" id="wifi_clients_search" class="filter-input table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
+            <button type="button" class="filters-toggle-btn" aria-expanded="false">{{ get_translate('html.admin.buttons.filters_open', session.user_lang) }}</button>
         </div>
-        
-        <div class="filters-row">
-            <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.expire', session.user_lang) }}:</label>
-            <input type="date" id="wifi_clients_daterange_start" class="filter-input">
-            <input type="date" id="wifi_clients_daterange_stop" class="filter-input">
-        </div>
-
-        <div class="filters-row">
-            <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee', session.user_lang) }}:</label>
-            <div id="wifi_clients_employee" class="tri-toggle" data-target="employee">
-                <div class="tri-option" data-value="all">{{ get_translate('html.admin.panel.tables.wifi_clients.all', session.user_lang, 'All') }}</div>
-                <div class="tri-option" data-value="yes">{{ get_translate('html.admin.panel.tables.wifi_clients.yes', session.user_lang) }}</div>
-                <div class="tri-option" data-value="no">{{ get_translate('html.admin.panel.tables.wifi_clients.no', session.user_lang) }}</div>
-                <div class="tri-slider"></div>
+        <div class="filters-body" hidden>
+            <div class="filters-row">
+                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.expire', session.user_lang) }}:</label>
+                <input type="date" id="wifi_clients_daterange_start" class="filter-input">
+                <input type="date" id="wifi_clients_daterange_stop" class="filter-input">
             </div>
-            
-            <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.online', session.user_lang) }}:</label>
-            <div id="wifi_clients_online" class="tri-toggle" data-target="online">
-                <div class="tri-option" data-value="all">{{ get_translate('html.admin.panel.tables.wifi_clients.all', session.user_lang, 'All') }}</div>
-                <div class="tri-option" data-value="yes">{{ get_translate('html.admin.panel.tables.wifi_clients.yes', session.user_lang) }}</div>
-                <div class="tri-option" data-value="no">{{ get_translate('html.admin.panel.tables.wifi_clients.no', session.user_lang) }}</div>
-                <div class="tri-slider"></div>
-            </div>
-        </div>
 
-        <div class="filters-row">
-            <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.last_location', session.user_lang) }}:</label>
-            <select id="wifi_clients_last_location" class="filter-select">
-                <option value="all" selected>{{ get_translate('html.admin.panel.tables.wifi_clients.all', session.user_lang, 'All') }}</option>
-                {% for location in locations %}
-                <option>{{ location }}</option>
-                {% endfor %}
-            </select>
+            <div class="filters-row">
+                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee', session.user_lang) }}:</label>
+                <div id="wifi_clients_employee" class="tri-toggle" data-target="employee">
+                    <div class="tri-option" data-value="all">{{ get_translate('html.admin.panel.tables.wifi_clients.all', session.user_lang, 'All') }}</div>
+                    <div class="tri-option" data-value="yes">{{ get_translate('html.admin.panel.tables.wifi_clients.yes', session.user_lang) }}</div>
+                    <div class="tri-option" data-value="no">{{ get_translate('html.admin.panel.tables.wifi_clients.no', session.user_lang) }}</div>
+                    <div class="tri-slider"></div>
+                </div>
+                
+                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.online', session.user_lang) }}:</label>
+                <div id="wifi_clients_online" class="tri-toggle" data-target="online">
+                    <div class="tri-option" data-value="all">{{ get_translate('html.admin.panel.tables.wifi_clients.all', session.user_lang, 'All') }}</div>
+                    <div class="tri-option" data-value="yes">{{ get_translate('html.admin.panel.tables.wifi_clients.yes', session.user_lang) }}</div>
+                    <div class="tri-option" data-value="no">{{ get_translate('html.admin.panel.tables.wifi_clients.no', session.user_lang) }}</div>
+                    <div class="tri-slider"></div>
+                </div>
+            </div>
+
+            <div class="filters-row">
+                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.last_location', session.user_lang) }}:</label>
+                <select id="wifi_clients_last_location" class="filter-select">
+                    <option value="all" selected>{{ get_translate('html.admin.panel.tables.wifi_clients.all', session.user_lang, 'All') }}</option>
+                    {% for location in locations %}
+                    <option>{{ location }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
     </div>
     <table>

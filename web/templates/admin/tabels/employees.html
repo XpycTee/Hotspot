@@ -1,6 +1,9 @@
 <div id="employees" class="content-tab table-container" style="display: none;">
-    <input type="text" id="employees_search" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
-
+    <div class="filters-panel">
+        <div class="filters-row">
+            <input type="text" id="employees_search" class="filter-input table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
+        </div>
+    </div>
     <table>
         <thead>
             <tr>

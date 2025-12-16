@@ -11,3 +11,16 @@ document.querySelectorAll('.tri-toggle').forEach(toggle => {
         });
     });
 });
+
+// Toggle filters visibility
+const toggleBtn = document.querySelector('.filters-toggle-btn');
+const filtersBody = document.querySelector('.filters-body');
+
+if (toggleBtn && filtersBody) {
+    toggleBtn.addEventListener('click', () => {
+        const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+        toggleBtn.setAttribute('aria-expanded', String(!expanded));
+        toggleBtn.textContent = !expanded ? getTranslate('html.admin.buttons.filters_close') : getTranslate('html.admin.buttons.filters_open');
+        filtersBody.hidden = expanded;
+    });
+}
