@@ -50,9 +50,9 @@ def main():
             cmd = ['python', '-m', 'radius.run', 
                    '--worker-id', str(i), 
                    '--log-level', args.log_level,
-                   '--port-auth', auth_port,
-                   '--port-acct', acct_port,
-                   '--port-coa', coa_port]
+                   '--port-auth', str(auth_port),
+                   '--port-acct', str(acct_port),
+                   '--port-coa', str(coa_port)]
             for address in addresses:
                 cmd.extend(['--address', address])
             p = subprocess.Popen(cmd)
