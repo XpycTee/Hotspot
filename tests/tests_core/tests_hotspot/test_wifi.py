@@ -420,7 +420,6 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '79990000001', 
-            'mac': 'AA:AA:AA:00:00:01', 
             'user_fp': None, 
             'employee': True
         }
@@ -431,7 +430,6 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '70000000001', 
-            'mac': '00:00:00:00:00:01', 
             'user_fp': None, 
             'employee': False
         }
@@ -445,7 +443,6 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '79990000001', 
-            'mac': 'AA:AA:AA:00:00:01', 
             'user_fp': 'ebbca9da97239a14180e102968d96db2c316bf32c5a8b680542f381678ec773d', 
             'employee': True
         }
@@ -455,8 +452,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         self._db_expired_guest('00:00:00:00:00:01', '70000000001', '186db641a10fb5522bf40c7e65e59cf0dde326f08651303e2a671773e7034aa9')
         expected = {
             'status': 'OK', 
-            'phone': '70000000001', 
-            'mac': '00:00:00:00:00:01', 
+            'phone': '70000000001',  
             'user_fp': '186db641a10fb5522bf40c7e65e59cf0dde326f08651303e2a671773e7034aa9', 
             'employee': False
         }
