@@ -1,0 +1,20 @@
+<div id="radius" class="content-tab table-container" style="display: none;">
+    <input type="text" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
+    <table>
+        <thead>
+            <tr>
+                <th>{{ get_translate('html.admin.settings.radius.address', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.settings.radius.name', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.settings.radius.authport', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.settings.radius.acctport', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.settings.radius.coaport', session.user_lang) }}</th>
+                <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
+            </tr>
+        </thead>
+        <tbody id="radius_body">
+            <tr class="add_row_button">
+                <td colspan="6"><button class="btn btn-add" onclick="addNewHostModal()">{{ get_translate('html.admin.buttons.add', session.user_lang) }}</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

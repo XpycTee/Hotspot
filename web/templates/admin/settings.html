@@ -8,21 +8,20 @@
 <div class="admin-dashboard">
     <a href="{{ url_for('pages.admin.auth.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout', session.user_lang) }}</a>
     <ul class="nav-tabs">
-        <li><a href="#radius">{{ get_translate('html.admin.panel.settings.radius.title', session.user_lang) }}</a></li>
-        <li><a href="#hotspot">{{ get_translate('html.admin.panel.settings.hotspot.title', session.user_lang) }}</a></li>
-        <li><a href="#sender">{{ get_translate('html.admin.panel.settings.sender.title', session.user_lang) }}</a></li>
-        <li><a href="#web">{{ get_translate('html.admin.panel.settings.web.title', session.user_lang) }}</a></li>
+        <li><a href="#hotspot">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
+        <li><a href="#radius">{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</a></li>
+        <li><a href="#sender">{{ get_translate('html.admin.settings.sender.title', session.user_lang) }}</a></li>
+        <li><a href="#web">{{ get_translate('html.admin.settings.web.title', session.user_lang) }}</a></li>
     </ul>
     <div class="table-container">
-        {% include "admin/settings/radius.html" %}
         {% include "admin/settings/hotspot.html" %}
+        {% include "admin/settings/radius.html" %}
         {% include "admin/settings/sender.html" %}
         {% include "admin/settings/web.html" %}
     </div>
 
 </div>
-<script src="{{ url_for('static', filename='javascript/tables.js') }}"></script>
-<script src="{{ url_for('static', filename='javascript/filters.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/settings.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.nav-tabs a');
@@ -36,19 +35,19 @@
         if (savedTab) {
             document.querySelector(savedTab).style.display = 'block';
             document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
-            loadTableData(savedTab.slice(1));
+            loadSettingsData(savedTab.slice(1));
         } else {
             // Default to first tab if no saved tab
             contentTabs[0].style.display = 'block';
             tabs[0].classList.add('active');
-            loadTableData('wifi_clients');
+            loadSettingsData('hotspot');
         }
 
         tabs.forEach(tab => {
             tab.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = this.getAttribute('href');
-                loadTableData(target.slice(1));
+                loadSettingsData(target.slice(1));
 
                 // Hide all content tabs
                 contentTabs.forEach(content => content.style.display = 'none');

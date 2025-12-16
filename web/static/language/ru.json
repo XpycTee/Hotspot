@@ -146,6 +146,27 @@
           "phone_palceholder": "Телефон",
           "add_phone_btn": "+ номер"
         }
+      },
+      "settings": {
+        "radius": {
+          "title": "RADIUS Хосты",
+          "add_title": "Новый хост",
+          "address": "Адрес",
+          "secret": "Секрет",
+          "name": "Имя",
+          "authport": "Auth",
+          "acctport": "Acct",
+          "coaport": "CoA"
+        },
+        "hotspot": {
+          "title": "Hotspot"
+        },
+        "sender": {
+          "title": "Sender"
+        },
+        "web": {
+          "title": "Web"
+        }
       }
     }
   },

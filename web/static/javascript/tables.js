@@ -74,12 +74,7 @@ function loadWifiData() {
 
 // Функция для загрузки данных с сервера
 function loadTableData(tableId) {
-    if (tableId === 'settings') {
-        fetch('/admin/tables/settings')
-            .then(response => response.json())
-            .then(data => { updateSettingsTabel(data.data); })
-            .catch(error => console.error('Error loading table data:', error));        
-    } else if (tableId === 'wifi_clients'){
+    if (tableId === 'wifi_clients'){
         loadWifiData();
     } else {
         const { currentPage, searchQuery } = tableData[tableId];
@@ -108,10 +103,6 @@ function loadTableData(tableId) {
             })
             .catch(error => console.error('Error loading table data:', error));
     }
-}
-
-function updateSettingsTabel(settings) {
-
 }
 
 // Функция для обновления таблицы

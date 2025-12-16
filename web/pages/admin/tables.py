@@ -130,18 +130,6 @@ def wifi_clients_table():
     })
 
 
-@tables_bp.route('/settings', methods=['GET'])
-@login_required
-def settings_table():
-    search_query = request.args.get('search', '').lower()
-
-    data = get_settings(search_query)
-
-    return jsonify({
-        'data': data
-    })
-
-
 @tables_bp.route('/<table_name>', methods=['GET'])
 @login_required
 def table(table_name):
