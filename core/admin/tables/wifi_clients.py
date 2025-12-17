@@ -43,9 +43,9 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
         elif online == 'no':
             filters.append(WifiClient.online==False)
         if employee == 'yes':
-            filters.append(WifiClient.employee==True)
+            filters.append(WifiClient.employee!=None)
         elif employee == 'no':
-            filters.append(WifiClient.employee==False)
+            filters.append(WifiClient.employee==None)
         if date_from:
             date_from = datetime.datetime.fromisoformat(date_from)
             filters.append(WifiClient.expiration>=date_from)

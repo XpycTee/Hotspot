@@ -21,3 +21,12 @@ class WifiClient(Model):
     online = Column(Boolean, server_default='false')
     last_location = Column(String(64))
     last_ipv4_address = Column(String(15))
+
+    @property
+    def is_employee(self) -> bool:
+        return self.employee_id is not None
+    
+    @property
+    def phone_number(self) -> str:
+        return self.phone.phone_number if self.phone else None
+    

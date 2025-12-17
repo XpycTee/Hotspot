@@ -117,7 +117,7 @@ class HotspotRADIUS(BaseServer):
                     client = authenticate_by_mac(mac)
                     status = client.get('status')
                     if status == 'OK':
-                        is_employee = client.get('employee')
+                        is_employee = client.get('is_employee')
                         self._set_accept_reply(reply, is_employee)
                         logger.info('Auth by mac')
                     else:

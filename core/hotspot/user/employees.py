@@ -1,3 +1,4 @@
+from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
 from core.database.models.employee_phone import EmployeePhone
 from core.database.models.wifi_client import WifiClient
@@ -34,15 +35,22 @@ def add_employee(lastname: str, name: str, phone_numbers: list):
         db_session.flush()  # Чтобы получить ID нового сотрудника
 
         # Добавление телефонов
-        for phone_number in phone_numbers:
-            phone_number = normalize_phone(phone_number)
-            query = select(EmployeePhone).where(EmployeePhone.phone_number==phone_number)
-            employee_phone = db_session.scalars(query).first()
+        for raw_phone in phone_numbers:
+            phone_number = normalize_phone(raw_phone)
+            exists_stmt = select(EmployeePhone).where(EmployeePhone.phone_number==phone_number)
+            employee_phone = db_session.scalars(exists_stmt).first()
             if employee_phone:
                 return {'status': 'ALREDY_EXISTS', 'error_message': get_translate('errors.admin.tables.phone_number_exists')}
             new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
             db_session.add(new_phone)
+
+            wifi_stmt = select(WifiClient).join(WifiClient.phone).where(ClientsNumber.phone_number == phone_number)
+            wifi_client = db_session.scalars(wifi_stmt).first()
+            if wifi_client:
+                wifi_client.employee = new_employee
+
         new_id = new_employee.id
+
     return {'status': 'OK', 'employee_id': new_id}
 
 
@@ -95,14 +103,8 @@ def update_employee(employee_id, lastname: str=None, name: str=None, phone_numbe
 
 def check_employee(phone_number) -> bool:
     with get_session() as db_session:
-        query = select(EmployeePhone).where(EmployeePhone.phone_number==phone_number)
-        employee_phone = db_session.scalars(query).first()
-        return employee_phone is not None
-
-
-def update_employee_status(mac, new_status: bool):
-    with get_session() as db_session:
-        query = select(WifiClient).where(WifiClient.mac==mac)
+        query = select(WifiClient).where(
+            WifiClient.phone.has(ClientsNumber.phone_number==phone_number)
+        )
         wifi_client = db_session.scalars(query).first()
-        wifi_client.employee = new_status
-        db_session.commit()
+        return wifi_client.is_employee

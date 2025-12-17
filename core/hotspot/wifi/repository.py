@@ -20,8 +20,8 @@ def find_by_mac(mac):
         return {
             "mac": wifi_client.mac,
             "expiration": wifi_client.expiration,
-            "employee": wifi_client.employee,
-            "phone": wifi_client.phone.phone_number if wifi_client.phone else None
+            "is_employee": wifi_client.is_employee,
+            "phone": wifi_client.phone_number
         }
 
 
@@ -35,8 +35,8 @@ def find_by_fp(user_fp):
         return {
             "mac": wifi_client.mac,
             "expiration": wifi_client.expiration,
-            "employee": wifi_client.employee,
-            "phone": wifi_client.phone.phone_number if wifi_client.phone else None
+            "is_employee": wifi_client.is_employee,
+            "phone": wifi_client.phone_number
         }
 
 
@@ -64,6 +64,7 @@ def create_or_udpate_wifi_client(mac, phone_number):
                 db_session.commit()
             except IntegrityError:
                 db_session.rollback()
+
 
 def get_locations():
     with get_session() as db_session:
