@@ -77,7 +77,7 @@ class TestAdminViews(unittest.TestCase):
 
     def test_login_required_decorator(self):
         with self.client as c:
-            response = c.get('/admin/')
+            response = c.get('/admin')
             self.assertEqual(response.status_code, 302)
             self.assertIn('/admin/auth/login', response.location)
     
