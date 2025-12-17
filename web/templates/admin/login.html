@@ -1,8 +1,17 @@
-{% extends 'admin/base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}
 {{ get_translate('html.admin.login.title', session.user_lang) }}
 {% endblock %}
+
+{% block headers %}
+<script src="https://cdn.jsdelivr.net/npm/jmespath@0.15.0/jmespath.min.js"></script>
+<script src="{{ url_for('static', filename='javascript/localization.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/forms.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/notifications.css') }}">
+{% endblock %}
+
 
 {% block content %}
 <form class="form form-login" action="/admin/auth/check" method="post">
