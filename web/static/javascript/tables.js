@@ -172,65 +172,71 @@ function generateRowHTML(tableId, row) {
 
 // Функция для обновления пагинации
 function updatePagination(tableId, currentPage, totalPages) {
-    const paginationContainer = document.querySelector(`#${tableId} .page_numbers`);
-    const prevButton = document.querySelector(`#${tableId} .btn-prev`);
-    const nextButton = document.querySelector(`#${tableId} .btn-next`);
-    const pageInfo = document.getElementById(`${tableId}_page_info`);
+    const pagination = document.querySelector(`#${tableId} .pagination`);
+
+    const paginationContainer = pagination.querySelector('.page_numbers');
+    const prevButton = pagination.querySelector('.btn-prev');
+    const nextButton = pagination.querySelector('.btn-next');
+    const pageInfo = pagination.querySelector('.page_info');
     pageInfo.textContent = getTranslate(
         'html.admin.panel.tables.page_counter', 
         { current_page: currentPage, total_pages: totalPages }
     );
 
-    // Очистка текущих кнопок пагинации
-    paginationContainer.innerHTML = '';
-
-    // Генерация кнопок страниц
-    const createPageButton = (page) => {
-        const button = document.createElement('button');
-        button.className = 'btn btn-number';
-        if (page === currentPage) {
-            button.classList.add('active');
-        }
-        button.textContent = page;
-        button.onclick = () => changePageTo(tableId, page);
-        return button;
-    };
-
-    // Видимость кнопок Вперед\Назад
-    if (currentPage == 1) {
-        prevButton.style.visibility = 'hidden'
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
     } else {
-        prevButton.style.visibility = ''
-    }
-    if (currentPage == totalPages) {
-        nextButton.style.visibility = 'hidden'
-    } else {
-        nextButton.style.visibility = ''
-    }
+        pagination.style.display = '';
+        // Очистка текущих кнопок пагинации
+        paginationContainer.innerHTML = '';
+        // Генерация кнопок страниц
+        const createPageButton = (page) => {
+            const button = document.createElement('button');
+            button.className = 'btn btn-number';
+            if (page === currentPage) {
+                button.classList.add('active');
+            }
+            button.textContent = page;
+            button.onclick = () => changePageTo(tableId, page);
+            return button;
+        };
 
-    // Добавление первой страницы
-    if (currentPage > 3) {
-        paginationContainer.appendChild(createPageButton(1));
-        if (currentPage > 4) {
-            const dots = document.createElement('span');
-            dots.textContent = '...';
-            paginationContainer.appendChild(dots);
+        // Видимость кнопок Вперед\Назад
+        if (currentPage == 1) {
+            prevButton.style.visibility = 'hidden'
+        } else {
+            prevButton.style.visibility = ''
         }
-    }
-
-    // Добавление кнопок для текущей страницы и соседних
-    for (let page = Math.max(1, currentPage - 2); page <= Math.min(totalPages, currentPage + 4); page++) {
-        paginationContainer.appendChild(createPageButton(page));
-    }
-
-    // Добавление последней страницы
-    if (currentPage < totalPages - 3) {
-        if (currentPage < totalPages - 4) {
-            const dots = document.createElement('span');
-            dots.textContent = '...';
-            paginationContainer.appendChild(dots);
+        if (currentPage == totalPages) {
+            nextButton.style.visibility = 'hidden'
+        } else {
+            nextButton.style.visibility = ''
         }
-        paginationContainer.appendChild(createPageButton(totalPages));
+
+        // Добавление первой страницы
+        if (currentPage > 3) {
+            paginationContainer.appendChild(createPageButton(1));
+            if (currentPage > 4) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                paginationContainer.appendChild(dots);
+            }
+        }
+
+        // Добавление кнопок для текущей страницы и соседних
+        for (let page = Math.max(1, currentPage - 2); page <= Math.min(totalPages, currentPage + 4); page++) {
+            paginationContainer.appendChild(createPageButton(page));
+        }
+
+        // Добавление последней страницы
+        if (currentPage < totalPages - 3) {
+            if (currentPage < totalPages - 4) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                paginationContainer.appendChild(dots);
+            }
+            paginationContainer.appendChild(createPageButton(totalPages));
+        }
     }
 }
 
