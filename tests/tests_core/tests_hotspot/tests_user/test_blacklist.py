@@ -44,7 +44,7 @@ class TestCoreHotpsotUserBlacklist(unittest.TestCase):
             blocked_wifi_client = WifiClient(
                 mac=mac, 
                 expiration=datetime.datetime.now() + datetime.timedelta(days=1), 
-                employee=False, 
+                employee=None, 
                 phone=blocked_client, 
                 user_fp=None
             )

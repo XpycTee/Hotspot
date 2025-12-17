@@ -6,11 +6,12 @@ from sqlalchemy import select
 
 from core import database
 from core.database.models import Model
+from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
 from core.database.models.employee_phone import EmployeePhone
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
-from core.hotspot.user.employees import add_employee, check_employee, delete_from_employees, update_employee, update_employee_status
+from core.hotspot.user.employees import add_employee, check_employee, delete_from_employees, update_employee
 
 
 class TestCoreHotpsotUserEmployees(unittest.TestCase):
@@ -38,8 +39,47 @@ class TestCoreHotpsotUserEmployees(unittest.TestCase):
             for phone_number in phone_numbers:
                 new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
                 db_session.add(new_phone)
+
+            new_client_number = ClientsNumber(
+                phone_number=phone_numbers[0], 
+                last_seen=datetime.datetime.now()
+            )
+            db_session.add(new_client_number)
+            db_session.commit()
+
+            new_wifi_client = WifiClient(
+                mac='mac', 
+                expiration=datetime.datetime.now() + datetime.timedelta(days=30), 
+                employee=new_employee, 
+                phone=new_client_number,
+                user_fp=None
+            )
+            db_session.add(new_wifi_client)
+            db_session.commit()
+
             new_id = new_employee.id
         return new_id
+
+    @staticmethod
+    def _add_guest(phone_number: str = '70000000000'):
+        with get_session() as db_session:
+            new_client_number = ClientsNumber(
+                phone_number=phone_number, 
+                last_seen=datetime.datetime.now()
+            )
+            db_session.add(new_client_number)
+            db_session.commit()
+
+            new_wifi_client = WifiClient(
+                mac='guest_mac', 
+                expiration=datetime.datetime.now() + datetime.timedelta(days=30), 
+                employee=None, 
+                phone=new_client_number,
+                user_fp=None
+            )
+            db_session.add(new_wifi_client)
+            db_session.commit()
+
 
     @staticmethod
     def _add_wifi_clinet(mac='00:00:00:00:00:02', is_employee=False):
@@ -106,19 +146,6 @@ class TestCoreHotpsotUserEmployees(unittest.TestCase):
         result = check_employee('70000000001')
         self.assertTrue(result)
 
+        self._add_guest('70000000000')
         result = check_employee('70000000000')
         self.assertFalse(result)
-
-    def test_update_employee_status(self):
-        self._add_wifi_clinet('00:00:00:00:00:02', False)
-        with get_session() as db_session:
-            query = select(WifiClient).where(WifiClient.mac=='00:00:00:00:00:02')
-            wifi_client = db_session.scalars(query).first()
-            self.assertFalse(wifi_client.employee)
-
-        update_employee_status('00:00:00:00:00:02', True)
-
-        with get_session() as db_session:
-            query = select(WifiClient).where(WifiClient.mac=='00:00:00:00:00:02')
-            wifi_client = db_session.scalars(query).first()
-            self.assertTrue(wifi_client.employee)

@@ -7,6 +7,8 @@ from sqlalchemy import select
 from core import database
 from core.database.models import Model
 from core.database.models.clients_number import ClientsNumber
+from core.database.models.employee import Employee
+from core.database.models.employee_phone import EmployeePhone
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
 from core.hotspot.user.expiration import get_delay, new_expiration, reset_expiration, update_expiration
@@ -35,6 +37,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             phone_number = '79990000010'
 
         with get_session() as db_session:
+            new_employee = Employee(lastname='lastname', name='name')
+            db_session.add(new_employee)
+            db_session.flush()
+            new_phone = EmployeePhone(phone_number=phone_number, employee=new_employee)
+            db_session.add(new_phone)
+
             client = ClientsNumber(
                 phone_number=phone_number,
                 last_seen=datetime.datetime.now()
@@ -44,7 +52,7 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
 
             wifi_client = WifiClient(
                 mac=mac,
-                employee=is_employee,
+                employee=new_employee if is_employee else None,
                 phone=client,
                 expiration=datetime.datetime.now() + datetime.timedelta(days=1)
             )

@@ -100,7 +100,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             expired_emp_wifi_client = WifiClient(
                 mac=mac, 
                 expiration=datetime.datetime(1970, 1, 1), 
-                employee=True, 
+                employee=expired_emp, 
                 phone=expired_emp_client,
                 user_fp=user_fp
             )
@@ -138,7 +138,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             authed_wifi_client = WifiClient(
                 mac=mac, 
                 expiration=datetime.datetime.now() + datetime.timedelta(days=30), 
-                employee=True, 
+                employee=authed_emp, 
                 phone=authed_emp_client, 
                 user_fp=user_fp
             )
@@ -163,7 +163,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             expired_guest_wifi_client = WifiClient(
                 mac=mac, 
                 expiration=datetime.datetime(1970, 1, 1), 
-                employee=False, 
+                employee=None, 
                 phone=expired_guest_client,
                 user_fp=user_fp
             )
@@ -191,7 +191,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             authed_guest_wifi_client = WifiClient(
                 mac=mac, 
                 expiration=datetime.datetime.now() + datetime.timedelta(days=1), 
-                employee=False, 
+                employee=None, 
                 phone=authed_guest_client, 
                 user_fp=user_fp
             )
@@ -207,7 +207,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             phoneless_wifi_client = WifiClient(
                 mac=mac, 
                 expiration=datetime.datetime.now() + datetime.timedelta(days=1), 
-                employee=False, 
+                employee=None, 
                 phone=None, 
                 user_fp=None
             )
@@ -232,7 +232,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             blocked_wifi_client = WifiClient(
                 mac=mac, 
                 expiration=datetime.datetime.now() + datetime.timedelta(days=1), 
-                employee=False, 
+                employee=None, 
                 phone=blocked_client, 
                 user_fp=None
             )
@@ -299,7 +299,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'mac': '00:00:00:00:00:01',
             'expiration': None,
-            'employee': None,
+            'is_employee': False,
             'phone': None
         }
 
@@ -314,7 +314,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'mac': '00:00:00:00:00:01',
             'expiration': None,
-            'employee': None,
+            'is_employee': False,
             'phone': None
         }
 
@@ -325,10 +325,8 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
     def test_create_or_udpate_wifi_client(self):
         mac = 'FF:FF:FF:00:00:01'
 
-        new_is_employee = False
         new_phone_number = '79999990001'
 
-        update_is_employee = True
         update_phone_number = '79999990002'
 
         with get_session() as db_session:
@@ -336,23 +334,30 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
             wifi_client = db_session.scalars(query).first()
             self.assertIsNone(wifi_client)
 
-        create_or_udpate_wifi_client(mac, new_is_employee, new_phone_number)
+        create_or_udpate_wifi_client(mac, new_phone_number)
 
         with get_session() as db_session:
             query = select(WifiClient).where(WifiClient.mac==mac)
             wifi_client = db_session.scalars(query).first()
             self.assertIsNotNone(wifi_client)
-            self.assertEqual(wifi_client.employee, new_is_employee)
-            self.assertEqual(wifi_client.phone.phone_number, new_phone_number)
+            self.assertEqual(wifi_client.is_employee, False)
+            self.assertEqual(wifi_client.phone_number, new_phone_number)
 
-        create_or_udpate_wifi_client(mac, update_is_employee, update_phone_number)
+            new_employee = Employee(lastname="lastname", name="name")
+            db_session.add(new_employee)
+            db_session.flush()
+            new_phone = EmployeePhone(phone_number=update_phone_number, employee=new_employee)
+            db_session.add(new_phone)
+            db_session.commit()
+
+        create_or_udpate_wifi_client(mac, update_phone_number)
 
         with get_session() as db_session:
             query = select(WifiClient).where(WifiClient.mac==mac)
             wifi_client = db_session.scalars(query).first()
             self.assertIsNotNone(wifi_client)
-            self.assertEqual(wifi_client.employee, update_is_employee)
-            self.assertEqual(wifi_client.phone.phone_number, update_phone_number)
+            self.assertEqual(wifi_client.is_employee, True)
+            self.assertEqual(wifi_client.phone_number, update_phone_number)
 
     def test_authenticate_by_mac(self):
         self._db_expired_emp('AA:AA:AA:00:00:01')
@@ -384,7 +389,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
                 'phone': '79990000002', 
                 'mac': 'AA:AA:AA:00:00:02', 
                 'user_fp': 'f344ea5b5b42f07f8885f6e154aa6d30e558d13ad7d3459611cdf410d42e1972', 
-                'employee': True
+                'is_employee': True
             }
         result = authenticate_by_mac('AA:AA:AA:00:00:02', 'abcdef02')
         self.assertDictEqual(result, expected)
@@ -395,7 +400,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
                 'phone': '70000000002', 
                 'mac': '00:00:00:00:00:02', 
                 'user_fp': '73d6746e649daf41416b5b678b44e3818ae49fcd4f81a6ce7c87d98707a9b144', 
-                'employee': False
+                'is_employee': False
             }
         result = authenticate_by_mac('00:00:00:00:00:02', '12345602')
         self.assertDictEqual(result, expected)
@@ -420,8 +425,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '79990000001', 
-            'user_fp': None, 
-            'employee': True
+            'user_fp': None
         }
         result = authenticate_by_phone('AA:AA:AA:00:00:01', '79990000001')
         self.assertDictEqual(result, expected)
@@ -430,8 +434,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '70000000001', 
-            'user_fp': None, 
-            'employee': False
+            'user_fp': None
         }
         result = authenticate_by_phone('00:00:00:00:00:01', '70000000001')
         self.assertDictEqual(result, expected)
@@ -443,8 +446,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '79990000001', 
-            'user_fp': 'ebbca9da97239a14180e102968d96db2c316bf32c5a8b680542f381678ec773d', 
-            'employee': True
+            'user_fp': 'ebbca9da97239a14180e102968d96db2c316bf32c5a8b680542f381678ec773d'
         }
         result = authenticate_by_phone('AA:AA:AA:FF:FF:01', '79990000001', 'abcdef01')
         self.assertDictEqual(result, expected)
@@ -453,8 +455,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '70000000001',  
-            'user_fp': '186db641a10fb5522bf40c7e65e59cf0dde326f08651303e2a671773e7034aa9', 
-            'employee': False
+            'user_fp': '186db641a10fb5522bf40c7e65e59cf0dde326f08651303e2a671773e7034aa9'
         }
         result = authenticate_by_phone('00:00:00:FF:FF:01', '70000000001', '12345601')
         self.assertDictEqual(result, expected)

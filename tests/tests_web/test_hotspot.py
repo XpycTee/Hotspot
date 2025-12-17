@@ -97,7 +97,7 @@ class TestHotspotViews(unittest.TestCase):
             expired_emp_wifi_client = WifiClient(
                 mac="12:34:56:78:9A:BD", 
                 expiration=datetime.datetime(1970, 1, 1), 
-                employee=True, 
+                employee=expired_emp, 
                 phone=expired_emp_client
             )
             db_session.add(expired_emp_wifi_client)
@@ -123,7 +123,7 @@ class TestHotspotViews(unittest.TestCase):
             authed_wifi_client = WifiClient(
                 mac="12:34:56:78:9A:BC", 
                 expiration=datetime.datetime.now() + datetime.timedelta(days=30), 
-                employee=True, 
+                employee=authed_emp, 
                 phone=authed_emp_client, 
                 user_fp="e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002"
             )
@@ -140,7 +140,7 @@ class TestHotspotViews(unittest.TestCase):
             expired_guest_wifi_client = WifiClient(
                 mac="00:00:00:00:00:10", 
                 expiration=datetime.datetime(1970, 1, 1), 
-                employee=False, 
+                employee=None, 
                 phone=expired_guest_client
             )
             db_session.add(expired_guest_wifi_client)
@@ -156,7 +156,7 @@ class TestHotspotViews(unittest.TestCase):
             authed_guest_wifi_client = WifiClient(
                 mac="00:00:00:00:00:11", 
                 expiration=datetime.datetime.now() + datetime.timedelta(days=1), 
-                employee=False, 
+                employee=None, 
                 phone=authed_guest_client, 
                 user_fp="ab185fb8f0baa93fc0d6852d019045d92dbc71aebec472c7461f7163892f5e92"
             )
