@@ -1,5 +1,9 @@
 <div id="radius" class="content-tab table-container" style="display: none;">
-    <input type="text" class="table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
+    <div class="filters-panel">
+        <div class="filters-row">
+            <input type="text" class="filter-input table-search" placeholder="{{ get_translate('html.admin.panel.tables.search', session.user_lang) }}">
+        </div>
+    </div>
     <table>
         <thead>
             <tr>
@@ -18,3 +22,32 @@
         </tbody>
     </table>
 </div>
+<script>
+const radiusSearchInput = document.querySelector('#radius .table-search');
+const radiusTbody = document.getElementById('radius_body');
+
+radiusSearchInput.addEventListener('input', () => {
+    const query = radiusSearchInput.value.trim().toLowerCase();
+
+    const rows = radiusTbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        // строку "Добавить" не фильтруем
+        if (row.classList.contains('add_row_button')) {
+            row.style.display = '';
+            return;
+        }
+
+        // берём только td с данными, без кнопок
+        const cells = row.querySelectorAll(
+            'td[data-address], td[data-name]'
+        );
+
+        const match = [...cells].some(td =>
+            td.textContent.toLowerCase().includes(query)
+        );
+
+        row.style.display = match ? '' : 'none';
+    });
+});
+</script>

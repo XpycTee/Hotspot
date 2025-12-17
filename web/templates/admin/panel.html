@@ -6,7 +6,17 @@
 
 {% block content %}
 <div class="admin-dashboard">
-    <a href="{{ url_for('pages.admin.auth.logout') }}" class="btn btn-exit">{{ get_translate('html.admin.buttons.logout', session.user_lang) }}</a>
+    <div class="admin-actions">
+        <a href="{{ url_for('pages.admin.settings.index') }}"
+           class="btn-action btn-settings">
+            {{ get_translate('html.admin.buttons.settings', session.user_lang, 'Settings') }}
+        </a>
+
+        <a href="{{ url_for('pages.admin.auth.logout') }}"
+           class="btn-action btn-logout">
+            {{ get_translate('html.admin.buttons.logout', session.user_lang) }}
+        </a>
+    </div>
     <ul class="nav-tabs">
         <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title', session.user_lang) }}</a></li>
         <li><a href="#employees">{{ get_translate('html.admin.panel.tables.employees.title', session.user_lang) }}</a></li>

@@ -20,9 +20,9 @@ for bp in bluepints:
     admin_bp.register_blueprint(bp)
 
 
-@admin_bp.route('/', methods=['POST', 'GET'])
+@admin_bp.route('', methods=['POST', 'GET'])
 @login_required
-def admin():
+def index():
     return redirect(url_for('pages.admin.panel'), 302)
 
 

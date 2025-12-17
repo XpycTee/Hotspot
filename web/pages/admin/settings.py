@@ -10,7 +10,7 @@ settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
 @settings_bp.route('', methods=['POST', 'GET'])
 @login_required
-def settings():
+def index():
     error = session.pop('error', None)
     return render_template('admin/settings.html', error=error)
 
