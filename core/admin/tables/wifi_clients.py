@@ -1,6 +1,7 @@
 import datetime
 from sqlalchemy import and_, func, select
 
+from core.admin.tables.employee import emoloyee_name
 from core.database.models.clients_number import ClientsNumber
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
@@ -56,12 +57,13 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
         logger.debug(data_query)
 
         clients = db_session.scalars(data_query).all()
+        data = []
 
         data = [
             {
                 'mac': client.mac,
                 'expiration': client.expiration,
-                'employee': client.employee,
+                'employee': emoloyee_name(client.employee),
                 'phone': client.phone.phone_number if client.phone else None,
                 'online': client.online,
                 'last_location': client.last_location,

@@ -33,3 +33,12 @@ def get_employees(page: int, rows_per_page: int, search_query: str = None):
             for emp in employees
         ]
     return {'employees': data, 'total_rows': total_rows}
+
+
+def emoloyee_name(employee: Employee):
+    if employee is not None:
+        return  {
+            'lastname': employee.lastname,
+            'name': employee.name
+        }
+    return False

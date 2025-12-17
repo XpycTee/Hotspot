@@ -5,6 +5,7 @@ from core.database.session import get_session
 
 from sqlalchemy import distinct, select
 
+from core.hotspot.user.employees import get_employee
 from core.hotspot.user.expiration import new_expiration
 from core.hotspot.user.repository import get_or_create_clients_number
 
@@ -39,17 +40,18 @@ def find_by_fp(user_fp):
         }
 
 
-def create_or_udpate_wifi_client(mac, is_employee, phone_number):
+def create_or_udpate_wifi_client(mac, phone_number):
     """Создать запись WiFi клиента по MAC-адресу, если нету."""
     db_phone = get_or_create_clients_number(phone_number)
-    expiration = new_expiration(is_employee)
+    db_employee = get_employee(phone_number)
+    expiration = new_expiration(db_employee is not None)
     with get_session() as db_session:
         query = select(WifiClient).where(WifiClient.mac==mac)
         db_client = db_session.scalars(query).first()
 
         if not db_client:
             try:
-                db_client = WifiClient(mac=mac, expiration=expiration, employee=is_employee, phone=db_phone, user_fp=None)
+                db_client = WifiClient(mac=mac, expiration=expiration, employee=db_employee, phone=db_phone, user_fp=None)
                 db_session.add(db_client)
                 db_session.commit()
             except IntegrityError:
@@ -57,7 +59,7 @@ def create_or_udpate_wifi_client(mac, is_employee, phone_number):
         else:
             try:
                 db_client.expiration = expiration
-                db_client.employee = is_employee
+                db_client.employee = db_employee
                 db_client.phone = db_phone
                 db_session.commit()
             except IntegrityError:

@@ -46,6 +46,15 @@ def add_employee(lastname: str, name: str, phone_numbers: list):
     return {'status': 'OK', 'employee_id': new_id}
 
 
+def get_employee(phone_number):
+    with get_session() as db_session:
+        query = select(Employee).where(Employee.phones.any(
+            EmployeePhone.phone_number == phone_number
+        ))
+        employee = db_session.scalars(query).first()
+        return employee
+    
+
 def update_employee(employee_id, lastname: str=None, name: str=None, phone_numbers: list=[]):
     if lastname is None and name is None and phone_numbers == []:
         return {'status': 'BAD_REUQEST'}

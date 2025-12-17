@@ -136,7 +136,7 @@ function generateRowHTML(tableId, row) {
         return `
             <td>${row.mac}</td>
             <td>${formattedExpiration}</td>
-            <td>${row.employee ? getTranslate('html.admin.panel.tables.wifi_clients.yes') : getTranslate('html.admin.panel.tables.wifi_clients.no') }</td>
+            <td>${row.employee ? `${row.employee.lastname} ${row.employee.name}` : getTranslate('html.admin.panel.tables.wifi_clients.no') }</td>
             <td>+${row.phone}</td>
             <td>${row.online ? getTranslate('html.admin.panel.tables.wifi_clients.yes') : getTranslate('html.admin.panel.tables.wifi_clients.no')}</td>
             <td>${row.last_location}</td>

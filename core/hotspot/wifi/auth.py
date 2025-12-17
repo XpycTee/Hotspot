@@ -95,8 +95,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp=None):
 
 def authenticate_by_code(session_id, mac, code, phone_number):
     if verify:=verify_code(session_id, code):
-        is_employee = check_employee(phone_number)
-        create_or_udpate_wifi_client(mac, is_employee, phone_number)
+        create_or_udpate_wifi_client(mac, phone_number)
         clear_code(session_id)
         logger.debug("Auth by code")
         return {"status": "OK"}
