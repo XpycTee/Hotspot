@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from core.database.models.employee import Employee
 from core.database.models.employee_phone import EmployeePhone
 from core.database.session import get_session
@@ -10,11 +10,14 @@ def get_employees(page: int, rows_per_page: int, search_query: str = None):
         query = select(Employee)
 
         if search_query:
-            query = query.filter(
-                Employee.lastname.ilike(f'%{search_query}%') |
-                Employee.name.ilike(f'%{search_query}%') |
-                Employee.phones.any(EmployeePhone.phone_number.ilike(f'%{search_query}%'))
-            )
+            q = f'%{search_query}%'
+            query = query.filter(or_(
+                Employee.lastname.ilike(q),
+                Employee.name.ilike(q),
+                Employee.phones.any(
+                    EmployeePhone.phone_number.ilike(q)
+                )
+            ))
 
         query = query.offset((page - 1) * rows_per_page).limit(rows_per_page)
         logger.debug(query)

@@ -1,8 +1,9 @@
 import datetime
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 
 from core.admin.tables.employee import emoloyee_name
 from core.database.models.clients_number import ClientsNumber
+from core.database.models.employee import Employee
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
 from core.logging.logger import logger
@@ -18,11 +19,23 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
         filters = []
 
         if search_query:
-            search_filters = (
-                WifiClient.mac.ilike(f'%{search_query}%') |
-                WifiClient.last_location.ilike(f'%{search_query}%') |
-                WifiClient.phone.has(ClientsNumber.phone_number.ilike(f'%{search_query}%'))
-            )
+            q = f'%{search_query}%'
+            search_filters = (or_(
+                WifiClient.mac.ilike(q),
+                WifiClient.last_location.ilike(q),
+                WifiClient.phone.has(ClientsNumber.phone_number.ilike(q)),
+                WifiClient.employee.has(or_(
+                    Employee.lastname.ilike(q), 
+                    Employee.name.ilike(q),
+                    func.concat(
+                        Employee.lastname, ' ', Employee.name
+                    ).ilike(q),
+                    func.concat(
+                        Employee.name, ' ', Employee.lastname
+                    ).ilike(q)
+                ))
+            ))
+
             filters.append(search_filters)
 
         if online == 'yes':
