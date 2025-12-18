@@ -2,6 +2,7 @@ import datetime
 from sqlalchemy import and_, func, or_, select
 
 from core.admin.tables.employee import emoloyee_name
+from core.config.hotspot import ONLINE_TIMEOUT
 from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
 from core.database.models.wifi_client import WifiClient
@@ -37,15 +38,18 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
             ))
 
             filters.append(search_filters)
-
+            
+        timeout_dt = datetime.datetime.now() - datetime.timedelta(seconds=ONLINE_TIMEOUT)
         if online == 'yes':
-            filters.append(WifiClient.online==True)
+            filters.append(WifiClient.last_seen >= timeout_dt)
         elif online == 'no':
-            filters.append(WifiClient.online==False)
+            filters.append(WifiClient.last_seen < timeout_dt)
+
         if employee == 'yes':
             filters.append(WifiClient.employee!=None)
         elif employee == 'no':
             filters.append(WifiClient.employee==None)
+
         if date_from:
             date_from = datetime.datetime.fromisoformat(date_from)
             filters.append(WifiClient.expiration>=date_from)
@@ -53,6 +57,7 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
             date_to = datetime.datetime.fromisoformat(date_to)
             date_to += datetime.timedelta(hours=12)
             filters.append(WifiClient.expiration<=date_to)
+
         if location != 'all':
             filters.append(WifiClient.last_location==location)
 
