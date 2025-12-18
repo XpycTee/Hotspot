@@ -1,7 +1,9 @@
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+import datetime
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
 from sqlalchemy.orm import relationship
 
+from core.config.hotspot import ONLINE_TIMEOUT
 from core.database.models import Model
 from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
@@ -14,13 +16,20 @@ class WifiClient(Model):
     mac = Column(String(17), unique=True)
     user_fp =  Column(String(64))
     expiration = Column(DateTime)
-    employee = relationship(Employee, backref='wifi_client') # Column(Boolean)
+
     employee_id = Column(Integer, ForeignKey(Employee.id))
+    employee = relationship(Employee, backref='wifi_client')
+
     phone_id = Column(Integer, ForeignKey(ClientsNumber.id))
     phone = relationship(ClientsNumber, backref='wifi_client')
-    online = Column(Boolean, server_default='false')
+
+    last_seen = Column(DateTime)
     last_location = Column(String(64))
     last_ipv4_address = Column(String(15))
+
+    @property
+    def online(self) -> bool:
+        return self.last_seen and (datetime.now() - self.last_seen).seconds < ONLINE_TIMEOUT
 
     @property
     def is_employee(self) -> bool:

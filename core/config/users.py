@@ -5,7 +5,8 @@ from core.config import SETTINGS, convert_delay
 env = Env(prefix='HOTSPOT_USERS_')
 env.read_env()
 
-users = SETTINGS.get('hotspot_users', {})
+hotspot = SETTINGS.get('hotspot', {})
+users = SETTINGS.get('users', {})
 
 with env.prefixed('STAFF_'):
     staff_user = users.get('staff', {})

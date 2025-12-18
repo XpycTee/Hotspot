@@ -1,3 +1,4 @@
+from sqlalchemy import update
 from core.database.models import Model
 from core.database.session import engine
 
@@ -10,3 +11,4 @@ def create_all():
     import core.database.models.blacklist
 
     Model.metadata.create_all(engine)
+
