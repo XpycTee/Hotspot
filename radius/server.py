@@ -147,18 +147,18 @@ class HotspotRADIUS(BaseServer):
         #logger.info('Received an accounting request')
         #packet.debug_log_attributes()
 
-        status = False
+        alive = False
         status_type = packet.get_attribute('Acct-Status-Type')
         mac = packet.get_attribute('Calling-Station-Id')
         location = packet.get_attribute('WISPr-Location-Name')
         ip_address = packet.get_attribute('Framed-IP-Address')
 
         if status_type in ['Start', 'Alive']:
-            status = True
+            alive = True
         elif status_type == 'Stop':
-            status = False
+            alive = False
 
-        update_statistic(mac, status, location, ip_address)
+        update_statistic(mac, alive, location, ip_address)
 
         reply = self.CreateReplyPacket(packet)
         reply.code = PacketType.AccountingResponse
