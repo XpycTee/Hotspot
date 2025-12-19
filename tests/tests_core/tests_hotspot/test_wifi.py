@@ -5,7 +5,7 @@ from unittest.mock import patch
 from sqlalchemy import select
 
 from core import database
-from core.cache import get_cache
+from core.cache import cache
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
 from core.database.models.clients_number import ClientsNumber
@@ -488,7 +488,6 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
     @patch('core.hotspot.wifi.auth.generate_token')
     @patch('core.hotspot.wifi.auth.RADIUS_ENABLED')
     def test_get_credentials(self, mock_radius_enabled, mock_generate_token):
-        cache = get_cache()
         staff_mac = 'AA:AA:AA:00:00:02'
         staff_phone = '79990000002'
         guest_mac = '00:00:00:00:00:02'
@@ -523,3 +522,5 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         result = get_credentials(guest_mac, guest_phone)
         self.assertDictEqual(result, expected)
         self.assertEqual(mock_token, cache.get(f'auth:token:{guest_phone}'))
+        
+        cache.flushdb()

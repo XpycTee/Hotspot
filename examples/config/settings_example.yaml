@@ -8,7 +8,7 @@ settings:
   # db_url:   # Default: SQLite DB stored as hotspot.db sqlite:///hotspot.db
 
   # Redis backend URL
-  # redis_url:   # Default: redis over UNIX socket unix:///tmp/redis.sock
+  # redis_url:   # Default: redis over UNIX socket unix:///tmp/redis.sock?db=0
 
   # Admin panel credentials and security parameters
   admin:

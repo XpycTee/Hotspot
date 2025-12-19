@@ -8,7 +8,7 @@ from flask import Flask
 from sqlalchemy import select
 
 from core import database
-from core.cache import get_cache
+from core.cache import cache
 from core.config.language import LANGUAGE_CONTENT, LANGUAGE_DEFAULT
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
@@ -41,8 +41,7 @@ class TestHotspotViews(unittest.TestCase):
     def tearDown(self):
         self._clear_users()
         self.app_context.pop()
-        cache = get_cache()
-        cache.clear()
+        cache.flushdb()
 
     @staticmethod
     def _create_flask():
@@ -255,7 +254,6 @@ class TestHotspotViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
 
     def test_resend_route(self):
-        cache = get_cache()
         session_id = 'test_resend_route'
 
         test_sess_data = {'_id': session_id, 'phone': '79999999999'}
@@ -268,7 +266,6 @@ class TestHotspotViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
     
     def test_resend_route_sended(self):
-        cache = get_cache()
         session_id = 'test_resend_route_sended'
         test_sess_data = {'_id': session_id, 'phone': '79999999999'}
 
@@ -291,7 +288,6 @@ class TestHotspotViews(unittest.TestCase):
             self.assertIn('/sendin', response.location)
 
     def test_auth_route_bad_code(self):
-        cache = get_cache()
         session_id = 'test_auth_route_bad_code'
         test_init_data = {'code': '1234'}
         test_sess_data = {'_id': session_id, 'mac': '00:00:00:00:00:00', 'phone': '71234567890'}

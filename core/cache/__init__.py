@@ -1,9 +1,6 @@
-from cachelib import BaseCache
-from core.config.cache import configure_cache
-from core.config.cache import CACHE_URL
+from redis import Redis
+
+from core.config.redis import REDIS_URL
 
 
-cache = configure_cache(CACHE_URL)
-
-def get_cache() -> BaseCache:
-    return cache
+cache = Redis.from_url(REDIS_URL)

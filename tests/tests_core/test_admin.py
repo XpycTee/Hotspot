@@ -9,15 +9,14 @@ from core.admin.auth.security import check_password
 from core.admin.tables.blacklist import get_blacklist
 from core.admin.tables.employee import get_employees
 from core.admin.tables.wifi_clients import get_wifi_clients
-from core.cache import get_cache
+from core.cache import cache
 from core.config.admin import ADMIN
 from core.utils.language import get_translate
 
 
 class TestCoreAdminAuth(unittest.TestCase):
     def tearDown(self):
-        cache = get_cache()
-        cache.clear()
+        cache.flushdb()
 
     def test_handle_failed_login(self):
         session_id = 'test_handle_failed_login'
@@ -69,7 +68,6 @@ class TestCoreAdminAuth(unittest.TestCase):
         result = check_lockout('None')
         self.assertIsNone(result)
 
-        cache = get_cache()
         yesterday = (datetime.datetime.now() + datetime.timedelta(days=1)).timestamp()
         cache.set(f'admin:login:lockout:Good', yesterday)
 
@@ -92,13 +90,11 @@ class TestCoreAdminAuth(unittest.TestCase):
         result = increment_attempts('Null')
         self.assertEqual(result, 1)
 
-        cache = get_cache()
         cache.set('admin:login:attempts:Big', 10)
         result = increment_attempts('Big')
         self.assertEqual(result, 11)
 
     def test_reset_attempts(self):
-        cache = get_cache()
         cache.set('admin:login:attempts:Reset', 10)
         cache.set('admin:login:lockout:Reset', True)
 

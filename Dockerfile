@@ -20,19 +20,15 @@ RUN apk update && apk add --no-cache \
     tzdata
 
 #########################################
-# 2. Опциональные backend'ы
+# 2. Redis backend (опционально)
 #########################################
 
 ARG ENABLE_REDIS=true
-ARG ENABLE_MEMCACHED=false
 
 RUN if [ "$ENABLE_REDIS" = "true" ]; then \
         apk add --no-cache redis; \
     fi
 
-RUN if [ "$ENABLE_MEMCACHED" = "true" ]; then \
-        apk add --no-cache memcached; \
-    fi
 
 #########################################
 # 3. Python зависимости

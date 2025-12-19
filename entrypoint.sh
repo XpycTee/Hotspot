@@ -30,7 +30,7 @@ EOF
         redis-server /tmp/redis.conf &
         REDIS_PID=$!
 
-        export HOTSPOT_REDIS_URL="unix://$REDIS_SOCKET"
+        export HOTSPOT_REDIS_URL="unix://$REDIS_SOCKET?db=0"
     else
         echo "ERROR: Redis not available and HOTSPOT_REDIS_URL not set"
         exit 1
@@ -41,18 +41,7 @@ fi
 
 
 #########################################
-# 2. (Optional) Memcached — legacy support
-#########################################
-
-if [ -z "$HOTSPOT_CACHE_URL" ]; then
-    echo "No HOTSPOT_CACHE_URL provided (memcached disabled)"
-else
-    echo "Using legacy cache: $HOTSPOT_CACHE_URL"
-fi
-
-
-#########################################
-# 3. Инициализация базы данных
+# 2. Инициализация базы данных
 #########################################
 
 echo "Running DB initialization..."
@@ -60,7 +49,7 @@ python init_database.py
 
 
 #########################################
-# 4. RADIUS Server
+# 3. RADIUS Server
 #########################################
 
 RADIUS_ENABLED=${RADIUS_ENABLED:-true}
@@ -77,7 +66,7 @@ fi
 
 
 #########################################
-# 5. Flask Secret Key
+# 4. Flask Secret Key
 #########################################
 
 if [ -z "$FLASK_SECRET_KEY" ]; then
@@ -89,7 +78,7 @@ fi
 
 
 #########################################
-# 6. Gunicorn
+# 5. Gunicorn
 #########################################
 
 GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
