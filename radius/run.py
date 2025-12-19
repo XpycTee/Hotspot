@@ -4,7 +4,7 @@ import os
 from pyrad2 import dictionary, server
 
 from core.config import SETTINGS
-from radius.server import HotspotRADIUS
+from radius.hotspot import HotspotRADIUS
 from radius.logging import logger
 
 
@@ -13,6 +13,7 @@ def configure_argparser():
     parser.add_argument(
         '--worker-id',
         type=int,
+        default=0,
         help='RADIUS Server worker ID'
     )
     parser.add_argument(
@@ -65,7 +66,7 @@ if __name__ == "__main__":
         acctport=radius_acct_port,
         coaport=radius_coa_port,
         hosts=hosts,
-        dict=dictionary.Dictionary("radius/dictionary"), 
+        dict=dictionary.Dictionary("radius/dictionary/main"), 
         coa_enabled=True
     )
     pid = os.getpid()

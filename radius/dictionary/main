@@ -51,10 +51,10 @@
 #$INCLUDE dictionary.usr
 #$INCLUDE dictionary.versanet
 #$INCLUDE dictionary.erx
-$INCLUDE dictionary.freeradius
 #$INCLUDE dictionary.alcatel
-$INCLUDE dictionary.mikrotik
-$INCLUDE dictionary.wispr
+$INCLUDE freeradius
+$INCLUDE mikrotik
+$INCLUDE wispr
 
 #
 #	Following are the proper new names. Use these.
