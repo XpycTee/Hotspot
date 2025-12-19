@@ -7,8 +7,8 @@ settings:
   # SQLAlchemy connection string
   # db_url:   # Default: SQLite DB stored as hotspot.db sqlite:///hotspot.db
 
-  # Cache backend URL
-  # cache_url:   # Default: memcached over UNIX socket memcached+unix:///var/run/memcached.sock
+  # Redis backend URL
+  # redis_url:   # Default: redis over UNIX socket unix:///tmp/redis.sock
 
   # Admin panel credentials and security parameters
   admin:

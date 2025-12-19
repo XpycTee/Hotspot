@@ -3,24 +3,56 @@ set -e
 
 DEBUG=${DEBUG:-false}
 CACHE_SIZE=${CACHE_SIZE:-1024}
+REDIS_MAXMEMORY=${REDIS_MAXMEMORY:-64mb}
 
 echo "=== HOTSPOT ENTRYPOINT STARTED ==="
 
 #########################################
-# 1. Memcached (локальный / внешний)
+# 1. Redis (локальный / внешний)
 #########################################
 
-if [ -z "$HOTSPOT_CACHE_URL" ]; then
-    echo "Starting local memcached (no HOTSPOT_CACHE_URL provided)"
-    memcached -u nobody -m "$CACHE_SIZE" -s "/tmp/memcached.sock" &
-    MEMCACHED_PID=$!
+if [ -z "$HOTSPOT_REDIS_URL" ]; then
+    if command -v redis-server >/dev/null 2>&1; then
+        echo "Starting local Redis (no HOTSPOT_REDIS_URL provided)"
+
+        REDIS_SOCKET="/tmp/redis.sock"
+
+        cat > /tmp/redis.conf <<EOF
+port 0
+unixsocket $REDIS_SOCKET
+unixsocketperm 777
+save ""
+appendonly no
+maxmemory $REDIS_MAXMEMORY
+maxmemory-policy allkeys-lru
+EOF
+
+        redis-server /tmp/redis.conf &
+        REDIS_PID=$!
+
+        export HOTSPOT_REDIS_URL="unix://$REDIS_SOCKET"
+    else
+        echo "ERROR: Redis not available and HOTSPOT_REDIS_URL not set"
+        exit 1
+    fi
 else
-    echo "Using external cache: $HOTSPOT_CACHE_URL"
+    echo "Using external Redis: $HOTSPOT_REDIS_URL"
 fi
 
 
 #########################################
-# 2. Ининциализация базы данных
+# 2. (Optional) Memcached — legacy support
+#########################################
+
+if [ -z "$HOTSPOT_CACHE_URL" ]; then
+    echo "No HOTSPOT_CACHE_URL provided (memcached disabled)"
+else
+    echo "Using legacy cache: $HOTSPOT_CACHE_URL"
+fi
+
+
+#########################################
+# 3. Инициализация базы данных
 #########################################
 
 echo "Running DB initialization..."
@@ -28,7 +60,7 @@ python init_database.py
 
 
 #########################################
-# 3. RADIUS Server
+# 4. RADIUS Server
 #########################################
 
 RADIUS_ENABLED=${RADIUS_ENABLED:-true}
@@ -36,6 +68,7 @@ RADIUS_WORKERS=${RADIUS_WORKERS:-4}
 : "${RADIUS_LOG_LEVEL=${LOG_LEVEL:-info}}"
 
 if [ "$RADIUS_ENABLED" = "true" ]; then
+    echo "Starting RADIUS ($RADIUS_WORKERS workers)"
     python radrun.py -w "$RADIUS_WORKERS" --log-level "$RADIUS_LOG_LEVEL" &
     RADIUS_PID=$!
 else
@@ -44,7 +77,7 @@ fi
 
 
 #########################################
-# 4. Flask Secret Key
+# 5. Flask Secret Key
 #########################################
 
 if [ -z "$FLASK_SECRET_KEY" ]; then
@@ -56,7 +89,7 @@ fi
 
 
 #########################################
-# 5. Gunicorn
+# 6. Gunicorn
 #########################################
 
 GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
