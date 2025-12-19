@@ -8,7 +8,7 @@ from flask import Flask
 from sqlalchemy import select
 
 from core import database
-from core.cache import cache
+from core.redis import cache
 from core.config.language import LANGUAGE_CONTENT, LANGUAGE_DEFAULT
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
@@ -41,7 +41,7 @@ class TestHotspotViews(unittest.TestCase):
     def tearDown(self):
         self._clear_users()
         self.app_context.pop()
-        cache.flushdb()
+        cache.clear()
 
     @staticmethod
     def _create_flask():
@@ -292,7 +292,7 @@ class TestHotspotViews(unittest.TestCase):
         test_init_data = {'code': '1234'}
         test_sess_data = {'_id': session_id, 'mac': '00:00:00:00:00:00', 'phone': '71234567890'}
         cache.set(f'sms:code:{session_id}', 5678)
-        cache.set(f'sms:attempts:{session_id}', 0)
+        cache.set_raw(f'sms:attempts:{session_id}', 0)
         expected_responses = [
             (307, '/code'),
             (307, '/code'),

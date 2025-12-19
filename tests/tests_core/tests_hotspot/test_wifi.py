@@ -5,7 +5,7 @@ from unittest.mock import patch
 from sqlalchemy import select
 
 from core import database
-from core.cache import cache
+from core.redis import cache
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
 from core.database.models.clients_number import ClientsNumber
@@ -523,4 +523,4 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         self.assertDictEqual(result, expected)
         self.assertEqual(mock_token, cache.get(f'auth:token:{guest_phone}'))
         
-        cache.flushdb()
+        cache.clear()

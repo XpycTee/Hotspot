@@ -1,4 +1,4 @@
-from core.cache import cache
+from core.redis import cache
 
 
 def increment_attempts(session_id):

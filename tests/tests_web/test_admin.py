@@ -6,7 +6,7 @@ from unittest.mock import patch
 from flask import Flask
 
 from core import database
-from core.cache import cache
+from core.redis import cache
 from core.config.language import LANGUAGE_CONTENT, LANGUAGE_DEFAULT
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
@@ -36,7 +36,7 @@ class TestAdminViews(unittest.TestCase):
     def tearDown(self):
         self._clear_users()
         self.app_context.pop()
-        cache.flushdb()
+        cache.clear()
 
     @staticmethod
     def _create_flask():
