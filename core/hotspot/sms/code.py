@@ -24,7 +24,10 @@ def increment_attempts(session_id):
 
 def verify_code(session_id, code: str):
     cached = cache.get(f"sms:code:{session_id}")
-    return cached and str(cached) == code
+    if cached:
+        return str(cached) == code
+    
+    return cached
 
 def code_sended(session_id):
     sended = cache.get(f"sms:sended:{session_id}")
