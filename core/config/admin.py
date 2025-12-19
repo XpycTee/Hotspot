@@ -9,7 +9,7 @@ env.read_env()
 DEFAULT_USERNAME = 'admin'
 DEFAULT_PASSWORD = 'admin'
 DEFAULT_MAX_LOGIN_ATTEMPTS = 3
-DEFAULT_LOCKOUT_TIME = 300
+DEFAULT_LOCKOUT_TIME = 5
 
 def configure_admin():
     admin = SETTINGS.get('admin')
