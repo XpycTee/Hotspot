@@ -14,5 +14,12 @@ def check_token(phone_number, token):
 
 
 def get_token(phone_number):
-    cache_token = cache.get(f"auth:token:{phone_number}") or ""
+    pop_lua = """
+    local val = redis.call('GET', KEYS[1])
+    if val then
+        redis.call('DEL', KEYS[1])
+    end
+    return val
+    """
+    cache_token = cache.eval(pop_lua, 1, f"auth:token:{phone_number}") or ""
     return cache_token

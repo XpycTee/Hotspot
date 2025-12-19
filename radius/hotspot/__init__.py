@@ -42,7 +42,6 @@ class HotspotRADIUS(BaseServer):
             else:
                 phone_number = normalize_phone(username)
                 token = get_token(phone_number)
-                non_token = get_token(phone_number)
 
                 if token and packet.verify_password(token):
                     is_employee = check_employee(phone_number)
@@ -73,7 +72,7 @@ class HotspotRADIUS(BaseServer):
 
         update_statistic(mac, alive, location, ip_address)
 
-        reply = packet.create_reply()
+        reply = self.create_reply_packet(packet)
         reply.code = PacketType.AccountingResponse
         reply.add_message_authenticator()
         self.send_reply(packet.fd, reply)
@@ -89,7 +88,7 @@ class HotspotRADIUS(BaseServer):
 
         update_statistic(mac, alive, location, ip_address)
 
-        reply = packet.create_reply()
+        reply = self.create_reply_packet(packet)
         # COA NAK
         reply.code = 45
 

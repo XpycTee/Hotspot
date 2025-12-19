@@ -7,11 +7,7 @@ from core.config.admin import ADMIN
 
 def check_lockout(session_id):
     lockout_until = cache.get(f'admin:login:lockout:{session_id}')
-    if lockout_until is None:
-        return False
-    
-    now_timestamp = datetime.now().timestamp()
-    return (lockout_until and now_timestamp < float(lockout_until))
+    return (lockout_until and datetime.now().timestamp() < float(lockout_until))
 
 
 def update_lockout(session_id):
