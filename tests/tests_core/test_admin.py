@@ -20,8 +20,8 @@ class TestCoreAdminAuth(unittest.TestCase):
 
     def test_handle_failed_login(self):
         session_id = 'test_handle_failed_login'
-        lockout_time = ADMIN.get('lockout_time')
-        max_login_attempts = ADMIN.get('max_login_attempts')
+        lockout_time = ADMIN.lockout_time
+        max_login_attempts = ADMIN.max_login_attempts
         before_lockout = get_translate('errors.admin.wrong_credentials')
         after_lockout = get_translate('errors.admin.end_tries', templates={'lockout_time': lockout_time})
 
@@ -32,8 +32,8 @@ class TestCoreAdminAuth(unittest.TestCase):
             self.assertEqual(error_message, expected)
 
     def test_login_by_password(self):
-        lockout_time = ADMIN.get('lockout_time')
-        max_login_attempts = ADMIN.get('max_login_attempts')
+        lockout_time = ADMIN.lockout_time
+        max_login_attempts = ADMIN.max_login_attempts
         expected_responses = [
             {'status': 'OK'},
             {'status': 'BAD_LOGIN', 'error_message': get_translate('errors.admin.wrong_credentials')},

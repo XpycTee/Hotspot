@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import bcrypt
 from environs import Env
 
@@ -11,6 +12,16 @@ DEFAULT_PASSWORD = 'admin'
 DEFAULT_MAX_LOGIN_ATTEMPTS = 3
 DEFAULT_LOCKOUT_TIME = 5
 
+
+@dataclass
+class AdminConfig:
+    username: str
+    password: bytes
+    max_login_attempts: int
+    lockout_time: int
+
+
+
 def configure_admin():
     admin = SETTINGS.get('admin')
     with env.prefixed('ADMIN_'):
@@ -20,11 +31,11 @@ def configure_admin():
         lockout_time = env.int('LOCKOUT_TIME', admin.get('lockout_time', DEFAULT_LOCKOUT_TIME))
 
     password_hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    return {
-        'username': username, 
-        'password': password_hashed, 
-        'max_login_attempts': max_login_attempts, 
-        'lockout_time': lockout_time
-    }
+    return AdminConfig(
+        username, 
+        password_hashed, 
+        max_login_attempts, 
+        lockout_time
+    )
 
 ADMIN = configure_admin()
