@@ -15,16 +15,18 @@ settings:
     username: admin          # Default admin login name
     password: admin          # Default admin password
     max_login_attempts: 5    # Failed login attempts before lockout
-    lockut_time: 300         # Lockout duration in seconds
+    lockout_time: 300         # Lockout duration in seconds
 
   # Hotspot user categories configuration
-  hotspot_users:
-    guest:
-      password: secret       # Password for guest accounts
-      delay: 24h             # Access duration; supports suffixes: w, d, h, m, s
-    staff:
-      password: supersecret  # Password for staff accounts
-      delay: 30d             # Access duration; default unit is hours if suffix omitted
+  hotspot:
+    online_timeout: 300
+    users:
+      guest:
+        password: secret       # Password for guest accounts
+        delay: 24h             # Access duration; supports suffixes: w, d, h, m, s
+      staff:
+        password: supersecret  # Password for staff accounts
+        delay: 30d             # Access duration; default unit is hours if suffix omitted
 
   # Message sender configuration
   sender:

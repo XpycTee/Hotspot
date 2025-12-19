@@ -15,7 +15,7 @@ settings:
     username: admin          # Default admin login name
     password: admin          # Default admin password
     max_login_attempts: 5    # Failed login attempts before lockout
-    lockut_time: 300         # Lockout duration in seconds
+    lockout_time: 300         # Lockout duration in seconds
 
   # Hotspot user categories configuration
   hotspot:
