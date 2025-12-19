@@ -1,8 +1,6 @@
 from radius.logging import logger
 
-
 from pyrad2 import packet
-from pyrad2.constants import PacketType
 
 
 class BasePacket(packet.Packet):
@@ -13,24 +11,6 @@ class BasePacket(packet.Packet):
 
     def get_attribute(self, key, default=None):
         return self.get(key, [default])[0]
-
-    def create_reply(self, **attributes):
-        return super().CreateReply(**attributes)
-
-    def reply_accept(self, is_employee):
-        reply = self.create_reply()
-        reply.AddAttribute('MT-Group', 'employee' if is_employee else 'guest')
-        reply.code = PacketType.AccessAccept
-        return reply
-
-    def reply_reject(self, error_message: str, log_=logger.info):
-        reply = self.create_reply()
-        reply.AddAttribute('Reply-Message', error_message)
-        reply.code = PacketType.AccessReject
-
-        log_(error_message)
-
-        return reply
 
 
 class HotspotAuthPacket(BasePacket, packet.AuthPacket):

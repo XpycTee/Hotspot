@@ -16,12 +16,12 @@ class HotspotRADIUS(BaseServer):
         logger.info('Received an authentication request')
         packet.debug_log_attributes()
 
-        reply = packet.reply_reject('Bad attributes')
+        reply = self.reply_reject(packet, 'Bad attributes')
 
         try:
             verify_packet = packet.verify_message_authenticator()
         except Exception as e:
-            reply = packet.reply_reject(e, logger.error)
+            reply = self.reply_reject(packet, e, logger.error)
 
         if verify_packet:
             mac = packet.get_attribute('Calling-Station-Id')
@@ -33,24 +33,25 @@ class HotspotRADIUS(BaseServer):
                     status = client.get('status')
                     if status == 'OK':
                         is_employee = client.get('is_employee')
-                        reply = packet.reply_accept(is_employee)
+                        reply = self.reply_accept(packet, is_employee)
                         logger.info('Auth by mac')
                     else:
-                        reply = packet.reply_reject(f'Auth failed with status: {status}')
+                        reply = self.reply_reject(packet, f'Auth failed with status: {status}')
                 else:
-                    reply = packet.reply_reject('Auth failed bad token')
+                    reply = self.reply_reject(packet, 'Auth failed bad token')
             else:
                 phone_number = normalize_phone(username)
                 token = get_token(phone_number)
+                non_token = get_token(phone_number)
 
                 if token and packet.verify_password(token):
                     is_employee = check_employee(phone_number)
-                    reply = packet.reply_accept(is_employee)
+                    reply = self.reply_accept(packet, is_employee)
                     logger.info('Auth by token')
                 else:
-                    reply = packet.reply_reject('Auth failed bad token')
+                    reply = self.reply_reject(packet, 'Auth failed bad token')
         else:
-            reply = packet.reply_reject('Bad Message-Authentificator', logger.warning)
+            reply = self.reply_reject(packet, 'Bad Message-Authentificator', logger.warning)
 
         reply.add_message_authenticator()
         self.send_reply(packet.fd, reply)

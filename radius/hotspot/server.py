@@ -4,6 +4,7 @@ from pyrad2 import server, packet
 from pyrad2.exceptions import ServerPacketError
 from pyrad2.constants import PacketType
 
+from radius.logging import logger
 from radius.hotspot.packet import HotspotAcctPacket, HotspotAuthPacket
 
 
@@ -16,6 +17,21 @@ class BaseServer(server.Server):
             return str(addr.ipv4_mapped)
 
         return str(addr)
+
+    def reply_accept(self, packet, is_employee):
+        reply = self.create_reply_packet(packet)
+        reply.AddAttribute('MT-Group', 'employee' if is_employee else 'guest')
+        reply.code = PacketType.AccessAccept
+        return reply
+
+    def reply_reject(self, packet, error_message: str, log_=logger.info):
+        reply = self.create_reply_packet(packet)
+        reply.AddAttribute('Reply-Message', error_message)
+        reply.code = PacketType.AccessReject
+
+        log_(error_message)
+
+        return reply
 
     def send_reply(self, fd, pkt):
         return super().SendReplyPacket(fd, pkt)
@@ -152,3 +168,6 @@ class BaseServer(server.Server):
 
     def CreateAcctPacket(self, **args) -> packet.Packet:
         return HotspotAcctPacket(dict=self.dict, **args)
+
+    def create_reply_packet(self, pkt, **attributes):
+        return super().CreateReplyPacket(pkt, **attributes)
