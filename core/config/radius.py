@@ -18,13 +18,14 @@ class RadiusPortsConfig:
 
 @dataclass
 class RadiusConfig:
+    enabled: bool = True
     addresses: List[str] = field(default_factory=list)
     ports: RadiusPortsConfig = field(default_factory=RadiusPortsConfig)
     hosts: Optional[dict] = None  # импортируемый YAML (hosts.yaml)
 
 
 with env.prefixed('RADIUS_'):
-    RADIUS_ENABLED = env.bool('ENABLED', True)
+    radius_enabled = env.bool('ENABLED', True)
 
 
 with env.prefixed('HOTSPOT_RADIUS_'):
@@ -44,7 +45,7 @@ with env.prefixed('HOTSPOT_RADIUS_'):
 
 
 RADIUS = RadiusConfig(
-    enabled=RADIUS_ENABLED,
+    enabled=radius_enabled,
     addresses=radius_addresses, 
     ports=RadiusPortsConfig(
         auth=radius_auth_port,

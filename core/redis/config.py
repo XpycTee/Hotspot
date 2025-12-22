@@ -28,4 +28,6 @@ class ConfigListener:
         self.pubsub.subscribe("config:update")
         for msg in self.pubsub.listen():
             if msg["type"] == "message":
-                self.on_reload(msg["data"])
+                data = json.loads(msg["data"])
+                self.on_reload(data)
+

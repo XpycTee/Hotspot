@@ -3,7 +3,7 @@ import datetime
 from core.hotspot.user.blacklist import check_blacklist
 from core.hotspot.user.token import generate_token
 from core.logging.logger import logger
-from core.config.radius import RADIUS_ENABLED
+from core.config.radius import RADIUS
 from core.config.users import GUEST_USER, STAFF_USER
 from core.hotspot.sms.code import clear_code, increment_attempts, verify_code
 from core.hotspot.user.repository import update_clients_numbers_last_seen
@@ -100,7 +100,7 @@ def authenticate_by_code(session_id, mac, code, phone_number):
 
 
 def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
-    if RADIUS_ENABLED:
+    if RADIUS.enabled:
         username = phone_number
         password = generate_token(phone_number)
     else:

@@ -1,10 +1,13 @@
 import argparse
+import dataclasses
 import logging
 import os
+import threading
 from pyrad2 import dictionary, server
 
 from core.config.logging import LOG_LEVEL
 from core.config.radius import RADIUS
+from core.redis.config import ConfigListener
 from radius.hotspot import HotspotRADIUS
 from radius.logging import logger
 
@@ -39,7 +42,12 @@ def configure_argparser():
     return parser
 
 
-if __name__ == "__main__":
+def config_listener(handler):
+    listener = ConfigListener(handler)
+    listener.run()
+
+
+def main():
     parser = configure_argparser()
     args = parser.parse_args()
     worker_id = args.worker_id
@@ -66,7 +74,21 @@ if __name__ == "__main__":
         dict=dictionary.Dictionary("radius/dictionary/main"), 
         coa_enabled=True
     )
+
     pid = os.getpid()
     logger.info(f'Started worker #{worker_id} with PID {pid}')
 
+
+    t = threading.Thread(
+        target=config_listener,
+        args=(srv.config_handler,),
+        name='redis-config-listener',
+        daemon=True
+    )
+    t.start()
+
     srv.Run()
+
+
+if __name__ == "__main__":
+    main()
