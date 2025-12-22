@@ -22,6 +22,7 @@ class RadiusConfig:
     addresses: List[str] = field(default_factory=list)
     ports: RadiusPortsConfig = field(default_factory=RadiusPortsConfig)
     hosts: Optional[dict] = None  # импортируемый YAML (hosts.yaml)
+    version: int = 0
 
 
 with env.prefixed('RADIUS_'):

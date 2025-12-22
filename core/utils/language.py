@@ -1,13 +1,13 @@
 import jmespath
 
-from core.config.language import LANGUAGE_CONTENT, LANGUAGE_DEFAULT
+from core.config.language import LANGUAGE_CONTENT, LANGUAGE
 
 
 def get_translate(path, lang=None, replace=None, templates={}):
     if lang is None:
-        lang = LANGUAGE_DEFAULT
+        lang = LANGUAGE
     else:
-        lang = lang if lang in LANGUAGE_CONTENT else LANGUAGE_DEFAULT
+        lang = lang if lang in LANGUAGE_CONTENT else LANGUAGE
 
     if not replace:
         replace = path

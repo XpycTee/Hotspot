@@ -7,7 +7,7 @@ from flask import Flask
 
 from core import database
 from core.redis import cache
-from core.config.language import LANGUAGE_CONTENT, LANGUAGE_DEFAULT
+from core.config.language import LANGUAGE_CONTENT, LANGUAGE
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
 from core.database.models.employee import Employee
@@ -45,7 +45,7 @@ class TestAdminViews(unittest.TestCase):
         app.register_blueprint(pages_bp)
         app.root_path = os.path.join(ROOD_DIR, 'web')
         app.config['SECRET_KEY'] = 'secret'
-        app.config['LANGUAGE_DEFAULT'] = LANGUAGE_DEFAULT
+        app.config['LANGUAGE_DEFAULT'] = LANGUAGE
         app.config['LANGUAGE_CONTENT'] = LANGUAGE_CONTENT
 
         @app.context_processor

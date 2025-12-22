@@ -3,7 +3,7 @@ from flask import Blueprint, abort, current_app, redirect, render_template, requ
 
 import web.logger as logger
 from core.admin.auth.login import login_by_password
-from core.config.language import LANGUAGE_DEFAULT
+from core.config.language import LANGUAGE
 from web.pages.admin import session
 
 
@@ -41,7 +41,7 @@ def check():
     username = request.form.get('username')
     password = request.form.get('password')
     client_ip = request.remote_addr
-    user_lang = request.form.get('language', LANGUAGE_DEFAULT)
+    user_lang = request.form.get('language', LANGUAGE)
 
     session_id = session.get('_id')
 

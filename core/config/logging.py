@@ -8,7 +8,10 @@ from environs import Env
 env = Env()
 env.read_env()
 
-level_name = SETTINGS.get('log_level', 'DEBUG' if DEBUG else 'WARNING')
+DEFAULT_LOG_LEVEL = 'WARNING'
+
+
+level_name = SETTINGS.get('log_level', 'DEBUG' if DEBUG else DEFAULT_LOG_LEVEL)
 mapping = logging.getLevelNamesMapping()
 level = mapping.get(level_name.upper())
 

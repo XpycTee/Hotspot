@@ -10,6 +10,9 @@ env = Env()
 env.read_env()
 
 
+DEFAULT_LANGUAGE = 'en'
+
+
 def load_language_files():
     language_folder = 'web/static/language'
     language_content = {}
@@ -22,5 +25,5 @@ def load_language_files():
     return language_content
 
 
-LANGUAGE_DEFAULT = env.str('HOTSPOT_LANGUAGE', SETTINGS.get('language', 'en'))
+LANGUAGE = env.str('HOTSPOT_LANGUAGE', SETTINGS.get('language', DEFAULT_LANGUAGE))
 LANGUAGE_CONTENT = load_language_files()

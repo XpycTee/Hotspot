@@ -21,7 +21,6 @@ class AdminConfig:
     lockout_time: int
 
 
-
 def configure_admin():
     admin = SETTINGS.get('admin')
     with env.prefixed('ADMIN_'):
