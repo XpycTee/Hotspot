@@ -3,7 +3,8 @@ import logging
 import os
 from pyrad2 import dictionary, server
 
-from core.config import SETTINGS
+from core.config.logging import LOG_LEVEL
+from core.config.radius import RADIUS
 from radius.hotspot import HotspotRADIUS
 from radius.logging import logger
 
@@ -23,19 +24,17 @@ def configure_argparser():
         default='WARNING',
         help='Set the logging level'
     )
-    raduis_settings = SETTINGS.get('radius')
     parser.add_argument(
-        '--address', action='append', default=raduis_settings.get('addresses')
-    )
-    radius_ports = raduis_settings.get('ports')
-    parser.add_argument(
-        '--port-auth', type=int, default=radius_ports.get('auth')
+        '--address', action='append', default=RADIUS.addresses
     )
     parser.add_argument(
-        '--port-acct', type=int, default=radius_ports.get('acct')
+        '--port-auth', type=int, default=RADIUS.ports.auth
     )
     parser.add_argument(
-        '--port-coa', type=int, default=radius_ports.get('CoA')
+        '--port-acct', type=int, default=RADIUS.ports.acct
+    )
+    parser.add_argument(
+        '--port-coa', type=int, default=RADIUS.ports.CoA
     )
     return parser
 
@@ -49,14 +48,12 @@ if __name__ == "__main__":
     radius_acct_port = args.port_acct
     radius_coa_port = args.port_coa
     
-    log_level = SETTINGS.get('log_level')
     mapping = logging.getLevelNamesMapping()
-    level = mapping.get(args.log_level, log_level)
+    level = mapping.get(args.log_level, LOG_LEVEL)
     logger.setLevel(level)
     
     hosts = {}
-    raduis_settings = SETTINGS.get('radius')
-    for host, parametres in raduis_settings['hosts'].items():
+    for host, parametres in RADIUS.hosts.items():
         parametres['secret'] = parametres.get('secret').encode()
         hosts[host] = server.RemoteHost(**parametres)
 

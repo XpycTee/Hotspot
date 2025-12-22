@@ -5,8 +5,8 @@ import argparse
 import os
 import sys
 
-from core.config import SETTINGS
 from core.config.logging import LOG_LEVEL
+from core.config.radius import RADIUS
 from radius.logging import logger
 
 
@@ -33,16 +33,12 @@ def main():
     logger.setLevel(level)
 
     logger.info(f'Starting RADIUS server with {num_workers} workers...')
-    radius_settings = SETTINGS.get('radius')
-    addresses = radius_settings.get('addresses')
-    auth_port = radius_settings['ports'].get('auth')
-    acct_port = radius_settings['ports'].get('acct')
-    coa_port = radius_settings['ports'].get('CoA')
-    for address in addresses:
+
+    for address in RADIUS.addresses:
         address = f'[{address}]' if ':' in address else address
-        logger.info(f'RADIUS Auth server Listening at: {address}:{auth_port}')
-        logger.info(f'RADIUS Accounting  Listening at: {address}:{acct_port}')
-        logger.info(f'RADIUS CoA server  Listening at: {address}:{coa_port}')
+        logger.info(f'RADIUS Auth server Listening at: {address}:{RADIUS.ports.auth}')
+        logger.info(f'RADIUS Accounting  Listening at: {address}:{RADIUS.ports.acct}')
+        logger.info(f'RADIUS CoA server  Listening at: {address}:{RADIUS.ports.CoA}')
 
     processes = []
     try:
@@ -50,10 +46,10 @@ def main():
             cmd = ['python', '-m', 'radius.run', 
                    '--worker-id', str(i), 
                    '--log-level', args.log_level,
-                   '--port-auth', str(auth_port),
-                   '--port-acct', str(acct_port),
-                   '--port-coa', str(coa_port)]
-            for address in addresses:
+                   '--port-auth', str(RADIUS.ports.auth),
+                   '--port-acct', str(RADIUS.ports.acct),
+                   '--port-coa', str(RADIUS.ports.CoA)]
+            for address in RADIUS.addresses:
                 cmd.extend(['--address', address])
             p = subprocess.Popen(cmd)
             processes.append(p)
