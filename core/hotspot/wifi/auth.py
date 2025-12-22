@@ -106,10 +106,10 @@ def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challeng
     else:
         if check_employee(phone_number):
             username = 'employee'
-            password = STAFF_USER.get('password')
+            password = STAFF_USER.password
         else:
             username = 'guest'
-            password = GUEST_USER.get('password')
+            password = GUEST_USER.password
 
     if chap_id and chap_challenge:
         password = hash_chap(chap_id, password, chap_challenge)

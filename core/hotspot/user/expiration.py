@@ -9,9 +9,9 @@ from core.database.session import get_session
 
 def get_delay(is_employee: bool) -> datetime.timedelta:
     if is_employee:
-        delay = STAFF_USER.get('delay')
+        delay = STAFF_USER.delay
     else:
-        delay = GUEST_USER.get('delay')
+        delay = GUEST_USER.delay
     return delay
 
 def new_expiration(is_employee: bool):
