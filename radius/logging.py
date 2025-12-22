@@ -1,8 +1,4 @@
-from logging import getLogger
-
-from core.config.logging import configure_logger
+from core.config.logging import get_logger
 
 
-logger = getLogger("RADIUS Server")
-
-configure_logger(logger)
+logger = get_logger('RADIUS')

@@ -17,6 +17,7 @@ LOG_LEVEL = env.log_level('LOG_LEVEL', level)
 def is_gunicorn():
     return env.str('SERVER_SOFTWARE', '').startswith('gunicorn')
 
+
 def configure_logger(logger: Logger, level=None):
     if is_gunicorn():
         gunicorn_error_logger = getLogger('gunicorn.error')
@@ -45,3 +46,9 @@ def configure_logger(logger: Logger, level=None):
             logger.addHandler(handler)
 
         logger.propagate = False
+
+
+def get_logger(name):
+    logger = getLogger(name)
+    configure_logger(logger)
+    return logger
