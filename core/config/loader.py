@@ -20,14 +20,25 @@ from core.config.models import (
 )
 
 from core.config.defaults import (
+    DEFAULT_ADMIN_ATTEMPTS,
+    DEFAULT_ADMIN_LOCKOUT,
+    DEFAULT_ADMIN_PASSWORD,
+    DEFAULT_ADMIN_USERNAME,
+    DEFAULT_GUEST_DELAY,
+    DEFAULT_GUEST_PASSWORD,
     DEFAULT_LANGUAGE,
     DEFAULT_LOG_LEVEL,
     DEFAULT_DB_URL,
     DEFAULT_REDIS_URL,
+    DEFAULT_RADIUS_ENABLED,
+    DEFAULT_RADIUS_ADDRESSES,
+    DEFAULT_RADIUS_AUTH_PORT,
+    DEFAULT_RADIUS_ACCT_PORT,
+    DEFAULT_RADIUS_COA_PORT,
     DEFAULT_ONLINE_TIMEOUT,
-    DEFAULT_AUTH_PORT,
-    DEFAULT_ACCT_PORT,
-    DEFAULT_COA_PORT,
+    DEFAULT_SENDER_TYPE,
+    DEFAULT_STAFF_DELAY,
+    DEFAULT_STAFF_PASSWORD,
 )
 
 
@@ -66,9 +77,12 @@ class ConfigLoader:
         return timedelta(**{suffixes[suffix]: amount})
 
     def language(self) -> LanguageConfig:
-        language = self._env.str(
-            'LANGUAGE', 
-            self._settings.get('language', DEFAULT_LANGUAGE)
+        language = self._settings.get(
+            'language', 
+            self._env.str(
+                'LANGUAGE', 
+                DEFAULT_LANGUAGE
+            )
         )
 
         return LanguageConfig(
@@ -91,18 +105,24 @@ class ConfigLoader:
 
     def db(self) -> DatabaseConfig:
         with self._env.prefixed('DB_'):
-            url = self._env.str(
-                'URL',
-                self._settings.get('db_url', DEFAULT_DB_URL),
+            url = self._settings.get(
+                'db_url', 
+                self._env.str(
+                    'URL',
+                    DEFAULT_DB_URL
+                ),
             )
 
         return DatabaseConfig(url=url)
 
     def redis(self) -> RedisConfig:
         with self._env.prefixed('REDIS_'):
-            url = self._env.str(
-                'URL',
-                self._settings.get('redis_url', DEFAULT_REDIS_URL),
+            url = self._settings.get(
+                'redis_url', 
+                self._env.str(
+                    'URL',
+                    DEFAULT_REDIS_URL
+                ),
             )
 
         return RedisConfig(url=url)
@@ -111,31 +131,43 @@ class ConfigLoader:
         admin: dict = self._settings.get('admin', {})
 
         with self._env.prefixed('ADMIN_'):
-            username = self._env.str(
-                'USERNAME',
-                admin.get('username', 'admin'),
+            username = admin.get(
+                'username', 
+                self._env.str(
+                    'USERNAME',
+                    DEFAULT_ADMIN_USERNAME
+                )
             )
 
             password_hash = admin.get(
                 'password_hash', 
-                self._hashpw(self._env.str('PASSWORD', 'admin')),
+                self._hashpw(self._env.str(
+                    'PASSWORD', 
+                    DEFAULT_ADMIN_PASSWORD
+                ))
             )
 
-            max_login_attempts = self._env.int(
-                'MAX_LOGIN_ATTEMPTS',
-                admin.get('max_login_attempts', 3),
+            max_login_attempts = admin.get(
+                'max_login_attempts', 
+                self._env.int(
+                    'MAX_LOGIN_ATTEMPTS',
+                    DEFAULT_ADMIN_ATTEMPTS
+                )
             )
 
-            lockout_time = self._env.int(
-                'LOCKOUT_TIME',
-                admin.get('lockout_time', 5),
+            lockout_time = admin.get(
+                'lockout_time', 
+                self._env.int(
+                    'LOCKOUT_TIME',
+                    DEFAULT_ADMIN_LOCKOUT
+                )
             )
 
         return AdminConfig(
             username=username,
             password_hash=password_hash,
             max_login_attempts=max_login_attempts,
-            lockout_time=timedelta(minutes=lockout_time),
+            lockout_time=timedelta(seconds=lockout_time),
         )
     
     def radius(self) -> RadiusConfig:
@@ -143,11 +175,11 @@ class ConfigLoader:
         ports: dict = radius.get('ports', {})
         raw_hosts: dict = radius.get('hosts', {})
 
-        enabled = self._r_env.bool('ENABLED', True)
-        addresses = self._r_env.list('ADDRESSES', radius.get('addresses', ['0.0.0.0']))
-        auth_port = self._r_env.int('AUTH_PORT', ports.get('auth', DEFAULT_AUTH_PORT))
-        acct_port = self._r_env.int('ACCT_PORT', ports.get('acct', DEFAULT_ACCT_PORT))
-        coa_port = self._r_env.int('COA_PORT', ports.get('CoA', DEFAULT_COA_PORT))
+        enabled = self._r_env.bool('ENABLED', DEFAULT_RADIUS_ENABLED)
+        addresses = radius.get('addresses', self._r_env.list('ADDRESSES', DEFAULT_RADIUS_ADDRESSES))
+        auth_port = ports.get('auth', self._r_env.int('AUTH_PORT', DEFAULT_RADIUS_AUTH_PORT))
+        acct_port = ports.get('acct', self._r_env.int('ACCT_PORT', DEFAULT_RADIUS_ACCT_PORT))
+        coa_port = ports.get('coa', self._r_env.int('COA_PORT', DEFAULT_RADIUS_COA_PORT))
 
         ports = RadiusPortsConfig(
             auth=auth_port,
@@ -169,23 +201,22 @@ class ConfigLoader:
 
     def hotspot(self) -> HotspotConfig:
         hotspot: dict = self._settings.get('hotspot', {})
-        users: dict = hotspot.get('users', {})
 
-        online_timeout = self._env.str('ONLINE_TIMEOUT', hotspot.get('online_timeout', DEFAULT_ONLINE_TIMEOUT))
+        online_timeout = hotspot.get('online_timeout', self._env.str('ONLINE_TIMEOUT', DEFAULT_ONLINE_TIMEOUT))
 
         with self._env.prefixed('USERS_'):
             with self._env.prefixed('STAFF_'):
-                staff = users.get('staff', {})
+                staff: dict = hotspot.get('staff', {})
                 staff_user = HotspotUserConfig(
-                    password=self._env.str('PASS', staff.get('password', 'supersecret')), 
-                    delay=self._convert_delay(self._env.str('DELAY', staff.get('delay', '30d')))
+                    password=staff.get('password', self._env.str('PASS', DEFAULT_STAFF_PASSWORD)), 
+                    delay=self._convert_delay(staff.get('delay', self._env.str('DELAY', DEFAULT_STAFF_DELAY)))
                 )
 
             with self._env.prefixed('GUEST_'):
-                guest = users.get('guest', {})
+                guest: dict = hotspot.get('guest', {})
                 guest_user = HotspotUserConfig(
-                    password=self._env.str('PASS', guest.get('password', 'secret')), 
-                    delay=self._convert_delay(self._env.str('DELAY', guest.get('delay', '1d')))
+                    password=guest.get('password', self._env.str('PASS', DEFAULT_GUEST_PASSWORD)), 
+                    delay=self._convert_delay(guest.get('delay', self._env.str('DELAY', DEFAULT_GUEST_DELAY)))
                 )
 
         return HotspotConfig(
@@ -196,11 +227,11 @@ class ConfigLoader:
 
     def sender(self) -> SenderConfig:
         sender: dict = self._settings.get('radius', {})
-        type = self._env.str('TYPE', sender.get('type', 'debug')).lower()
+        type = sender.get('type', self._env.str('TYPE', DEFAULT_SENDER_TYPE)).lower()
 
         with self._env.prefixed(f'{type.upper()}_'):
-            url = self._env.url('URL', sender.get('url', None))
-            api_key = self._env.str('APIKEY', sender.get('api_key', None))
+            url = sender.get('url', self._env.url('URL', None))
+            api_key = sender.get('api_key', self._env.str('APIKEY', None))
 
         return SenderConfig(
             type=type,
