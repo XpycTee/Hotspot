@@ -7,7 +7,9 @@ from core.config.models import LoggingConfig
 
 
 def get_log_config() -> LoggingConfig:
-    raw, version = get_config()
+    config = get_config()
+    raw = config.get('data', {})
+    version = config.get('version', 0)
     data = ConfigLoader(raw, version).logging()
     return data
 

@@ -4,7 +4,9 @@ from core.config.models import LanguageConfig
 
 
 def get_lang_config() -> LanguageConfig:
-    raw, version = get_config()
+    config = get_config()
+    raw = config.get('data', {})
+    version = config.get('version', 0)
     data = ConfigLoader(raw, version).language()
     return data
 

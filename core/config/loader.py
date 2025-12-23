@@ -24,7 +24,7 @@ from core.config.defaults import *
 class ConfigLoader:
     def __init__(self, settings: dict | None, version: int = 0):
         self._settings = settings or {}
-        self._version = version
+        self.version = version
         self._env = Env(prefix='HOTSPOT_')
         self._env.read_env()
 
@@ -202,5 +202,5 @@ class ConfigLoader:
             sender=self.sender(),
             admin=self.admin(),
             radius=self.radius(),
-            version=self._version
+            version=self.version
         )
