@@ -1,29 +1,14 @@
-import json
-import os
-
-from environs import Env
-
-from core.config import SETTINGS
+from core.config import get_config
+from core.config.loader import ConfigLoader
+from core.config.models import LanguageConfig
 
 
-env = Env()
-env.read_env()
+def get_lang_config() -> LanguageConfig:
+    raw = get_config()
+    data = ConfigLoader(raw).language()
+    return data
 
 
-DEFAULT_LANGUAGE = 'en'
-
-
-def load_language_files():
-    language_folder = 'web/static/language'
-    language_content = {}
-    for filename in os.listdir(language_folder):
-        if filename.endswith('.json'):
-            file_path = os.path.join(language_folder, filename)
-            language_name = os.path.splitext(filename)[0]
-            with open(file_path, 'r', encoding='utf-8') as lang_file:
-                language_content[language_name] = json.load(lang_file)
-    return language_content
-
-
-LANGUAGE = env.str('HOTSPOT_LANGUAGE', SETTINGS.get('language', DEFAULT_LANGUAGE))
-LANGUAGE_CONTENT = load_language_files()
+config = get_lang_config()
+LANGUAGE = config.language
+LANGUAGE_CONTENT = config.content

@@ -1,12 +1,13 @@
-from environs import Env
-
-from core.config import SETTINGS
-
-env = Env(prefix='HOTSPOT_')
-env.read_env()
+from core.config import get_config
+from core.config.loader import ConfigLoader
+from core.config.models import HotspotConfig
 
 
-DEFAULT_ONLINE_TIMEOUT = 300
+def get_hotspot_config() -> HotspotConfig:
+    raw = get_config()
+    data = ConfigLoader(raw).hotspot()
+    return data
 
-hotspot = SETTINGS.get('hotspot')
-ONLINE_TIMEOUT = env.str('ONLINE_TIMEOUT', hotspot.get('online_timeout', DEFAULT_ONLINE_TIMEOUT))
+
+config = get_hotspot_config()
+ONLINE_TIMEOUT = config.online_timeout

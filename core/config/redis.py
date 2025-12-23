@@ -1,11 +1,14 @@
-from urllib.parse import urlparse
-from environs import Env
 
-from core.config import SETTINGS
+from core.config import get_config
+from core.config.loader import ConfigLoader
+from core.config.models import RedisConfig
 
-env = Env(prefix='HOTSPOT_REDIS_')
-env.read_env()
 
-DEFAULT_REDIS_URL = 'unix:///tmp/redis.sock?db=0'
+def get_redis_config() -> RedisConfig:
+    raw = get_config()
+    data = ConfigLoader(raw).redis()
+    return data
 
-REDIS_URL = env.str('URL', SETTINGS.get('redis_url', DEFAULT_REDIS_URL))
+
+redis_config = get_redis_config()
+REDIS_URL = redis_config.url

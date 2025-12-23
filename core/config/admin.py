@@ -1,40 +1,12 @@
-from dataclasses import dataclass
-import bcrypt
-from environs import Env
-
-from core.config import SETTINGS, convert_delay
-
-env = Env(prefix='HOTSPOT_')
-env.read_env()
-
-DEFAULT_USERNAME = 'admin'
-DEFAULT_PASSWORD = 'admin'
-DEFAULT_MAX_LOGIN_ATTEMPTS = 3
-DEFAULT_LOCKOUT_TIME = 5
+from core.config import get_config
+from core.config.loader import ConfigLoader
+from core.config.models import AdminConfig
 
 
-@dataclass
-class AdminConfig:
-    username: str
-    password: bytes
-    max_login_attempts: int
-    lockout_time: int
+def get_admin_config() -> AdminConfig:
+    raw = get_config()
+    data = ConfigLoader(raw).admin()
+    return data
 
 
-def configure_admin():
-    admin = SETTINGS.get('admin')
-    with env.prefixed('ADMIN_'):
-        username = env.str('USERNAME', admin.get('username', DEFAULT_USERNAME))
-        password = env.str('PASSWORD', admin.get('password', DEFAULT_PASSWORD))
-        max_login_attempts = env.int('MAX_LOGIN_ATTEMPTS', admin.get('max_login_attempts', DEFAULT_MAX_LOGIN_ATTEMPTS))
-        lockout_time = env.int('LOCKOUT_TIME', admin.get('lockout_time', DEFAULT_LOCKOUT_TIME))
-
-    password_hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    return AdminConfig(
-        username, 
-        password_hashed, 
-        max_login_attempts, 
-        lockout_time
-    )
-
-ADMIN = configure_admin()
+ADMIN = get_admin_config()

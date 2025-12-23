@@ -1,35 +1,31 @@
 from logging import Logger, getLogger
 import logging
 
-from core.config import DEBUG, SETTINGS
-
-from environs import Env
-
-env = Env()
-env.read_env()
-
-DEFAULT_LOG_LEVEL = 'WARNING'
+from core.config import get_config
+from core.config.loader import ConfigLoader
+from core.config.models import LoggingConfig
 
 
-level_name = SETTINGS.get('log_level', 'DEBUG' if DEBUG else DEFAULT_LOG_LEVEL)
-mapping = logging.getLevelNamesMapping()
-level = mapping.get(level_name.upper())
+def get_log_config() -> LoggingConfig:
+    raw = get_config()
+    data = ConfigLoader(raw).logging()
+    return data
 
-LOG_LEVEL = env.log_level('LOG_LEVEL', level)
 
-def is_gunicorn():
-    return env.str('SERVER_SOFTWARE', '').startswith('gunicorn')
+config = get_log_config()
+LOG_LEVEL = config.level
 
 
 def configure_logger(logger: Logger, level=None):
-    if is_gunicorn():
+    config = get_log_config()
+    if config.is_gunicorn:
         gunicorn_error_logger = getLogger('gunicorn.error')
         logger.handlers = gunicorn_error_logger.handlers
         logger.setLevel(gunicorn_error_logger.level)
         logger.propagate = False
     else:
         if level is None:
-            level = LOG_LEVEL
+            level = config.level
 
         logger.setLevel(level)
         handler = logging.StreamHandler()

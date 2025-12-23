@@ -1,11 +1,9 @@
-from environs import Env
+from core.config import get_config
+from core.config.loader import ConfigLoader
+from core.config.models import DatabaseConfig
 
-from core.config import SETTINGS
 
-env = Env(prefix='HOTSPOT_DB_')
-env.read_env()
-
-DEFAULT_DB_URL = 'sqlite:///hotspot.db'
-
-DB_URL = env.str('URL', SETTINGS.get('db_url', DEFAULT_DB_URL))
-
+def get_db_config() -> DatabaseConfig:
+    raw = get_config()
+    data = ConfigLoader(raw).db()
+    return data
