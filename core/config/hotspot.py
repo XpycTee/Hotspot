@@ -4,8 +4,8 @@ from core.config.models import HotspotConfig
 
 
 def get_hotspot_config() -> HotspotConfig:
-    raw = get_config()
-    data = ConfigLoader(raw).hotspot()
+    raw, version = get_config()
+    data = ConfigLoader(raw, version).hotspot()
     return data
 
 

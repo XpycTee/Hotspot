@@ -8,49 +8,25 @@ from pyrad2 import server
 
 from core.config.models import (
     AdminConfig,
-    DatabaseConfig,
+    Config,
     HotspotConfig,
     HotspotUserConfig,
     LanguageConfig,
     LoggingConfig, 
     RadiusConfig, 
     RadiusPortsConfig,
-    RedisConfig,
     SenderConfig
 )
 
-from core.config.defaults import (
-    DEFAULT_ADMIN_ATTEMPTS,
-    DEFAULT_ADMIN_LOCKOUT,
-    DEFAULT_ADMIN_PASSWORD,
-    DEFAULT_ADMIN_USERNAME,
-    DEFAULT_GUEST_DELAY,
-    DEFAULT_GUEST_PASSWORD,
-    DEFAULT_LANGUAGE,
-    DEFAULT_LOG_LEVEL,
-    DEFAULT_DB_URL,
-    DEFAULT_REDIS_URL,
-    DEFAULT_RADIUS_ENABLED,
-    DEFAULT_RADIUS_ADDRESSES,
-    DEFAULT_RADIUS_AUTH_PORT,
-    DEFAULT_RADIUS_ACCT_PORT,
-    DEFAULT_RADIUS_COA_PORT,
-    DEFAULT_ONLINE_TIMEOUT,
-    DEFAULT_SENDER_TYPE,
-    DEFAULT_STAFF_DELAY,
-    DEFAULT_STAFF_PASSWORD,
-)
+from core.config.defaults import *
 
 
 class ConfigLoader:
-    def __init__(self, settings: dict | None):
+    def __init__(self, settings: dict | None, version: int = 0):
         self._settings = settings or {}
-
+        self._version = version
         self._env = Env(prefix='HOTSPOT_')
         self._env.read_env()
-
-        self._r_env = Env(prefix='RADIUS_')
-        self._r_env.read_env()
 
     @staticmethod
     def _hashpw(password: str):
@@ -103,30 +79,6 @@ class ConfigLoader:
             is_gunicorn=is_gunicorn
         )
 
-    def db(self) -> DatabaseConfig:
-        with self._env.prefixed('DB_'):
-            url = self._settings.get(
-                'db_url', 
-                self._env.str(
-                    'URL',
-                    DEFAULT_DB_URL
-                ),
-            )
-
-        return DatabaseConfig(url=url)
-
-    def redis(self) -> RedisConfig:
-        with self._env.prefixed('REDIS_'):
-            url = self._settings.get(
-                'redis_url', 
-                self._env.str(
-                    'URL',
-                    DEFAULT_REDIS_URL
-                ),
-            )
-
-        return RedisConfig(url=url)
-
     def admin(self) -> AdminConfig:
         admin: dict = self._settings.get('admin', {})
 
@@ -171,15 +123,18 @@ class ConfigLoader:
         )
     
     def radius(self) -> RadiusConfig:
+        env = Env(prefix='RADIUS_')
+        env.read_env()
+
         radius: dict = self._settings.get('radius', {})
         ports: dict = radius.get('ports', {})
         raw_hosts: dict = radius.get('hosts', {})
 
-        enabled = self._r_env.bool('ENABLED', DEFAULT_RADIUS_ENABLED)
-        addresses = radius.get('addresses', self._r_env.list('ADDRESSES', DEFAULT_RADIUS_ADDRESSES))
-        auth_port = ports.get('auth', self._r_env.int('AUTH_PORT', DEFAULT_RADIUS_AUTH_PORT))
-        acct_port = ports.get('acct', self._r_env.int('ACCT_PORT', DEFAULT_RADIUS_ACCT_PORT))
-        coa_port = ports.get('coa', self._r_env.int('COA_PORT', DEFAULT_RADIUS_COA_PORT))
+        enabled = env.bool('ENABLED', DEFAULT_RADIUS_ENABLED)
+        addresses = radius.get('addresses', env.list('ADDRESSES', DEFAULT_RADIUS_ADDRESSES))
+        auth_port = ports.get('auth', env.int('AUTH_PORT', DEFAULT_RADIUS_AUTH_PORT))
+        acct_port = ports.get('acct', env.int('ACCT_PORT', DEFAULT_RADIUS_ACCT_PORT))
+        coa_port = ports.get('coa', env.int('COA_PORT', DEFAULT_RADIUS_COA_PORT))
 
         ports = RadiusPortsConfig(
             auth=auth_port,
@@ -237,4 +192,15 @@ class ConfigLoader:
             type=type,
             url=url,
             api_key=api_key
+        )
+    
+    def load(self) -> Config:
+        return Config(
+            language=self.language(),
+            logging=self.logging(),
+            hotspot=self.hotspot(),
+            sender=self.sender(),
+            admin=self.admin(),
+            radius=self.radius(),
+            version=self._version
         )

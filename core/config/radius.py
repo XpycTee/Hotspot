@@ -4,8 +4,8 @@ from core.config.models import RadiusConfig
 
 
 def get_radius_config() -> RadiusConfig:
-    raw = get_config()
-    data = ConfigLoader(raw).radius()
+    raw, version = get_config()
+    data = ConfigLoader(raw, version).radius()
     return data
 
 

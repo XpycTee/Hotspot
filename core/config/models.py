@@ -132,18 +132,13 @@ class Config:
 
     This object represents the fully resolved runtime configuration
     after merging:
-        - environment variables
         - database configuration
+        - environment variables
         - default values
     """
 
-    language: str
-    log_level: int
-    debug: bool
-
-    db_url: str
-    redis_url: str
-
+    language: LanguageConfig
+    logging: LoggingConfig
     hotspot: HotspotConfig
     sender: SenderConfig
     admin: AdminConfig

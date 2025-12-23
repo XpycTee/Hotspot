@@ -8,8 +8,8 @@ from core.hotspot.sms.sender.smsru import SMSRUSender
 
 
 def get_sender_config() -> SenderConfig:
-    raw = get_config()
-    data = ConfigLoader(raw).sender()
+    raw, version = get_config()
+    data = ConfigLoader(raw, version).sender()
     return data
 
 

@@ -2,7 +2,8 @@ import json
 
 from redis import Redis
 
-from core.config.redis import REDIS_URL
+from core.bootstrap.env import REDIS_URL
+
 
 TYPE_SERIALIZERS = {
     int:    ("int", str, int),

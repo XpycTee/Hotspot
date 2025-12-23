@@ -1,8 +1,8 @@
+import logging
 import os
 from environs import Env
 from flask import Flask
 
-from core.config import DEBUG
 from core.config.language import LANGUAGE_CONTENT, LANGUAGE
 from core.config.logging import LOG_LEVEL, configure_logger
 
@@ -15,7 +15,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     @classmethod
     def init_app(cls, app: Flask):
-        cls.DEBUG = DEBUG
+        cls.DEBUG = LOG_LEVEL == logging.DEBUG
         cls.LOG_LEVEL = LOG_LEVEL
         cls.LANGUAGE_CONTENT = LANGUAGE_CONTENT
         cls.LANGUAGE_DEFAULT = LANGUAGE

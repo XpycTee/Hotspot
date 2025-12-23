@@ -4,8 +4,8 @@ from core.config.models import LanguageConfig
 
 
 def get_lang_config() -> LanguageConfig:
-    raw = get_config()
-    data = ConfigLoader(raw).language()
+    raw, version = get_config()
+    data = ConfigLoader(raw, version).language()
     return data
 
 
