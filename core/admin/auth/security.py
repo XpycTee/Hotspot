@@ -6,7 +6,7 @@ import bcrypt
 
 def check_password(username: str, password: str):
     stored_username = ADMIN.username
-    stored_password_hash = ADMIN.password
+    stored_password_hash = ADMIN.password_hash
 
     if not stored_password_hash:
         return False
