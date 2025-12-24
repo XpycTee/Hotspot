@@ -120,7 +120,7 @@ function addNewHostModal() {
             </div>
         </form>
     `
-    showModal(tittle, template, 'radius/hosts', 'add');
+    showModal(tittle, template, 'radius', 'add');
 }
 
 function editHostModal(button) {
@@ -154,7 +154,7 @@ function editHostModal(button) {
             </div>
         </form>
     `
-    showModal(tittle, template, 'radius/hosts', 'update');
+    showModal(tittle, template, 'radius', 'update');
 }
 
 function deleteHostRow(button) {
@@ -166,7 +166,7 @@ function deleteHostRow(button) {
     };
 
     // Отправляем запрос на сервер
-    fetch(`/admin/settings/radius/hosts/delete`, {
+    fetch(`/admin/settings/radius/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

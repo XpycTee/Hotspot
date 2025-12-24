@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, jsonify, render_template, request, session
+from flask import Blueprint, abort, jsonify, request
 
 from core.admin.tables.settings.radius import add_radius_host, delete_radius_host, get_radius_hosts, update_radius_host
 from core.config.defaults import DEFAULT_RADIUS_ACCT_PORT, DEFAULT_RADIUS_AUTH_PORT, DEFAULT_RADIUS_COA_PORT
@@ -6,17 +6,10 @@ from core.utils.language import get_translate
 from web.pages.admin.utils import login_required
 
 
-settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
+radius_bp = Blueprint('radius', __name__, url_prefix='/radius')
 
 
-@settings_bp.route('', methods=['POST', 'GET'])
-@login_required
-def index():
-    error = session.pop('error', None)
-    return render_template('admin/settings.html', error=error)
-
-
-@settings_bp.route('/radius', methods=['GET'])
+@radius_bp.route('', methods=['GET'])
 @login_required
 def radius():
     response = get_radius_hosts()
@@ -26,7 +19,7 @@ def radius():
     })
 
 
-@settings_bp.route('/radius/hosts/add', methods=['POST'])
+@radius_bp.route('/add', methods=['POST'])
 @login_required
 def add_host():
     data: dict = request.json
@@ -74,7 +67,7 @@ def add_host():
         return jsonify({'success': False, 'error_message': error_message})
 
 
-@settings_bp.route('/radius/hosts/update', methods=['POST'])
+@radius_bp.route('/update', methods=['POST'])
 @login_required
 def update_host():
     data: dict = request.json
@@ -122,7 +115,7 @@ def update_host():
         return jsonify({'success': False, 'error_message': error_message})
 
 
-@settings_bp.route('/radius/hosts/delete', methods=['POST'])
+@radius_bp.route('/delete', methods=['POST'])
 @login_required
 def delete_host():
     data = request.json
