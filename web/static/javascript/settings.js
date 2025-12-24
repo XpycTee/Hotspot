@@ -61,7 +61,7 @@ function updateSettingsPage(settingId, settings) {
     }
 }
 
-function showModal(title, template, settingId) {
+function showModal(title, template, settingId, action) {
     const modal = document.getElementById('addRowModal')
 
     triggerModalHtml(modal, title, template);
@@ -80,7 +80,7 @@ function showModal(title, template, settingId) {
         });
 
         // Отправляем запрос на сервер
-        fetch(`/admin/settings/${settingId}/update`, {
+        fetch(`/admin/settings/${settingId}/${action}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -120,7 +120,7 @@ function addNewHostModal() {
             </div>
         </form>
     `
-    showModal(tittle, template, 'radius/hosts');
+    showModal(tittle, template, 'radius/hosts', 'add');
 }
 
 function editHostModal(button) {
@@ -154,7 +154,7 @@ function editHostModal(button) {
             </div>
         </form>
     `
-    showModal(tittle, template, 'radius/hosts');
+    showModal(tittle, template, 'radius/hosts', 'update');
 }
 
 function deleteHostRow(button) {
