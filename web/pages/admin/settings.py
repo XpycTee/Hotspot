@@ -1,6 +1,8 @@
 from flask import Blueprint, abort, jsonify, render_template, request, session
 
-from core.admin.tables.settings import get_settings, radius_delete_host, update_settings
+from core.admin.tables.settings import get_settings, update_settings
+from core.admin.tables.settings.radius import add_radius_host, delete_radius_host, update_radius_host
+from core.config.defaults import DEFAULT_RADIUS_ACCT_PORT, DEFAULT_RADIUS_AUTH_PORT, DEFAULT_RADIUS_COA_PORT
 from core.utils.language import get_translate
 from web.pages.admin.utils import login_required
 
@@ -18,7 +20,7 @@ def index():
 @settings_bp.route('/<table_name>/save', methods=['POST'])
 @login_required
 def save_data(table_name):
-    data = request.json
+    data: dict = request.json
 
     if not data:
         abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
@@ -32,15 +34,117 @@ def save_data(table_name):
         return jsonify({'success': False, 'error_message': error_message})
 
 
-@settings_bp.route('/radius/delete', methods=['POST'])
+@settings_bp.route('/radius/hosts/add', methods=['POST'])
+@login_required
+def add_host():
+    data: dict = request.json
+
+    if not data:
+        abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
+
+    # Basic validation: required fields
+    required_fields = ['address', 'name', 'secret']
+    for field in required_fields:
+        val = data.get(field)
+        if val is None or (isinstance(val, str) and not val.strip()):
+            return jsonify({'success': False, 'error_message': f'Missing or empty field: {field}'}), 400
+
+    # Validate ports (optional) and convert to ints
+    ports = {}
+    for p in ('authport', 'acctport', 'coaport'):
+        v = data.get(p)
+        if v in (None, ''):
+            ports[p] = None
+            continue
+        try:
+            pv = int(v)
+            if pv < 1 or pv > 65535:
+                return jsonify({'success': False, 'error_message': f'Invalid port value for {p}'}), 400
+            ports[p] = pv
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'error_message': f'Invalid port value for {p}'}), 400
+
+    new_host_data = {
+        'address': data.get('address').strip(),
+        'name': data.get('name').strip(),
+        'secret': data.get('secret'),
+        'authport': ports.get('authport', DEFAULT_RADIUS_AUTH_PORT),
+        'acctport': ports.get('acctport', DEFAULT_RADIUS_ACCT_PORT),
+        'coaport': ports.get('coaport', DEFAULT_RADIUS_COA_PORT),
+    }
+
+    response = add_radius_host(new_host_data)
+    status = response.get('status')
+    if status == 'OK':
+        return jsonify({'success': True})
+    else:
+        error_message = response.get('error_message')
+        return jsonify({'success': False, 'error_message': error_message})
+
+
+@settings_bp.route('/radius/hosts/update', methods=['POST'])
+@login_required
+def update_host():
+    data: dict = request.json
+
+    if not data:
+        abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
+    
+    # Basic validation: required fields
+    host = data.get('host').strip()
+    if host is None or (isinstance(host, str) and not host.strip()):
+        return jsonify({'success': False, 'error_message': f'Missing or empty field: host'}), 400
+
+    # Validate ports (optional) and convert to ints
+    ports = {}
+    for p in ('authport', 'acctport', 'coaport'):
+        v = data.get(p)
+        if v in (None, ''):
+            ports[p] = None
+            continue
+        try:
+            pv = int(v)
+            if pv < 1 or pv > 65535:
+                return jsonify({'success': False, 'error_message': f'Invalid port value for {p}'}), 400
+            ports[p] = pv
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'error_message': f'Invalid port value for {p}'}), 400
+    
+    new_host_data = {
+        'address': data.get('address').strip(),
+        'name': data.get('name').strip(),
+        'authport': ports.get('authport', DEFAULT_RADIUS_AUTH_PORT),
+        'acctport': ports.get('acctport', DEFAULT_RADIUS_ACCT_PORT),
+        'coaport': ports.get('coaport', DEFAULT_RADIUS_COA_PORT),
+    }
+
+    if secret:=data.get('secret').strip():
+        new_host_data['secret'] = secret
+
+    response = update_radius_host(host, new_host_data)
+    status = response.get('status')
+    if status == 'OK':
+        return jsonify({'success': True})
+    else:
+        error_message = response.get('error_message')
+        return jsonify({'success': False, 'error_message': error_message})
+
+
+@settings_bp.route('/radius/hosts/delete', methods=['POST'])
 @login_required
 def delete_host():
     data = request.json
 
     if not data:
         abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
-    
-    response = radius_delete_host(data)
+
+    # Basic validation: required fields
+
+    host = data.get('host')
+    if host is None or (isinstance(host, str) and not host.strip()):
+        return jsonify({'success': False, 'error_message': f'Missing or empty field: host'}), 400
+
+    response = delete_radius_host(host)
     status = response.get('status')
     if status == 'OK':
         return jsonify({'success': True})

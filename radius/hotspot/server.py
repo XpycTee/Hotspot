@@ -1,20 +1,18 @@
-import dataclasses
 import ipaddress
 import socket
-import threading
+
 from pyrad2 import server, packet
 from pyrad2.exceptions import ServerPacketError
 from pyrad2.constants import PacketType
 
-from core.config.radius import RADIUS
 from radius.logging import logger
 from radius.hotspot.packet import HotspotAcctPacket, HotspotAuthPacket
 
 
-config_lock = threading.RLock()
-
-
 class BaseServer(server.Server):
+    def __init__(self, addresses = None, authport = 1812, acctport = 1813, coaport = 3799, hosts = None, dict = None, auth_enabled = True, acct_enabled = True, coa_enabled = False):
+        super().__init__(addresses, authport, acctport, coaport, hosts, dict, auth_enabled, acct_enabled, coa_enabled)
+
     @staticmethod
     def _unmapped_ip(ip: str) -> str:
         addr = ipaddress.ip_address(ip)
@@ -23,10 +21,6 @@ class BaseServer(server.Server):
             return str(addr.ipv4_mapped)
 
         return str(addr)
-
-    def config_handler(self, cfg):
-        with config_lock:
-            logger.debug(cfg)
 
     def reply_accept(self, packet, is_employee):
         reply = self.create_reply_packet(packet)

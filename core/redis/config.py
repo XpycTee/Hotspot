@@ -1,33 +1,38 @@
-import json
-
+from typing import Callable
 from redis import Redis
 
-from core.config.redis import REDIS_URL
+from core.bootstrap.env import REDIS_URL
+from core.utils import json
 
 
-class RadiusConfigStore:
-    def __init__(self):
-        self.r = Redis.from_url(REDIS_URL, decode_responses=True)
+class ConfigStore:
+    def __init__(self, domain: str, redis: Redis | None = None):
+        if redis is None:
+            self._r = Redis.from_url(REDIS_URL, decode_responses=True)
+        else:
+            self._r = redis
+        self._domain = domain
 
     def load(self):
-        data = self.r.get("config:radius")
+        data = self._r.get(f'app:config:{self._domain}')
         return json.loads(data) if data else {}
 
     def save(self, config):
-        self.r.set("config:radius", json.dumps(config))
-        self.r.publish("config:update", "radius")
+        self._r.set(f'app:config:{self._domain}', json.dumps(config))
+        self._r.publish(f'config:update:{self._domain}', json.dumps({'version': config.version}))
 
 
 class ConfigListener:
-    def __init__(self, on_reload):
-        self.r = Redis.from_url(REDIS_URL, decode_responses=True)
-        self.pubsub = self.r.pubsub()
-        self.on_reload = on_reload
+    def __init__(self, domain: str, handelr: Callable):
+        self._r = Redis.from_url(REDIS_URL, decode_responses=True)
+        self._domain = domain
+        self._pubsub = self._r.pubsub()
+        self._handler = handelr
+        self._store = ConfigStore(domain, self._r)
 
     def run(self):
-        self.pubsub.subscribe("config:update")
-        for msg in self.pubsub.listen():
+        self._pubsub.subscribe(f'config:update:{self._domain}')
+        for msg in self._pubsub.listen():
             if msg["type"] == "message":
                 data = json.loads(msg["data"])
-                self.on_reload(data)
-
+                self._handler(data, self._store)

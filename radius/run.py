@@ -1,5 +1,4 @@
 import argparse
-import dataclasses
 import logging
 import os
 import threading
@@ -7,9 +6,12 @@ from pyrad2 import dictionary, server
 
 from core.config.logging import LOG_LEVEL
 from core.config.radius import RADIUS
-from core.redis.config import ConfigListener
+from core.redis.config import ConfigListener, ConfigStore
 from radius.hotspot import HotspotRADIUS
 from radius.logging import logger
+
+
+config_lock = threading.RLock()
 
 
 def configure_argparser():
@@ -37,13 +39,38 @@ def configure_argparser():
         '--port-acct', type=int, default=RADIUS.ports.acct
     )
     parser.add_argument(
-        '--port-coa', type=int, default=RADIUS.ports.CoA
+        '--port-coa', type=int, default=RADIUS.ports.coa
     )
     return parser
 
 
-def config_listener(handler):
-    listener = ConfigListener(handler)
+def config_handler(update: dict, store: ConfigStore):
+    with config_lock:
+        logger.debug(update)
+        up_version = update.get('version')
+        current_version = RADIUS.version
+        if up_version <= current_version:
+            return  # устаревшее событие
+        
+        new_cfg = store.load()
+        logger.debug(new_cfg)
+        new_version = new_cfg.get('version')
+        if new_version <= current_version:
+            return  # устаревшее событие
+        
+        RADIUS.version = new_version
+        updated_hosts = new_cfg.get('hosts')
+
+        deleted_hosts = set(RADIUS.hosts) - set(updated_hosts)
+        for host in deleted_hosts:
+            del RADIUS.hosts[host]
+
+        for host, parametres in updated_hosts.items():
+            RADIUS.hosts[host] = server.RemoteHost(**parametres)
+
+
+def config_listener():
+    listener = ConfigListener('radius', config_handler)
     listener.run()
 
 
@@ -60,17 +87,12 @@ def main():
     level = mapping.get(args.log_level, LOG_LEVEL)
     logger.setLevel(level)
     
-    hosts = {}
-    for host, parametres in RADIUS.hosts.items():
-        parametres['secret'] = parametres.get('secret').encode()
-        hosts[host] = server.RemoteHost(**parametres)
-
     srv = HotspotRADIUS(
         addresses=radius_addresses,
         authport=radius_auth_port,
         acctport=radius_acct_port,
         coaport=radius_coa_port,
-        hosts=hosts,
+        hosts=RADIUS.hosts,
         dict=dictionary.Dictionary("radius/dictionary/main"), 
         coa_enabled=True
     )
@@ -81,7 +103,6 @@ def main():
 
     t = threading.Thread(
         target=config_listener,
-        args=(srv.config_handler,),
         name='redis-config-listener',
         daemon=True
     )

@@ -12,11 +12,11 @@ yaml.add_constructor("!import", yaml_include.Constructor(base_dir='config'))
 def get_config() -> dict:
     return get_config_from_yaml()
 
-
+  
 def get_config_from_yaml() -> dict:
     with open('config/settings.yaml', 'r', encoding='utf-8') as f:
         config: dict = yaml.full_load(f)
-    result = {'data': config, 'version': 0}
+    result = {'data': config.get('settings'), 'version': 0}
     return result
 
 
