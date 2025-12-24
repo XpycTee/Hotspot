@@ -80,7 +80,7 @@ function showModal(title, template, settingId) {
         });
 
         // Отправляем запрос на сервер
-        fetch(`/admin/settings/${settingId}/save`, {
+        fetch(`/admin/settings/${settingId}/update`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -120,7 +120,7 @@ function addNewHostModal() {
             </div>
         </form>
     `
-    showModal(tittle, template, 'radius');
+    showModal(tittle, template, 'radius/hosts');
 }
 
 function editHostModal(button) {
@@ -134,12 +134,13 @@ function editHostModal(button) {
 
     const template = `
         <form class="form form-modal" id="addRowForm">
+            <input type="hidden" name="host" value="${address}">
             <label for="address">${getTranslate('html.admin.settings.radius.address')}</label>
             <input class="input modal-input" type="text" name="address" placeholder="${getTranslate('html.admin.settings.radius.address')}" value="${address}" required>
             <label for="name">${getTranslate('html.admin.settings.radius.name')}</label>
             <input class="input modal-input" type="text" name="name" placeholder="${getTranslate('html.admin.settings.radius.name')}" value="${hostName}" required>
             <label for="secret">${getTranslate('html.admin.settings.radius.secret')}</label>
-            <input class="input modal-input" type="password" name="secret" placeholder="${getTranslate('html.admin.settings.radius.secret')}" value="********************" required>
+            <input class="input modal-input" type="password" name="secret" placeholder="${getTranslate('html.admin.settings.radius.secret')}">
             <label for="authport">${getTranslate('html.admin.settings.radius.authport')}</label>
             <input class="input modal-input" type="text" name="authport" placeholder="${getTranslate('html.admin.settings.radius.authport')}" value="${authPort}" required>
             <label for="acctport">${getTranslate('html.admin.settings.radius.acctport')}</label>
@@ -153,7 +154,7 @@ function editHostModal(button) {
             </div>
         </form>
     `
-    showModal(tittle, template, 'radius');
+    showModal(tittle, template, 'radius/hosts');
 }
 
 function deleteHostRow(button) {
@@ -165,7 +166,7 @@ function deleteHostRow(button) {
     };
 
     // Отправляем запрос на сервер
-    fetch(`/admin/settings/radius/delete`, {
+    fetch(`/admin/settings/radius/hosts/delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
