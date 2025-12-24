@@ -4,7 +4,7 @@ import os
 import threading
 from pyrad2 import dictionary, server
 
-from core.config import ConfigStore
+from core.config import CONFIG, ConfigStore
 from core.config.logging import LOG_LEVEL
 from core.config.radius import RADIUS
 from core.redis.config import ConfigListener
@@ -49,17 +49,12 @@ def config_handler(update: dict, store: ConfigStore):
     with config_lock:
         logger.debug(update)
         up_version = update.get('version')
-        current_version = RADIUS.version
-        if up_version <= current_version:
+        if up_version <= CONFIG.version:
             return  # устаревшее событие
         
         new_cfg = store.load()
         logger.debug(new_cfg)
-        new_version = new_cfg.get('version')
-        if new_version <= current_version:
-            return  # устаревшее событие
         
-        RADIUS.version = new_version
         updated_hosts = new_cfg.get('hosts')
 
         deleted_hosts = set(RADIUS.hosts) - set(updated_hosts)
@@ -69,9 +64,11 @@ def config_handler(update: dict, store: ConfigStore):
         for host, parametres in updated_hosts.items():
             RADIUS.hosts[host] = server.RemoteHost(**parametres)
 
+        CONFIG.version = up_version
+
 
 def config_listener():
-    listener = ConfigListener('radius', config_handler)
+    listener = ConfigListener(handelr=config_handler, domain='radius')
     listener.run()
 
 

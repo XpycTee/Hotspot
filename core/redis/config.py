@@ -7,7 +7,7 @@ from core.utils import json
 
 
 class ConfigListener:
-    def __init__(self, domain: str, handelr: Callable):
+    def __init__(self, handelr: Callable, domain: str = 'app'):
         self._r = Redis.from_url(REDIS_URL, decode_responses=True)
         self._domain = domain
         self._pubsub = self._r.pubsub()

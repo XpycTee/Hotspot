@@ -131,10 +131,7 @@ class ConfigLoader:
             coa=coa_port
         )
         
-        hosts = {}
-        for host, parametres in raw_hosts.items():
-            parametres['secret'] = parametres.get('secret').encode()
-            hosts[host] = server.RemoteHost(**parametres)
+        hosts = {h: server.RemoteHost(**p) for h, p in raw_hosts.items()}
 
         return RadiusConfig(
             enabled=enabled,

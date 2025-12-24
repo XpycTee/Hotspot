@@ -16,7 +16,7 @@ yaml.add_constructor("!import", yaml_include.Constructor(base_dir='config'))
 
 
 class ConfigStore:
-    def __init__(self, domain: str, redis: Redis | None = None):
+    def __init__(self, domain: str = 'app', redis: Redis | None = None):
         if redis is None:
             self._r = Redis.from_url(REDIS_URL, decode_responses=True)
         else:
