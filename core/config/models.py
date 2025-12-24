@@ -9,8 +9,8 @@ from pyrad2 import server
 
 @dataclass
 class LanguageConfig:
-    language: str
-    _content: dict = None
+    name: str
+    _content: dict = field(default=None, metadata={"json": False})
 
     @property
     def content(self) -> dict:
@@ -126,9 +126,9 @@ class SenderConfig:
 
 
 @dataclass
-class Config:
+class AppConfig:
     """
-    Root application configuration object.
+    System application configuration object.
 
     This object represents the fully resolved runtime configuration
     after merging:

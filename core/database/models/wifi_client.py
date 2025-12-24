@@ -3,7 +3,6 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
 from sqlalchemy.orm import relationship
 
-from core.config.hotspot import ONLINE_TIMEOUT
 from core.database.models import Model
 from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
@@ -29,6 +28,7 @@ class WifiClient(Model):
 
     @property
     def online(self) -> bool:
+        from core.config.hotspot import ONLINE_TIMEOUT
         return self.last_seen and (datetime.now() - self.last_seen).seconds < ONLINE_TIMEOUT
 
     @property

@@ -4,9 +4,10 @@ import os
 import threading
 from pyrad2 import dictionary, server
 
+from core.config import ConfigStore
 from core.config.logging import LOG_LEVEL
 from core.config.radius import RADIUS
-from core.redis.config import ConfigListener, ConfigStore
+from core.redis.config import ConfigListener
 from radius.hotspot import HotspotRADIUS
 from radius.logging import logger
 

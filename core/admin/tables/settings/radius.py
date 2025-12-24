@@ -1,15 +1,15 @@
-import dataclasses
+from dataclasses import asdict
 
 from pyrad2 import server
 
 from core.config.radius import RADIUS
-from core.redis.config import ConfigStore
+from core.config import ConfigStore
 
 
 def get_radius_hosts():
     hosts = {}
     for host, data in RADIUS.hosts.items():
-        return_data = dataclasses.asdict(data)
+        return_data = asdict(data)
         del return_data['secret']
         hosts[host] = return_data
     return hosts
@@ -17,10 +17,9 @@ def get_radius_hosts():
 
 def add_radius_host(data: dict):
     RADIUS.hosts[data['address']] = server.RemoteHost(**data)
-    RADIUS.version += 1
 
     store = ConfigStore('radius')
-    store.save(RADIUS)
+    store.save()
 
     return {'status': 'OK'}
 
@@ -37,19 +36,16 @@ def update_radius_host(host: str, data: dict):
 
     RADIUS.hosts[host] = update_host
 
-    RADIUS.version += 1
-
     store = ConfigStore('radius')
-    store.save(RADIUS)
+    store.save()
     
     return {'status': 'OK'}
 
 
 def delete_radius_host(host: str):
     del RADIUS.hosts[host]
-    RADIUS.version += 1
 
     store = ConfigStore('radius')
-    store.save(RADIUS)
+    store.save()
 
     return {'status': 'OK'}

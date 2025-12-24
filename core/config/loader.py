@@ -6,23 +6,12 @@ from environs import Env
 
 from pyrad2 import server
 
-from core.config.models import (
-    AdminConfig,
-    Config,
-    HotspotConfig,
-    HotspotUserConfig,
-    LanguageConfig,
-    LoggingConfig, 
-    RadiusConfig, 
-    RadiusPortsConfig,
-    SenderConfig
-)
-
+from core.config.models import *
 from core.config.defaults import *
 
 
 class ConfigLoader:
-    def __init__(self, settings: dict | None, version: int = 0):
+    def __init__(self, settings: dict | None = None, version: int = 0):
         self._settings = settings or {}
         self.version = version
         self._env = Env(prefix='HOTSPOT_')
@@ -53,16 +42,16 @@ class ConfigLoader:
         return timedelta(**{suffixes[suffix]: amount})
 
     def language(self) -> LanguageConfig:
-        language = self._settings.get(
-            'language', 
+        language = self._settings.get('language', {})
+        name = language.get(
+            'name', 
             self._env.str(
                 'LANGUAGE', 
                 DEFAULT_LANGUAGE
             )
         )
-
         return LanguageConfig(
-            language=language
+            name=name
         )
 
     def logging(self) -> LoggingConfig:
@@ -109,17 +98,17 @@ class ConfigLoader:
 
             lockout_time = admin.get(
                 'lockout_time', 
-                self._env.int(
+                timedelta(seconds=self._env.int(
                     'LOCKOUT_TIME',
                     DEFAULT_ADMIN_LOCKOUT
-                )
+                ))
             )
 
         return AdminConfig(
             username=username,
             password_hash=password_hash,
             max_login_attempts=max_login_attempts,
-            lockout_time=timedelta(seconds=lockout_time),
+            lockout_time=lockout_time,
         )
     
     def radius(self) -> RadiusConfig:
@@ -157,25 +146,25 @@ class ConfigLoader:
     def hotspot(self) -> HotspotConfig:
         hotspot: dict = self._settings.get('hotspot', {})
 
-        online_timeout = hotspot.get('online_timeout', self._env.str('ONLINE_TIMEOUT', DEFAULT_ONLINE_TIMEOUT))
+        online_timeout = hotspot.get('online_timeout', timedelta(seconds=self._env.int('ONLINE_TIMEOUT', DEFAULT_ONLINE_TIMEOUT)))
 
         with self._env.prefixed('USERS_'):
             with self._env.prefixed('STAFF_'):
                 staff: dict = hotspot.get('staff', {})
                 staff_user = HotspotUserConfig(
                     password=staff.get('password', self._env.str('PASS', DEFAULT_STAFF_PASSWORD)), 
-                    delay=self._convert_delay(staff.get('delay', self._env.str('DELAY', DEFAULT_STAFF_DELAY)))
+                    delay=staff.get('delay', self._convert_delay(self._env.str('DELAY', DEFAULT_STAFF_DELAY)))
                 )
 
             with self._env.prefixed('GUEST_'):
                 guest: dict = hotspot.get('guest', {})
                 guest_user = HotspotUserConfig(
                     password=guest.get('password', self._env.str('PASS', DEFAULT_GUEST_PASSWORD)), 
-                    delay=self._convert_delay(guest.get('delay', self._env.str('DELAY', DEFAULT_GUEST_DELAY)))
+                    delay=guest.get('delay', self._convert_delay(self._env.str('DELAY', DEFAULT_GUEST_DELAY)))
                 )
 
         return HotspotConfig(
-            online_timeout=timedelta(seconds=online_timeout),
+            online_timeout=online_timeout,
             staff=staff_user,
             guest=guest_user
         )
@@ -194,8 +183,8 @@ class ConfigLoader:
             api_key=api_key
         )
     
-    def load(self) -> Config:
-        return Config(
+    def load(self) -> AppConfig:
+        return AppConfig(
             language=self.language(),
             logging=self.logging(),
             hotspot=self.hotspot(),

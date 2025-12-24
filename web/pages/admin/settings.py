@@ -1,7 +1,6 @@
 from flask import Blueprint, abort, jsonify, render_template, request, session
 
-from core.admin.tables.settings import get_settings, update_settings
-from core.admin.tables.settings.radius import add_radius_host, delete_radius_host, update_radius_host
+from core.admin.tables.settings.radius import add_radius_host, delete_radius_host, get_radius_hosts, update_radius_host
 from core.config.defaults import DEFAULT_RADIUS_ACCT_PORT, DEFAULT_RADIUS_AUTH_PORT, DEFAULT_RADIUS_COA_PORT
 from core.utils.language import get_translate
 from web.pages.admin.utils import login_required
@@ -17,21 +16,14 @@ def index():
     return render_template('admin/settings.html', error=error)
 
 
-@settings_bp.route('/<table_name>/save', methods=['POST'])
+@settings_bp.route('/radius', methods=['GET'])
 @login_required
-def save_data(table_name):
-    data: dict = request.json
-
-    if not data:
-        abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
+def radius():
+    response = get_radius_hosts()
         
-    response = update_settings(table_name, data)
-    status = response.get('status')
-    if status == 'OK':
-        return jsonify({'success': True})
-    else:
-        error_message = response.get('error_message')
-        return jsonify({'success': False, 'error_message': error_message})
+    return jsonify({
+        'data': response
+    })
 
 
 @settings_bp.route('/radius/hosts/add', methods=['POST'])
@@ -151,15 +143,3 @@ def delete_host():
     else:
         error_message = response.get('error_message')
         return jsonify({'success': False, 'error_message': error_message})
-
-
-@settings_bp.route('/<table_name>', methods=['GET'])
-@login_required
-def get_table(table_name):
-    response = get_settings(table_name)
-    if not response:
-        abort(404)
-        
-    return jsonify({
-        'data': response
-    })

@@ -1,7 +1,6 @@
 from flask import Blueprint, abort, jsonify, request
 
 from core.admin.tables import get_table
-from core.admin.tables.settings import get_settings
 from core.admin.tables.wifi_clients import get_wifi_clients
 from core.hotspot.user.blacklist import add_to_blacklist, delete_from_blacklist
 from core.hotspot.user.employees import add_employee, delete_from_employees, update_employee
