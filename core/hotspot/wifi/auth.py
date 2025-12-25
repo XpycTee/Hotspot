@@ -48,7 +48,7 @@ def authenticate_by_mac(mac, hardware_fp=None):
     return {"status": "NOT_FOUND"}
 
 
-def authenticate_by_phone(mac, phone_number, hardware_fp=None):
+def authenticate_by_phone(mac, phone_number, hardware_fp):
     phone_number = normalize_phone(phone_number)
 
     if check_blacklist(phone_number):

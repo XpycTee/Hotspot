@@ -6,48 +6,48 @@ from core.config.sms import get_sender
 from core.utils.language import get_translate
 
 
-def generate_code(session_id):
+def generate_code(user_fp):
     code = str(randint(0, 9999)).zfill(4)
-    cache.set(f'sms:code:{session_id}', code, 300)
-    cache.set_raw(f'sms:attempts:{session_id}', 0, 300)
-    cache.set(f'sms:sended:{session_id}', False, 60)
+    cache.set(f'sms:code:{user_fp}', code, 300)
+    cache.set_raw(f'sms:attempts:{user_fp}', 0, 300)
+    cache.set(f'sms:sended:{user_fp}', False, 60)
     return code
 
-def get_code(session_id):
-    return cache.get(f"sms:code:{session_id}")
+def get_code(user_fp):
+    return cache.get(f"sms:code:{user_fp}")
 
-def set_sended(session_id):
-    cache.set(f'sms:sended:{session_id}', True, 60)
+def set_sended(user_fp):
+    cache.set(f'sms:sended:{user_fp}', True, 60)
 
-def increment_attempts(session_id):
-    return cache.incr(f"sms:attempts:{session_id}")
+def increment_attempts(user_fp):
+    return cache.incr(f"sms:attempts:{user_fp}")
 
-def verify_code(session_id, code: str):
-    cached = cache.get(f"sms:code:{session_id}")
+def verify_code(user_fp, code: str):
+    cached = cache.get(f"sms:code:{user_fp}")
     if cached:
         return cached == code
     
     return cached
 
-def code_sended(session_id):
-    sended = cache.get(f"sms:sended:{session_id}")
+def code_sended(user_fp):
+    sended = cache.get(f"sms:sended:{user_fp}")
     return sended is not None and sended
 
-def clear_code(session_id):
-    cache.delete(f'sms:code:{session_id}')
-    cache.delete(f'sms:attempts:{session_id}')
-    cache.delete(f'sms:sended:{session_id}')
+def clear_code(user_fp):
+    cache.delete(f'sms:code:{user_fp}')
+    cache.delete(f'sms:attempts:{user_fp}')
+    cache.delete(f'sms:sended:{user_fp}')
 
 
-def send_code(session_id, phone_number):
-    if code_sended(session_id):
+def send_code(user_fp, phone_number):
+    if code_sended(user_fp):
         return {"status": "ALREDY_SENDED", 'error_message': get_translate("errors.auth.code_can_not_resend")}
     
-    if user_code:=get_code(session_id):
+    if user_code:=get_code(user_fp):
         logger.debug(f'User cached code for {phone_number}: {user_code}')
         sending_code = user_code
     else:
-        sending_code = generate_code(session_id)
+        sending_code = generate_code(user_fp)
 
     sender = get_sender()
     sms_error = sender.send_sms(phone_number, get_translate('sms_code', templates={"code": sending_code}))
@@ -56,7 +56,6 @@ def send_code(session_id, phone_number):
         logger.error(f"Failed to send SMS to {phone_number}")
         return {"status": "SENDER_ERROR"}
     
-    set_sended(session_id)
+    set_sended(user_fp)
     logger.debug(f"Send {phone_number}'s code: {sending_code}")
     return {"status": "OK"}
-

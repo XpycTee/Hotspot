@@ -106,7 +106,7 @@ def login():
 
     logger.debug(f'Session data after form: {_log_masked_session()}')
     mac = session.get('mac')
-    hardware_fp = session.get('hardware_fp', None)
+    hardware_fp = session.get('hardware_fp')
 
     response = authenticate_by_mac(mac, hardware_fp)
 
@@ -137,15 +137,14 @@ def code():
     if phone_number:
         phone_number = normalize_phone(phone_number)
         mac = session.get('mac')
-        hardware_fp = session.get('hardware_fp', None)
+        hardware_fp = session.get('hardware_fp')
 
         session['phone'] = phone_number
 
         response = authenticate_by_phone(mac, phone_number, hardware_fp)
         status = response.get('status')
         if status == "OK":
-            if user_fp:=response.get('user_fp'):
-                session['user_fp'] = user_fp
+            session['user_fp'] = response.get('user_fp')
 
             return redirect(url_for('pages.hotspot.sendin'), 302)
         elif status == "BLOCKED":
@@ -162,9 +161,9 @@ def code():
         if not phone_number:
             abort(400)
 
-    session_id = session.get('_id')
+    user_fp = session.get('user_fp')
 
-    response = send_code(session_id, phone_number)
+    response = send_code(user_fp, phone_number)
 
     status = response.get('status')
     if status == "OK":
