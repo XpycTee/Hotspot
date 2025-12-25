@@ -1,17 +1,16 @@
-from datetime import timedelta
 from flask import Blueprint, render_template, session
 
-from core.config.hotspot import HOTSPOT
-from core.config.users import GUEST_USER, STAFF_USER
 from web.pages.admin.utils import login_required
 from web.pages.admin.settings.radius import radius_bp
 from web.pages.admin.settings.hotspot import hotspot_bp
+from web.pages.admin.settings.sender import sender_bp
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
 bluepints = [
     radius_bp,
-    hotspot_bp
+    hotspot_bp,
+    sender_bp
 ]
 
 for bp in bluepints:

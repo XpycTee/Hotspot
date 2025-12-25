@@ -57,7 +57,6 @@
     position: absolute;
     top: 4px;
     left: 4px;
-    width: calc((100% - 8px) / 3);
     height: calc(100% - 8px);
     background: #fff;
     border-radius: 16px;
@@ -65,9 +64,7 @@
     transition: left 0.25s ease;
 }
 
-.tri-toggle[data-state="1"] .tri-slider { left: 4px; }
-.tri-toggle[data-state="2"] .tri-slider { left: calc(33.33% + 4px); }
-.tri-toggle[data-state="3"] .tri-slider { left: calc(66.66% + 4px); }
+.tri-toggle .tri-slider { left: 4px; }
 
 /* Collapsible filters */
 .filters-header {

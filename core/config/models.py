@@ -106,7 +106,7 @@ class HotspotConfig:
     guest: HotspotUserConfig
 
 
-@dataclass(frozen=True)
+@dataclass
 class SenderConfig:
     """
     External message sender configuration (SMS, HTTP API, etc).

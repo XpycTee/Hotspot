@@ -35,7 +35,7 @@
     <ul class="nav-tabs">
         <li><a id="hotspot" href="{{ url_for('pages.admin.settings.hotspot.index') }}">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
         <li><a id="radius" href="{{ url_for('pages.admin.settings.radius.index') }}">{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</a></li>
-        <li><a id="sender" href="#sender">{{ get_translate('html.admin.settings.sender.title', session.user_lang) }}</a></li>
+        <li><a id="sender" href="{{ url_for('pages.admin.settings.sender.index') }}">{{ get_translate('html.admin.settings.sender.title', session.user_lang) }}</a></li>
         <li><a id="web" href="#web">{{ get_translate('html.admin.settings.web.title', session.user_lang) }}</a></li>
     </ul>
     <div class="table-container">
@@ -44,6 +44,7 @@
 
 </div>
 <script src="{{ url_for('static', filename='javascript/settings.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/filters.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.nav-tabs a');

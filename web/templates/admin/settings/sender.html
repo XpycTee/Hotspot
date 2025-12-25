@@ -1,7 +1,149 @@
 {% extends 'admin/settings.html' %}
 
 {% block settings_content %}
-<div id="sender" class="content-tab" style="display: none;">
+<div id="sender" class="content-tab">
+    <section class="settings-pane">
+        <h2>{{ get_translate('html.admin.settings.sender.title', session.user_lang) }}</h2>
 
+        <form id="sender-form">
+            {# Determine initial toggle state and which field to show #}
+            {# compute initial state index based on options order: None, mikrotik, huawei, smsru #}
+            {% set type_state = 1 %}
+            {% if sender is defined and sender.type == 'debug' %}{% set type_state = 1 %}
+            {% elif sender is defined and sender.type == 'mikrotik' %}{% set type_state = 2 %}
+            {% elif sender is defined and sender.type == 'huawei' %}{% set type_state = 3 %}
+            {% elif sender is defined and sender.type == 'smsru' %}{% set type_state = 4 %}{% endif %}
+            {% set show_url = sender is defined and (sender.type in ['mikrotik', 'huawei']) %}
+            {% set show_api = sender is defined and sender.type == 'smsru' %}
+
+            <div class="settings-panel">
+                <label class="settings-label">{{ get_translate('html.admin.settings.sender.type', session.user_lang) }}</label>
+                <div id="sender_type_toggle" class="tri-toggle" data-target="sender_type_input" data-state="{{ type_state }}">
+                    <div class="tri-option" data-value="debug">None</div>
+                    <div class="tri-option" data-value="mikrotik">Mikrotik</div>
+                    <div class="tri-option" data-value="huawei">Huawei</div>
+                    <div class="tri-option" data-value="smsru">sms.ru</div>
+                    <div class="tri-slider"></div>
+                </div>
+                <input type="hidden" name="type" id="sender_type_input" value="{{ sender.type if sender is defined else 'mikrotik' }}" />
+            </div>
+
+            <div class="settings-panel sender-url" style="{{ 'display:block;' if show_url else 'display:none;' }}">
+                <label class="settings-label" for="sender_url">{{ get_translate('html.admin.settings.sender.url', session.user_lang) }}</label>
+                <input class="input input-settings" type="text" id="sender_url" name="url" value="{{ sender.url if sender is defined and sender.url is not none else '' }}" />
+            </div>
+
+            <div class="settings-panel sender-api_key" style="{{ 'display:block;' if show_api else 'display:none;' }}">
+                <label class="settings-label" for="sender_api_key">{{ get_translate('html.admin.settings.sender.api_key', session.user_lang) }}</label>
+                <input class="input input-settings" type="text" id="sender_api_key" name="api_key" value="{{ sender.api_key if sender is defined and sender.api_key is not none else '' }}" />
+            </div>
+
+            {% if sender is defined and sender.params %}
+            <div class="settings-panel">
+                <h3>{{ get_translate('html.admin.settings.sender.params', session.user_lang) }}</h3>
+                {% for key, value in sender.params.items() %}
+                <div class="field">
+                    <label class="settings-label" for="param_{{ key }}">{{ key }}</label>
+                    <input class="input input-settings" type="text" id="param_{{ key }}" name="params[{{ key }}]" value="{{ value }}" />
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="settings-actions">
+                <button type="submit" class="btn btn-settings btn-save">{{ get_translate('buttons.save', session.user_lang) }}</button>
+                <button type="button" id="sender-reset" class="btn btn-settings btn-modal-close">{{ get_translate('buttons.reset', session.user_lang) }}</button>
+                <span id="sender-status" role="status" aria-live="polite"></span>
+            </div>
+        </form>
+    </section>
 </div>
+<script>
+// use shared tri-toggle logic from filters.js; react to hidden input changes to show/hide panels
+document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('sender_type_toggle');
+    const hiddenInput = document.getElementById('sender_type_input');
+    const urlPanel = document.querySelector('.sender-url');
+    const apiPanel = document.querySelector('.sender-api_key');
+
+    if (!toggle || !hiddenInput) return;
+
+    const options = Array.from(toggle.querySelectorAll('.tri-option'));
+
+    // when hidden input changes (set by filters.js), toggle visibility
+    hiddenInput.addEventListener('input', function () {
+        const val = hiddenInput.value;
+        if (val === 'debug') {
+            if (apiPanel) apiPanel.style.display = 'none';
+            if (urlPanel) urlPanel.style.display = 'none';
+        } else if (val === 'smsru') {
+            if (apiPanel) apiPanel.style.display = 'block';
+            if (urlPanel) urlPanel.style.display = 'none';
+        } else {
+            if (apiPanel) apiPanel.style.display = 'none';
+            if (urlPanel) urlPanel.style.display = 'block';
+        }
+    });
+
+    // initialize panels visibility from initial value
+    hiddenInput.dispatchEvent(new Event('input'));
+
+    // handle reset: set form back to default values and update toggle visually
+    const form = document.getElementById('sender-form');
+    const resetBtn = document.getElementById('sender-reset');
+    const statusEl = document.getElementById('sender-status');
+
+    if (resetBtn && toggle && typeof toggle._setState === 'function') {
+        resetBtn.addEventListener('click', function () {
+            form.reset();
+            showStatus('', true);
+            // determine initial index from hidden input defaultValue
+            const defaultVal = hiddenInput.defaultValue || hiddenInput.getAttribute('value') || '';
+            const idx = options.findIndex(o => o.dataset.value === defaultVal);
+            const indexToSet = idx >= 0 ? idx : 0;
+            toggle._setState(indexToSet);
+            hiddenInput.dispatchEvent(new Event('input'));
+        });
+    }
+
+    function showStatus(msg, ok){
+        statusEl.textContent = msg;
+        statusEl.style.color = ok ? 'green' : 'crimson';
+    }
+
+    form.addEventListener('submit', function(ev){
+        ev.preventDefault();
+
+        const typeVal = document.getElementById('sender_type_input').value;
+        let data = {
+                type: typeVal
+            }
+
+        if (typeVal === 'smsru') {
+            data.api_key = document.getElementById('sender_api_key').value;
+        } else if (typeVal != 'debug') {
+            data.url = document.getElementById('sender_url').value;
+        }
+
+        fetch('/admin/settings/sender/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showStatus(getTranslate('html.admin.settings.saved'), true);
+            } else {
+                showStatus(getTranslate('html.admin.settings.failed'), false);
+                //alert(`Error: ${result.error.description}`);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+});
+</script>
+<script>
+    
+</script>
 {% endblock %}
