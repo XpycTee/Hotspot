@@ -182,8 +182,8 @@ def resend():
     if not phone_number:
         abort(400)
     
-    session_id = session.get('_id')
-    response = send_code(session_id, phone_number)
+    user_fp = session.get('user_fp')
+    response = send_code(user_fp, phone_number)
     status = response.get('status')
     if status == "OK":
         return jsonify({'success': True})
@@ -201,14 +201,14 @@ def auth():
     if not mac or not phone_number:
         abort(400)
 
-    session_id = session.get('_id')
+    user_fp = session.get('user_fp')
     form_code = request.form.get('code')
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
         return redirect(url_for('pages.hotspot.code'), 302)
 
-    response = authenticate_by_code(session_id, mac, form_code, phone_number)
+    response = authenticate_by_code(user_fp, mac, form_code, phone_number)
     status = response.get('status')
     if status == "OK":
         return redirect(url_for('pages.hotspot.sendin'), 302)
