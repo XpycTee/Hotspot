@@ -84,6 +84,7 @@
         "tables": {
           "controls": "Controls",
           "page_counter": "Page {current_page} of {total_pages}",
+          "found_counter": "Found: {count}",
           "wifi_clients": {
             "title": "WiFi Clients",
             "mac": "MAC address",

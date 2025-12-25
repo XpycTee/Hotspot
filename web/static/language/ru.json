@@ -84,6 +84,7 @@
         "tables": {
           "controls": "Управление",
           "page_counter": "Страница {current_page} из {total_pages}",
+          "found_counter": "Найдено: {count}",
           "wifi_clients": {
             "title": "WiFi Клиенты",
             "mac": "Мак адрес",

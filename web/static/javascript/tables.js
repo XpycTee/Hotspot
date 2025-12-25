@@ -25,7 +25,8 @@ function changePageTo(tableId, pageNumber) {
 }
 
 function loadWifiData() {
-    const { currentPage, searchQuery } = tableData['wifi_clients'];
+    const tableId = 'wifi_clients';
+    const { currentPage, searchQuery } = tableData[tableId];
     let url = '/admin/tables/wifi_clients';
     let url_query = [`page=${currentPage}`, `rows_per_page=${rowsPerPage}`];
 
@@ -62,9 +63,10 @@ function loadWifiData() {
     fetch(url)
         .then(response => response.json())
         .then(data => { 
-            updateTable('wifi_clients', data.data);
+            updateTable(tableId, data.data);
+            updateFoundCounter(tableId, data.total_rows);
             updatePagination(
-                'wifi_clients', 
+                tableId, 
                 data.current_page, 
                 Math.ceil(data.total_rows / rowsPerPage)
             );
@@ -95,6 +97,7 @@ function loadTableData(tableId) {
             .then(response => response.json())
             .then(data => { 
                 updateTable(tableId, data.data);
+                updateFoundCounter(tableId, data.total_rows);
                 updatePagination(
                     tableId, 
                     data.current_page, 
@@ -103,6 +106,12 @@ function loadTableData(tableId) {
             })
             .catch(error => console.error('Error loading table data:', error));
     }
+}
+
+function updateFoundCounter(tableId, totalRows) {
+    const pageBody = document.getElementById(tableId);
+    const foundCounterSpan = pageBody.querySelector('.found-count');
+    foundCounterSpan.innerHTML = getTranslate('html.admin.panel.tables.found_counter', { count: totalRows });
 }
 
 // Функция для обновления таблицы
