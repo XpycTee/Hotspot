@@ -11,7 +11,7 @@ radius_bp = Blueprint('radius', __name__, url_prefix='/radius')
 
 @radius_bp.route('', methods=['GET'])
 @login_required
-def radius():
+def index():
     response = get_radius_hosts()
         
     return jsonify({

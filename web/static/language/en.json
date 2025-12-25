@@ -5,58 +5,58 @@
     "http": {
       "400": {
         "name": "Bad Request",
-        "description": "Client error, server cannot process the request. Try reconnecting to the wifi."
+        "description": "Client error, the server cannot process the request. Try reconnecting to Wi-Fi"
       },
       "403": {
         "name": "Forbidden",
-        "description": "Server refuses to authorize the request."
+        "description": "The server refuses to authorize the request."
       },
       "404": {
         "name": "Not Found",
-        "description": "Requested URL was not found on this server."
+        "description": "The requested URL was not found on the server."
       },
       "405": {
         "name": "Method Not Allowed",
-        "description": "The method specified in the request is not allowed for the resource."
+        "description": "The specified method is not allowed for this resource."
       },
       "500": {
         "name": "Internal Server Error",
-        "description": "Server encountered a situation it doesn't know how to handle."
+        "description": "The server encountered a situation it does not know how to handle."
       },
       "502": {
         "name": "Bad Gateway",
-        "description": "Invalid response from the upstream server."
+        "description": "Invalid response received from the upstream server."
       },
       "503": {
         "name": "Service Unavailable",
-        "description": "Server is currently unable to handle the request."
+        "description": "The server is currently unable to process the request."
       }
     },
     "auth": {
-      "bad_code_try": "Invalid code, try again",
-      "bad_code_all": "Invalid code, ran out of attempts, start again",
-      "bad_auth": "If authorization failed, contact tech support",
+      "bad_code_try": "Invalid code, please try again",
+      "bad_code_all": "Invalid code, attempts exhausted. Please start over",
+      "bad_auth": "If authorization failed, please contact technical support",
       "missing_code": "Code is missing, please enter the code",
-      "expired_code": "Code expired, a new code has been sent to you",
-      "code_can_not_resend": "Code already sent, please wait a minute",
-      "code_alredy_sended": "Code already sent, please enter the code"
+      "expired_code": "The code has expired, a new code has been sent to you",
+      "code_can_not_resend": "The code has already been sent, please wait one minute",
+      "code_alredy_sended": "The code has already been sent, please enter the code"
     },
     "admin": {
-      "wrong_credentials": "Incorrect username or password",
-      "end_tries": "Too many attempts. Try again in {lockout_time} minutes.",
+      "wrong_credentials": "Invalid username or password",
+      "end_tries": "Too many attempts. Please try again in {lockout_time} minutes.",
       "tables": {
         "missing_request_data": "Request data is missing",
         "employee_not_found": "Employee not found",
         "phone_number_exists": "Phone number already exists",
         "mac_is_missing": "MAC address is missing",
-        "mac_not_flound": "MAC address not found"
+        "mac_not_found": "MAC address not found"
       },
       "modals": {
         "header": "Error message:\n",
-        "delete": "Error deleting data",
-        "save": "Error saving data",
-        "deauth": "Error deauthenticating client",
-        "block": "Error blocking client"
+        "delete": "Error while deleting data",
+        "save": "Error while saving data",
+        "deauth": "Error while deauthorizing the client",
+        "block": "Error while blocking the client"
       }
     }
   },
@@ -64,71 +64,42 @@
     "privacy_policy_label": "Privacy Policy",
     "login": {
       "title": "Authorization",
-      "label_phone": "Enter your phone number for authorization:",
-      "placeholder_phone": "Phone number",
-      "submit_button": "Send SMS with code"
+      "label_phone": "Please enter your phone number to authorize in the hotspot"
     },
     "code": {
       "title": "Code Confirmation",
-      "label_code": "Please enter the code received in the SMS",
-      "placeholder_code": "Code from SMS",
-      "submit_button": "Confirm code",
+      "label_code": "Please enter the code received via SMS",
       "validity_message": "The code is valid for 5 minutes",
       "resend_message": "You can request a new code in",
       "seconds": "seconds",
       "resend_link": "Resend code"
     },
-    "error": {
-      "retry": "Retry"
-    },
-    "modal": {
-      "close": "Close"
-    },
     "admin": {
-      "buttons": {
-        "login": "Login",
-        "logout": "Logout",
-        "edit": "Edit",
-        "deauth": "Deauth",
-        "delete": "Delete",
-        "add": "Add",
-        "prev": "Previous",
-        "next": "Next",
-        "save": "Save",
-        "cancel": "Cancel",
-        "block": "Block"
-      },
       "login": {
         "title": "Authorization",
-        "label": "Admin panel login",
-        "login_placeholder": "Enter login",
-        "password_placeholder": "Enter password"
+        "label": "Admin panel login"
       },
       "panel": {
-        "title": "Admin panel",
+        "title": "Admin Panel",
         "tables": {
           "controls": "Controls",
-          "search": "Search...",
           "page_counter": "Page {current_page} of {total_pages}",
           "wifi_clients": {
             "title": "WiFi Clients",
-            "mac": "MAC Address",
-            "expire": "Access Expiry",
+            "mac": "MAC address",
+            "expire": "Access expiration",
             "is_employee": "Employee",
-            "phone": "Phone Number",
-            "all": "All",
-            "yes": "Yes",
-            "no": "No",
+            "phone": "Phone number",
             "online": "Online",
-            "last_location": "Last Location",
+            "last_location": "Last location",
             "last_ipv4_address": "Last IP"
           },
           "employees": {
             "title": "Employee List",
             "id": "ID",
-            "lastname": "Last Name",
-            "name": "First Name",
-            "phones": "Phones"
+            "lastname": "Last name",
+            "name": "First name",
+            "phones": "Phone numbers"
           },
           "blacklist": {
             "title": "Blacklist",
@@ -140,14 +111,70 @@
             "employees": "Add new employee",
             "blacklist": "Block"
           },
-          "lastname_palceholder": "lastname",
-          "name_palceholder": "Name",
-          "phones_label": "Phones",
-          "phone_palceholder": "Phone",
-          "add_phone_btn": "+ phone"
+          "phones_label": "Phones"
+        }
+      },
+      "settings": {
+        "radius": {
+          "title": "RADIUS Hosts",
+          "add_title": "New host",
+          "address": "Address",
+          "secret": "Secret",
+          "name": "Name",
+          "authport": "Auth",
+          "acctport": "Acct",
+          "coaport": "CoA"
+        },
+        "hotspot": {
+          "title": "Hotspot Settings",
+          "online_timeout": "Online timeout (minutes)",
+          "staff_user": "Staff user",
+          "guest_user": "Guest user"
+        },
+        "sender": {
+          "title": "Sender"
+        },
+        "web": {
+          "title": "Web"
         }
       }
     }
   },
-  "sms_code": "{code} your WiFi code"
+  "buttons": {
+    "login": "Log in",
+    "logout": "Log out",
+    "edit": "Edit",
+    "deauth": "Deauthorize",
+    "delete": "Delete",
+    "add": "Add",
+    "prev": "Back",
+    "next": "Next",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reset": "Reset",
+    "retry": "Retry",
+    "close": "Close",
+    "block": "Block",
+    "filters_open": "Filters ▾",
+    "filters_close": "Filters ▴",
+    "send_sms": "Send SMS with code",
+    "onfirm_code": "Confirm code",
+    "panel": "Panel",
+    "settings": "Settings",
+    "all": "All",
+    "yes": "Yes",
+    "no": "No",
+    "add_phone": "+ phone"
+  },
+  "placeholders": {
+    "login": "Login",
+    "password": "Password",
+    "code": "SMS code",
+    "phone_number": "Phone number",
+    "search": "Search...",
+    "lastname": "Last name",
+    "firstname": "First name",
+    "phone": "Phone"
+  },
+  "sms_code": "{code} is your WiFi code"
 }

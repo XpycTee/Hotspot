@@ -136,14 +136,14 @@ function generateRowHTML(tableId, row) {
         return `
             <td>${row.mac}</td>
             <td>${formattedExpiration}</td>
-            <td>${row.employee ? `${row.employee.lastname} ${row.employee.name}` : getTranslate('html.admin.panel.tables.wifi_clients.no') }</td>
+            <td>${row.employee ? `${row.employee.lastname} ${row.employee.name}` : getTranslate('buttons.no') }</td>
             <td>+${row.phone}</td>
-            <td>${row.online ? getTranslate('html.admin.panel.tables.wifi_clients.yes') : getTranslate('html.admin.panel.tables.wifi_clients.no')}</td>
+            <td>${row.online ? getTranslate('buttons.yes') : getTranslate('buttons.no')}</td>
             <td>${row.last_location}</td>
             <td>${row.last_ipv4_address}</td>
             <td class="column-controls">
-                <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('html.admin.buttons.deauth')}</button>
-                <button class="btn btn-delete btn-controls" onclick="blockRow(this)">${getTranslate('html.admin.buttons.block')}</button>
+                <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('buttons.deauth')}</button>
+                <button class="btn btn-delete btn-controls" onclick="blockRow(this)">${getTranslate('buttons.block')}</button>
             </td>
         `;
     } else if (tableId === 'employees') {
@@ -155,15 +155,15 @@ function generateRowHTML(tableId, row) {
                 <ul>${row.phones.map(phone => `<li>+${phone}</li>`).join('')}</ul>
             </td>
             <td class="column-controls">
-                <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employees')">${getTranslate('html.admin.buttons.edit')}</button>
-                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employees')">${getTranslate('html.admin.buttons.delete')}</button>
+                <button class="btn btn-edit btn-controls" onclick="editRow(this, 'employees')">${getTranslate('buttons.edit')}</button>
+                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'employees')">${getTranslate('buttons.delete')}</button>
             </td>
         `;
     } else if (tableId === 'blacklist') {
         return `
             <td class="blocked-phone">+${row}</td>
             <td class="column-controls">
-                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">${getTranslate('html.admin.buttons.delete')}</button>
+                <button class="btn btn-delete btn-controls" onclick="deleteRow(this, 'blacklist')">${getTranslate('buttons.delete')}</button>
             </td>
         `;
     }
@@ -268,29 +268,29 @@ function addRowModal(button, type) {
     const templates = {
         employees: `
             <form class="form form-modal" id="addRowForm">
-                <input class="input modal-input" type="text" name="lastname" placeholder="${getTranslate('html.admin.panel.edit.lastname_palceholder')}" required>
-                <input class="input modal-input" type="text" name="name" placeholder="${getTranslate('html.admin.panel.edit.name_palceholder')}" required>
+                <input class="input modal-input" type="text" name="lastname" placeholder="${getTranslate('placeholders.lastname')}" required>
+                <input class="input modal-input" type="text" name="name" placeholder="${getTranslate('placeholders.firstname')}" required>
                 <label>
                     ${getTranslate('html.admin.panel.edit.phones_label')}:
                     <ul id="phoneList">
                         <li>
-                            <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="${getTranslate('html.admin.panel.edit.phone_palceholder')}" required>
+                            <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="${getTranslate('placeholders.phone')}" required>
                         </li>
                     </ul>
-                    <button type="button" class="btn btn-add-phone" onclick="addPhoneField(this, true)">${getTranslate('html.admin.panel.edit.add_phone_btn')}</button>
+                    <button type="button" class="btn btn-add-phone" onclick="addPhoneField(this, true)">${getTranslate('buttons.add_phone')}</button>
                 </label>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('html.admin.buttons.save')}</button>
-                    <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('html.admin.buttons.cancel')}</button>
+                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('.buttons.save')}</button>
+                    <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
                 </div>
             </form>
         `,
         blacklist: `
             <form class="form form-modal" id="addRowForm">
-                <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="${getTranslate('html.admin.panel.edit.phone_palceholder')}" required>
+                <input class="input modal-input" type="tel" name="phone" data-tel-input placeholder="${getTranslate('placeholders.phone')}" required>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('html.admin.buttons.save')}</button>
-                    <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('html.admin.buttons.cancel')}</button>
+                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                    <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
                 </div>
             </form>
         `
@@ -589,7 +589,7 @@ function editPhoneList(cell) {
     const addPhoneButton = document.createElement('button');
     addPhoneButton.type = 'button';
     addPhoneButton.className = 'btn btn-add-phone';
-    addPhoneButton.textContent = getTranslate('html.admin.panel.edit.add_phone_btn');
+    addPhoneButton.textContent = getTranslate('buttons.add_phone');
     addPhoneButton.onclick = () => addPhoneField(addPhoneButton);
     cell.appendChild(addPhoneButton);
 }
@@ -617,13 +617,13 @@ function updateControlButtons(row, type) {
         controlsTd.innerHTML = '';
         const saveButton = document.createElement('button');
         saveButton.className = 'btn btn-save btn-controls';
-        saveButton.textContent = getTranslate('html.admin.buttons.save');
+        saveButton.textContent = getTranslate('buttons.save');
         saveButton.onclick = () => saveRow(saveButton, type);
         controlsTd.appendChild(saveButton);
 
         const deleteButton = document.createElement('button');
         deleteButton.className = 'btn btn-delete btn-controls';
-        deleteButton.textContent = getTranslate('html.admin.buttons.delete');
+        deleteButton.textContent = getTranslate('buttons.delete');
         deleteButton.onclick = () => deleteRow(deleteButton, type);
         controlsTd.appendChild(deleteButton);
     }
@@ -636,7 +636,7 @@ function addPhoneField(button, isModal=false) {
     const newInput = document.createElement('input');
     newInput.type = 'tel';
     newInput.name = 'phone';
-    newInput.placeholder = getTranslate('html.admin.panel.edit.phone_palceholder');
+    newInput.placeholder = getTranslate('placeholders.phone');
     if (isModal) {
         newInput.classList = 'input modal-input';
     } else {
@@ -685,7 +685,7 @@ function convertInputsToCells(inputs, data, type, row, button, new_id) {
         if (controlsTd) {
             const editButton = document.createElement('button');
             editButton.className = 'btn btn-edit btn-controls';
-            editButton.textContent = getTranslate('html.admin.buttons.edit');
+            editButton.textContent = getTranslate('buttons.edit');
             editButton.onclick = () => editRow(editButton, type);
             controlsTd.insertBefore(editButton, controlsTd.firstChild);
         }

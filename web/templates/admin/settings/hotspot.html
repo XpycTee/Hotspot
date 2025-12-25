@@ -1,3 +1,107 @@
 <div id="hotspot" class="content-tab" style="display: none;">
+	<section class="settings-pane">
+		<h2>{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</h2>
+
+		<form id="hotspot-form">
+			<div class="settings-panel">
+				<label class="settings-label" for="online_timeout">{{ get_translate('html.admin.settings.hotspot.online_timeout', session.user_lang) }}</label>
+				<input class="input input-settings" type="number" id="online_timeout" name="online_timeout" min="1" step="1" value="60" />
+			</div>
+
+			<div class="settings-panel">
+				<h2>{{ get_translate('html.admin.settings.hotspot.staff_user', session.user_lang) }}</h2>
+				<div class="field">
+					<input class="input input-settings" type="password" id="staff_password" placeholder="{{ get_translate('placeholders.password', session.user_lang) }}" name="staff_password" />
+				</div>
+				<div class="field">
+					<label class="settings-label" for="staff_delay_days">Delay</label>
+					<div class="time-delta">
+						<input class="input input-settings input-small" type="number" id="staff_delay_days" name="staff_delay_days" min="0" value="0" />
+						<span class="delta-label">days</span>
+						<input class="input input-settings input-small" type="number" id="staff_delay_hours" name="staff_delay_hours" min="0" max="23" value="0" />
+						<span class="delta-label">hours</span>
+						<input class="input input-settings input-small" type="number" id="staff_delay_minutes" name="staff_delay_minutes" min="0" max="59" value="0" />
+						<span class="delta-label">min</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="settings-panel">
+				<h2>{{ get_translate('html.admin.settings.hotspot.guest_user', session.user_lang) }}</h2>
+				<div class="field">
+					<input class="input input-settings" type="password" id="guest_password" placeholder="{{ get_translate('placeholders.password', session.user_lang) }}" name="guest_password" />
+				</div>
+				<div class="field">
+					<label for="guest_delay_days">Delay</label>
+					<div class="time-delta">
+						<input class="input input-settings input-small" type="number" id="guest_delay_days" name="guest_delay_days" min="0" value="0" />
+						<span class="delta-label">days</span>
+						<input class="input input-settings input-small" type="number" id="guest_delay_hours" name="guest_delay_hours" min="0" max="23" value="0" />
+						<span class="delta-label">hours</span>
+						<input class="input input-settings input-small" type="number" id="guest_delay_minutes" name="guest_delay_minutes" min="0" max="59" value="0" />
+						<span class="delta-label">min</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="settings-actions">
+				<button type="submit" class="btn btn-settings btn-save">{{ get_translate('buttons.save', session.user_lang) }}</button>
+				<button type="button" id="hotspot-reset" class="btn btn-settings btn-modal-close">{{ get_translate('buttons.reset', session.user_lang) }}</button>
+				<span id="hotspot-status" role="status" aria-live="polite"></span>
+			</div>
+		</form>
+	</section>
+
+	<script>
+		(function(){
+			const form = document.getElementById('hotspot-form');
+			const statusEl = document.getElementById('hotspot-status');
+			const resetBtn = document.getElementById('hotspot-reset');
+
+			function showStatus(msg, ok){
+				statusEl.textContent = msg;
+				statusEl.style.color = ok ? 'green' : 'crimson';
+			}
+
+			form.addEventListener('submit', function(ev){
+				ev.preventDefault();
+				const data = {
+					online_timeout_minutes: parseInt(document.getElementById('online_timeout').value, 10),
+					staff: {
+						password: document.getElementById('staff_password').value,
+						delay_seconds: (parseInt(document.getElementById('staff_delay_days').value,10) || 0) * 86400 +
+							(parseInt(document.getElementById('staff_delay_hours').value,10) || 0) * 3600 +
+							(parseInt(document.getElementById('staff_delay_minutes').value,10) || 0) * 60
+					},
+					guest: {
+						password: document.getElementById('guest_password').value,
+						delay_seconds: (parseInt(document.getElementById('guest_delay_days').value,10) || 0) * 86400 +
+							(parseInt(document.getElementById('guest_delay_hours').value,10) || 0) * 3600 +
+							(parseInt(document.getElementById('guest_delay_minutes').value,10) || 0) * 60
+					}
+				};
+                fetch('/admin/settings/hotspot/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showStatus('Saved', true);
+                    } else {
+                        showStatus('Save failed', false);
+                        //alert(`Error: ${result.error.description}`);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+			});
+
+			resetBtn.addEventListener('click', function(){
+				form.reset();
+				showStatus('', true);
+			});
+		})();
+	</script>
 
 </div>

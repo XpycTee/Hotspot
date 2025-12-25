@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import timedelta
-import json
+from core.utils import json
 import os
 from typing import Dict, List, Optional
 
@@ -23,7 +23,7 @@ class LanguageConfig:
             if filename.endswith('.json'):
                 file_path = os.path.join(language_folder, filename)
                 language_name = os.path.splitext(filename)[0]
-                with open(file_path, 'r', encoding='utf-8') as lang_file:
+                with open(file_path, 'rb') as lang_file:
                     language_content[language_name] = json.load(lang_file)
         self._content = language_content
         return language_content

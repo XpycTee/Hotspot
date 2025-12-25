@@ -36,8 +36,8 @@ function updateRadiusPage(settings) {
         <td data-acctport>${host.acctport}</td>
         <td data-coaport>${host.coaport}</td>
         <td class="column-controls">
-            <button class="btn btn-edit btn-controls" onclick="editHostModal(this)">${getTranslate('html.admin.buttons.edit')}</button>
-            <button class="btn btn-delete btn-controls" onclick="deleteHostRow(this)">${getTranslate('html.admin.buttons.delete')}</button>
+            <button class="btn btn-edit btn-controls" onclick="editHostModal(this)">${getTranslate('buttons.edit')}</button>
+            <button class="btn btn-delete btn-controls" onclick="deleteHostRow(this)">${getTranslate('buttons.delete')}</button>
         </td>
         `
         radiusBody.appendChild(tr);
@@ -115,8 +115,8 @@ function addNewHostModal() {
             <input class="input modal-input" type="text" name="coaport" value="3799" placeholder="${getTranslate('html.admin.settings.radius.coaport')}" required>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-save" data-close-button>${getTranslate('html.admin.buttons.save')}</button>
-                <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('html.admin.buttons.cancel')}</button>
+                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
             </div>
         </form>
     `
@@ -149,8 +149,8 @@ function editHostModal(button) {
             <input class="input modal-input" type="text" name="coaport" placeholder="${getTranslate('html.admin.settings.radius.coaport')}" value="${coaPort}" required>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-save" data-close-button>${getTranslate('html.admin.buttons.save')}</button>
-                <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('html.admin.buttons.cancel')}</button>
+                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
             </div>
         </form>
     `

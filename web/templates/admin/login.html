@@ -19,7 +19,7 @@
     <h2>{{ get_translate('html.admin.login.label', session.user_lang) }}</h2>
     <div>
         <input class="input input-auth" type="text" id="username" name="username" placeholder="{{ get_translate('html.admin.login.login_placeholder', session.user_lang) }}" required>
-        <input class="input input-auth" type="password" id="password" name="password" placeholder="{{ get_translate('html.admin.login.password_placeholder', session.user_lang) }}" required>
+        <input class="input input-auth" type="password" id="password" name="password" placeholder="{{ get_translate('placeholders.password', session.user_lang) }}" required>
         <select class="input input-auth" id="language" name="language">
             <option value="auto">Auto</option>
             {% for key, language in config["LANGUAGE_CONTENT"].items() %}
@@ -32,7 +32,7 @@
     <div class="error-notify">{{ error }}</div>
     {% endif %}
 
-    <input class="btn btn-submit" type="submit" value="{{ get_translate('html.admin.buttons.login', session.user_lang) }}">
+    <input class="btn btn-submit" type="submit" value="{{ get_translate('buttons.login', session.user_lang) }}">
 
 </form>
 {% endblock %}

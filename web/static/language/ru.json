@@ -1,4 +1,4 @@
-{ 
+{
   "language": "Русский",
   "errors": {
     "must_be_filled": "Все поля должны быть заполнены",
@@ -64,53 +64,25 @@
     "privacy_policy_label": "Политика конфиденциальности",
     "login": {
       "title": "Авторизация",
-      "label_phone": "Пожалуйста, введите свой номер телефона для авторизации в hotspot",
-      "placeholder_phone": "Номер телефона",
-      "submit_button": "Отправить СМС с кодом"
+      "label_phone": "Пожалуйста, введите свой номер телефона для авторизации в hotspot"
     },
     "code": {
       "title": "Подтверждение кода",
       "label_code": "Пожалуйста, введите код полученный в СМС",
-      "placeholder_code": "Код из СМС",
-      "submit_button": "Подтвердить код",
       "validity_message": "Код действителен в течение 5 минут",
       "resend_message": "Вы можете запросить новый код через",
       "seconds": "секунд",
       "resend_link": "Отправить код повторно"
     },
-    "error": {
-      "retry": "Повторить"
-    },
-    "modal": {
-      "close": "Закрыть"
-    },
     "admin": {
-      "buttons": {
-        "login": "Войти",
-        "logout": "Выход",
-        "edit": "Редактировать",
-        "deauth": "Деавторизовать",
-        "delete": "Удалить",
-        "add": "Добавить",
-        "prev": "Назад",
-        "next": "Далее",
-        "save": "Сохранить",
-        "cancel": "Отмена",
-        "block": "Заблокировать",
-        "filters_open": "Фильтры ▾",
-        "filters_close": "Фильтры ▴"
-      },
       "login": {
         "title": "Авторизация",
-        "label": "Вход в админ панель",
-        "login_placeholder": "Введите логин",
-        "password_placeholder": "Введите пароль"
+        "label": "Вход в админ панель"
       },
       "panel": {
         "title": "Админ панель",
         "tables": {
           "controls": "Управление",
-          "search": "Поиск...",
           "page_counter": "Страница {current_page} из {total_pages}",
           "wifi_clients": {
             "title": "WiFi Клиенты",
@@ -118,9 +90,6 @@
             "expire": "Срок доступа",
             "is_employee": "Сотрудник",
             "phone": "Номер телефона",
-            "all": "Все",
-            "yes": "Да",
-            "no": "Нет",
             "online": "Онлайн",
             "last_location": "Последня локация",
             "last_ipv4_address": "Последний IP"
@@ -144,9 +113,7 @@
           },
           "lastname_palceholder": "Фамилия",
           "name_palceholder": "Имя",
-          "phones_label": "Телефоны",
-          "phone_palceholder": "Телефон",
-          "add_phone_btn": "+ номер"
+          "phones_label": "Телефоны"
         }
       },
       "settings": {
@@ -161,7 +128,10 @@
           "coaport": "CoA"
         },
         "hotspot": {
-          "title": "Hotspot"
+          "title": "Настройки Hotspot",
+          "online_timeout": "Online timeout (minutes)",
+          "staff_user": "Staff user",
+          "guest_user": "Guest user"
         },
         "sender": {
           "title": "Sender"
@@ -171,6 +141,42 @@
         }
       }
     }
+  },
+  "buttons": {
+    "login": "Войти",
+    "logout": "Выход",
+    "edit": "Редактировать",
+    "deauth": "Деавторизовать",
+    "delete": "Удалить",
+    "add": "Добавить",
+    "prev": "Назад",
+    "next": "Далее",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "reset": "Сброс",
+    "retry": "Повторить",
+    "close": "Закрыть",
+    "block": "Заблокировать",
+    "filters_open": "Фильтры ▾",
+    "filters_close": "Фильтры ▴",
+    "send_sms": "Отправить СМС с кодом",
+    "onfirm_code": "Подтвердить код",
+    "panel": "Панель",
+    "settings": "Настройки",
+    "all": "Все",
+    "yes": "Да",
+    "no": "Нет",
+    "add_phone": "+ номер"
+  },
+  "placeholders": {
+    "login": "Логин",
+    "password": "Пароль",
+    "code": "Код из СМС",
+    "phone_number": "Номер телефона",
+    "search": "Поиск...",
+    "lastname": "Фамилия",
+    "firstname": "Имя",
+    "phone": "Телефон"
   },
   "sms_code": "{code} ваш код WiFi"
 }

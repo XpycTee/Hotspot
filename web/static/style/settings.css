@@ -1,0 +1,58 @@
+.field { 
+    margin: 8px 0; 
+}
+
+.settings-label { 
+    display:block; 
+    font-weight:600; 
+    margin-bottom:4px; 
+}
+
+.input-settings { 
+    width: 100%;
+    max-width: 360px; 
+    margin: 10px 0; 
+}
+
+.settings-actions { 
+    border-top: 1px solid #ccc; /* Замените #ccc на нужный вам цвет */
+    margin-top: 20px;
+    margin-bottom: 150px;
+    padding-top: 10px; /* Добавьте отступ, если необходимо */
+}
+
+#hotspot-status { margin-left:12px; }
+
+/* Panel style similar to table shadow */
+.settings-panel {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 25px 30px;
+    margin: 10px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.settings-panel h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+/* Time-delta inputs */
+.time-delta { 
+    display: flex; 
+    gap: 8px; 
+    align-items: center; 
+    flex-wrap: wrap; 
+}
+
+.input-small { 
+    width: 84px; 
+    box-sizing: border-box; 
+}
+
+.delta-label { 
+    font-size: 13px; 
+    color: #555; 
+    margin-right: 6px; 
+}

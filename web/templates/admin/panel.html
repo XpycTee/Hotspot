@@ -23,13 +23,13 @@
 <div class="admin-dashboard">
     <div class="admin-actions">
         <a href="{{ url_for('pages.admin.settings.index') }}"
-           class="btn-action btn-settings">
-            {{ get_translate('html.admin.buttons.settings', session.user_lang, 'Settings') }}
+           class="btn-action btn-go">
+            {{ get_translate('buttons.settings', session.user_lang) }}
         </a>
 
         <a href="{{ url_for('pages.admin.auth.logout') }}"
            class="btn-action btn-logout">
-            {{ get_translate('html.admin.buttons.logout', session.user_lang) }}
+            {{ get_translate('buttons.logout', session.user_lang) }}
         </a>
     </div>
     <ul class="nav-tabs">

@@ -44,12 +44,12 @@
     transition: background-color 0.2s ease;
 }
 
-.btn-settings {
+.btn-go {
     color: #2196F3;
     border-color: #2196F3;
 }
 
-.btn-settings:hover {
+.btn-go:hover {
     background-color: rgba(33, 150, 243, 0.1);
 }
 
@@ -92,4 +92,11 @@
     margin: 0 5px;
     padding: 5px 10px;
     font-size: 12px;
+}
+
+.btn-settings {
+    width: auto;
+    display: inline-block;
+    padding: 8px 14px;
+    margin-right: 8px;
 }

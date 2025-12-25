@@ -3,7 +3,10 @@ from __future__ import annotations
 import base64
 from dataclasses import fields, is_dataclass
 from datetime import datetime, date, timedelta
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from _typeshed import SupportsRead
 
 import orjson
 
@@ -75,6 +78,11 @@ def _walk(obj: Any):
 
 def loads(data: bytes) -> Any:
     raw = orjson.loads(data)
+    return _walk(raw)
+
+
+def load(fp: SupportsRead[bytes]) -> Any:
+    raw = orjson.loads(fp.read())
     return _walk(raw)
 
 
