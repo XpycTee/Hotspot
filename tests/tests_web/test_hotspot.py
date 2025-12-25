@@ -266,10 +266,10 @@ class TestHotspotViews(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
     
     def test_resend_route_sended(self):
-        session_id = 'test_resend_route_sended'
-        test_sess_data = {'_id': session_id, 'phone': '79999999999'}
+        user_fp = 'qweasdzxc'
+        test_sess_data = {'_id': 'test_resend_route_sended', 'phone': '79999999999', 'user_fp': user_fp}
 
-        cache.set(f'sms:sended:{session_id}', True)
+        cache.set(f'sms:sended:{user_fp}', True)
         with self.client as c:
             with c.session_transaction() as sess:
                 sess.update(test_sess_data)
@@ -288,11 +288,11 @@ class TestHotspotViews(unittest.TestCase):
             self.assertIn('/sendin', response.location)
 
     def test_auth_route_bad_code(self):
-        session_id = 'test_auth_route_bad_code'
+        user_fp = 'qweasdzxc'
         test_init_data = {'code': '1234'}
-        test_sess_data = {'_id': session_id, 'mac': '00:00:00:00:00:00', 'phone': '71234567890'}
-        cache.set(f'sms:code:{session_id}', 5678)
-        cache.set_raw(f'sms:attempts:{session_id}', 0)
+        test_sess_data = {'_id': 'test_auth_route_bad_code', 'mac': '00:00:00:00:00:00', 'phone': '71234567890', 'user_fp': user_fp}
+        cache.set(f'sms:code:{user_fp}', 5678)
+        cache.set_raw(f'sms:attempts:{user_fp}', 0)
         expected_responses = [
             (307, '/code'),
             (307, '/code'),

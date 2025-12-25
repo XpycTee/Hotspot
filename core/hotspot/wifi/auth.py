@@ -82,20 +82,20 @@ def authenticate_by_phone(mac, phone_number, hardware_fp):
     return {"status": "NOT_FOUND"}
 
 
-def authenticate_by_code(session_id, mac, code, phone_number):
-    if verify:=verify_code(session_id, code):
+def authenticate_by_code(user_fp, mac, code, phone_number):
+    if verify:=verify_code(user_fp, code):
         create_or_udpate_wifi_client(mac, phone_number)
-        clear_code(session_id)
+        clear_code(user_fp)
         logger.debug("Auth by code")
         return {"status": "OK"}
     elif verify is None:
         return {"status": "CODE_EXPIRED", 'error_message': get_translate('errors.auth.expired_code')}
 
-    attempts = increment_attempts(session_id)
+    attempts = increment_attempts(user_fp)
     if attempts < 3:
         return {"status": "BAD_TRY", 'error_message': get_translate('errors.auth.bad_code_try')}
 
-    clear_code(session_id)
+    clear_code(user_fp)
     return {"status": "BAD_CODE", 'error_message': get_translate('errors.auth.bad_code_all')}
 
 

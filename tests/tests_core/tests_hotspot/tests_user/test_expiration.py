@@ -59,21 +59,24 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             db_session.add(wifi_client)
             db_session.commit()
 
-    @patch('core.hotspot.user.expiration.STAFF_USER', {'delay': datetime.timedelta(days=30)})
-    @patch('core.hotspot.user.expiration.GUEST_USER', {'delay': datetime.timedelta(days=1)})
-    def test_get_delay_employee(self, *args):
+    @patch('core.hotspot.user.expiration.STAFF_USER')
+    def test_get_delay_employee(self, mock_staff):
+        mock_staff.delay = datetime.timedelta(days=30)
         result = get_delay(is_employee=True)
         self.assertEqual(result, datetime.timedelta(days=30))
 
-    @patch('core.hotspot.user.expiration.STAFF_USER', {'delay': datetime.timedelta(days=30)})
-    @patch('core.hotspot.user.expiration.GUEST_USER', {'delay': datetime.timedelta(days=1)})
-    def test_get_delay_guest(self, *args):
+    @patch('core.hotspot.user.expiration.GUEST_USER')
+    def test_get_delay_guest(self, mock_guest):
+        mock_guest.delay = datetime.timedelta(days=1)
         result = get_delay(is_employee=False)
         self.assertEqual(result, datetime.timedelta(days=1))
 
-    @patch('core.hotspot.user.expiration.STAFF_USER', {'delay': datetime.timedelta(hours=8)})
-    @patch('core.hotspot.user.expiration.GUEST_USER', {'delay': datetime.timedelta(hours=2)})
-    def test_new_expiration_employee_before_6am(self, *args):
+    @patch('core.hotspot.user.expiration.STAFF_USER')
+    @patch('core.hotspot.user.expiration.GUEST_USER')
+    def test_new_expiration_employee_before_6am(self, mock_guest, mock_staff, *args):
+        mock_guest.delay = datetime.timedelta(hours=2)
+        mock_staff.delay = datetime.timedelta(hours=8)
+
         with patch('core.hotspot.user.expiration.datetime') as mock_datetime:
             today = datetime.date.today()
             current_time = datetime.datetime.combine(today, datetime.time(3, 0))
@@ -89,9 +92,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             expected = expected_start + datetime.timedelta(hours=8)
             self.assertEqual(result, expected)
 
-    @patch('core.hotspot.user.expiration.STAFF_USER', {'delay': datetime.timedelta(hours=8)})
-    @patch('core.hotspot.user.expiration.GUEST_USER', {'delay': datetime.timedelta(hours=2)})
-    def test_new_expiration_employee_after_6am(self, *args):
+    @patch('core.hotspot.user.expiration.STAFF_USER')
+    @patch('core.hotspot.user.expiration.GUEST_USER')
+    def test_new_expiration_employee_after_6am(self, mock_guest, mock_staff, *args):
+        mock_guest.delay = datetime.timedelta(hours=2)
+        mock_staff.delay = datetime.timedelta(hours=8)
+
         with patch('core.hotspot.user.expiration.datetime') as mock_datetime:
             today = datetime.date.today()
             current_time = datetime.datetime.combine(today, datetime.time(15, 0))
@@ -107,9 +113,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             expected = expected_start + datetime.timedelta(hours=8) + datetime.timedelta(days=1)
             self.assertEqual(result, expected)
 
-    @patch('core.hotspot.user.expiration.STAFF_USER', {'delay': datetime.timedelta(hours=8)})
-    @patch('core.hotspot.user.expiration.GUEST_USER', {'delay': datetime.timedelta(hours=2)})
-    def test_new_expiration_guest(self, *args):
+    @patch('core.hotspot.user.expiration.STAFF_USER')
+    @patch('core.hotspot.user.expiration.GUEST_USER')
+    def test_new_expiration_guest(self, mock_guest, mock_staff, *args):
+        mock_guest.delay = datetime.timedelta(hours=2)
+        mock_staff.delay = datetime.timedelta(hours=8)
+
         with patch('core.hotspot.user.expiration.datetime') as mock_datetime:
             today = datetime.date.today()
             current_time = datetime.datetime.combine(today, datetime.time(10, 0))
@@ -125,9 +134,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             expected = expected_start + datetime.timedelta(hours=2) + datetime.timedelta(days=1)
             self.assertEqual(result, expected)
 
-    @patch('core.hotspot.user.expiration.STAFF_USER', {'delay': datetime.timedelta(days=30)})
-    @patch('core.hotspot.user.expiration.GUEST_USER', {'delay': datetime.timedelta(days=1)})
-    def test_update_expiration_employee(self, *args):
+    @patch('core.hotspot.user.expiration.STAFF_USER')
+    @patch('core.hotspot.user.expiration.GUEST_USER')
+    def test_update_expiration_employee(self, mock_guest, mock_staff, *args):
+        mock_guest.delay = datetime.timedelta(days=1)
+        mock_staff.delay = datetime.timedelta(days=30)
+
         mac = 'CC:CC:CC:00:00:01'
         self._create_wifi_client(mac=mac, is_employee=True)
 
@@ -146,9 +158,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             self.assertNotEqual(new_expiration_time, old_expiration)
             self.assertGreater(new_expiration_time, datetime.datetime.now())
 
-    @patch('core.hotspot.user.expiration.STAFF_USER', {'delay': datetime.timedelta(days=30)})
-    @patch('core.hotspot.user.expiration.GUEST_USER', {'delay': datetime.timedelta(days=1)})
-    def test_update_expiration_guest(self, *args):
+    @patch('core.hotspot.user.expiration.STAFF_USER')
+    @patch('core.hotspot.user.expiration.GUEST_USER')
+    def test_update_expiration_guest(self, mock_guest, mock_staff, *args):
+        mock_guest.delay = datetime.timedelta(days=1)
+        mock_staff.delay = datetime.timedelta(days=30)
+
         mac = 'DD:DD:DD:00:00:01'
         self._create_wifi_client(mac=mac, is_employee=False)
 

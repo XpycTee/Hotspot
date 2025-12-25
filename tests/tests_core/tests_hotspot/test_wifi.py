@@ -408,15 +408,15 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
     def test_authenticate_by_phone(self):
         self._db_blocked('00:00:00:00:00:04', '70000000004')
         expected = {'status': 'BLOCKED'}
-        result = authenticate_by_phone('00:00:00:00:00:04', '70000000004')
+        result = authenticate_by_phone('00:00:00:00:00:04', '70000000004', 'qweasdzxc')
         self.assertDictEqual(result, expected)
         
         self._db_phoneless('00:00:00:00:00:03')
         expected = {'status': 'NOT_FOUND'}
-        result = authenticate_by_phone('00:00:00:00:00:03', '70000000003')
+        result = authenticate_by_phone('00:00:00:00:00:03', '70000000003', 'qweasdzxc')
         self.assertDictEqual(result, expected)
 
-        result = authenticate_by_phone('FF:FF:FF:FF:FF:FF', '79999999999')
+        result = authenticate_by_phone('FF:FF:FF:FF:FF:FF', '79999999999', 'qweasdzxc')
         self.assertDictEqual(result, expected)
 
         # By Mac
@@ -425,18 +425,18 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         expected = {
             'status': 'OK', 
             'phone': '79990000001', 
-            'user_fp': None
+            'user_fp': '16ac91fc6aebf5fc7fe6fa7b2685c9ad635de5be18f7c796a245ae0c8b7c5bd9'
         }
-        result = authenticate_by_phone('AA:AA:AA:00:00:01', '79990000001')
+        result = authenticate_by_phone('AA:AA:AA:00:00:01', '79990000001', 'qweasdzxc')
         self.assertDictEqual(result, expected)
 
         self._db_expired_guest('00:00:00:00:00:01', '70000000001')
         expected = {
             'status': 'OK', 
             'phone': '70000000001', 
-            'user_fp': None
+            'user_fp': '434b48846cb22a4855db887e3f226edc1210c4e9fecc565008f78649ea6fa255'
         }
-        result = authenticate_by_phone('00:00:00:00:00:01', '70000000001')
+        result = authenticate_by_phone('00:00:00:00:00:01', '70000000001', 'qweasdzxc')
         self.assertDictEqual(result, expected)
         self._clear_users()
 
@@ -486,15 +486,15 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         self.assertDictEqual(result, expected)
     
     @patch('core.hotspot.wifi.auth.generate_token')
-    @patch('core.hotspot.wifi.auth.RADIUS_ENABLED')
-    def test_get_credentials(self, mock_radius_enabled, mock_generate_token):
+    @patch('core.hotspot.wifi.auth.RADIUS')
+    def test_get_credentials(self, mock_radius, mock_generate_token):
         staff_mac = 'AA:AA:AA:00:00:02'
         staff_phone = '79990000002'
         guest_mac = '00:00:00:00:00:02'
         guest_phone = '70000000002'
 
 
-        mock_radius_enabled.__bool__.return_value = False
+        mock_radius.enabled.__bool__.return_value = False
 
         self._db_authed_emp(staff_mac, staff_phone)
         expected = {'username': 'employee', 'password': 'supersecret'}
@@ -507,7 +507,7 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         self.assertDictEqual(result, expected)
 
 
-        mock_radius_enabled.__bool__.return_value = True
+        mock_radius.enabled.__bool__.return_value = True
         mock_token = 'a' * 64
         mock_generate_token.return_value = mock_token
         cache.set(f'auth:token:{staff_phone}', mock_token)
