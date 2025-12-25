@@ -85,7 +85,7 @@ class RadiusConfig:
     version: int = 0
 
 
-@dataclass(frozen=True)
+@dataclass
 class HotspotUserConfig:
     """
     Per-user hotspot configuration.

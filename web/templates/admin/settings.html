@@ -33,16 +33,13 @@
         </a>
     </div>
     <ul class="nav-tabs">
-        <li><a href="#hotspot">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
-        <li><a href="#radius">{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</a></li>
-        <li><a href="#sender">{{ get_translate('html.admin.settings.sender.title', session.user_lang) }}</a></li>
-        <li><a href="#web">{{ get_translate('html.admin.settings.web.title', session.user_lang) }}</a></li>
+        <li><a id="hotspot" href="{{ url_for('pages.admin.settings.hotspot.index') }}">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
+        <li><a id="radius" href="{{ url_for('pages.admin.settings.radius.index') }}">{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</a></li>
+        <li><a id="sender" href="#sender">{{ get_translate('html.admin.settings.sender.title', session.user_lang) }}</a></li>
+        <li><a id="web" href="#web">{{ get_translate('html.admin.settings.web.title', session.user_lang) }}</a></li>
     </ul>
     <div class="table-container">
-        {% include "admin/settings/hotspot.html" %}
-        {% include "admin/settings/radius.html" %}
-        {% include "admin/settings/sender.html" %}
-        {% include "admin/settings/web.html" %}
+        {% block settings_content %}{% endblock %}
     </div>
 
 </div>
@@ -52,32 +49,25 @@
         const tabs = document.querySelectorAll('.nav-tabs a');
         const contentTabs = document.querySelectorAll('.content-tab');
 
-        // Hide all content tabs initially
-        contentTabs.forEach(content => content.style.display = 'none');
-
         // Check localStorage for saved tab
         const savedTab = localStorage.getItem('activeSettingsTab');
         if (savedTab) {
-            document.querySelector(savedTab).style.display = 'block';
-            document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
-            loadSettingsData(savedTab.slice(1));
+            const tab = document.getElementById(savedTab);
+            tab.classList.add('active');
         } else {
             // Default to first tab if no saved tab
             contentTabs[0].style.display = 'block';
             tabs[0].classList.add('active');
-            loadSettingsData('hotspot');
         }
 
         tabs.forEach(tab => {
             tab.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = this.getAttribute('href');
-                loadSettingsData(target.slice(1));
+                const target = this.getAttribute('id');
 
                 // Hide all content tabs
                 contentTabs.forEach(content => content.style.display = 'none');
                 // Show the selected tab content
-                document.querySelector(target).style.display = 'block';
+                document.getElementById(target).style.display = 'block';
 
                 // Remove active class from all tabs
                 tabs.forEach(link => link.classList.remove('active'));

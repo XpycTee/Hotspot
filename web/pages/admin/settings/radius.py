@@ -1,4 +1,4 @@
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, abort, jsonify, render_template, request
 
 from core.admin.tables.settings.radius import add_radius_host, delete_radius_host, get_radius_hosts, update_radius_host
 from core.config.defaults import DEFAULT_RADIUS_ACCT_PORT, DEFAULT_RADIUS_AUTH_PORT, DEFAULT_RADIUS_COA_PORT
@@ -12,11 +12,24 @@ radius_bp = Blueprint('radius', __name__, url_prefix='/radius')
 @radius_bp.route('', methods=['GET'])
 @login_required
 def index():
-    response = get_radius_hosts()
-        
-    return jsonify({
-        'data': response
-    })
+    hosts = get_radius_hosts()
+
+    template = render_template(
+        'admin/settings/radius.html', 
+        hosts=hosts
+    )
+    
+    return template
+
+
+@radius_bp.route('/get', methods=['GET'])
+@login_required
+def get_hosts():
+    hosts = get_radius_hosts()
+
+    template = jsonify({'success': True, 'data': hosts})
+    
+    return template
 
 
 @radius_bp.route('/add', methods=['POST'])

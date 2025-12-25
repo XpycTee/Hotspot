@@ -1,5 +1,8 @@
+from datetime import timedelta
 from flask import Blueprint, render_template, session
 
+from core.config.hotspot import HOTSPOT
+from core.config.users import GUEST_USER, STAFF_USER
 from web.pages.admin.utils import login_required
 from web.pages.admin.settings.radius import radius_bp
 from web.pages.admin.settings.hotspot import hotspot_bp
@@ -19,4 +22,8 @@ for bp in bluepints:
 @login_required
 def index():
     error = session.pop('error', None)
-    return render_template('admin/settings.html', error=error)
+
+    return render_template(
+        'admin/settings.html', 
+        error=error
+    )

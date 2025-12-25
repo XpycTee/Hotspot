@@ -2,7 +2,7 @@ import datetime
 from sqlalchemy import and_, func, or_, select
 
 from core.admin.tables.employee import emoloyee_name
-from core.config.hotspot import ONLINE_TIMEOUT
+from core.config.hotspot import HOTSPOT
 from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
 from core.database.models.wifi_client import WifiClient
@@ -39,7 +39,7 @@ def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
 
             filters.append(search_filters)
             
-        timeout_dt = datetime.datetime.now() - datetime.timedelta(seconds=ONLINE_TIMEOUT)
+        timeout_dt = datetime.datetime.now() - HOTSPOT.online_timeout
         if online == 'yes':
             filters.append(WifiClient.last_seen >= timeout_dt)
         elif online == 'no':

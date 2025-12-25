@@ -1,23 +1,15 @@
-const tableData = {}; // Хранилище данных для таблиц (пагинация и поиск)
-
-
-// Инициализация таблиц
-document.addEventListener('DOMContentLoaded', function () {
-    const tables = ['radius', 'hotspot', 'sender', 'web'];
-
-    tables.forEach(settingId => {
-        tableData[settingId] = { searchQuery: '' };
-    });
-});
-
 // Функция для загрузки данных с сервера
 function loadSettingsData(settingId) {
-    let url = `/admin/settings/${settingId}`;
+    let url = `/admin/settings/${settingId}/get`;
 
     fetch(url)
         .then(response => response.json())
-        .then(data => { 
-            updateSettingsPage(settingId, data.data);
+        .then(result => {
+            if (result.success) {
+                updateSettingsPage(settingId, result.data);
+            } else {
+                alert(`Error: ${result.error.description}`);
+            }
         })
         .catch(error => console.error('Error loading table data:', error));
 }
@@ -44,6 +36,7 @@ function updateRadiusPage(settings) {
     });
     radiusBody.appendChild(addRowButton); // Возвращаем строку с кнопкой добавления
 }
+
 
 // Функция для обновления таблицы
 function updateSettingsPage(settingId, settings) {

@@ -129,9 +129,15 @@
         },
         "hotspot": {
           "title": "Настройки Hotspot",
-          "online_timeout": "Online timeout (minutes)",
+          "online_timeout": "Онлайн таймаут (минуты)",
           "staff_user": "Staff user",
-          "guest_user": "Guest user"
+          "guest_user": "Guest user",
+          "delay": "Срок доступа",
+          "days": "дней",
+          "hours": "часов",
+          "min": "минут",
+          "saved": "Сохранено",
+          "failed": "Ошибка сохранения"
         },
         "sender": {
           "title": "Sender"

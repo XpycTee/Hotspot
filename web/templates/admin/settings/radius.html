@@ -1,4 +1,7 @@
-<div id="radius" class="content-tab table-container" style="display: none;">
+{% extends 'admin/settings.html' %}
+
+{% block settings_content %}
+<div id="radius" class="content-tab table-container">
     <div class="filters-panel">
         <div class="filters-row">
             <input type="text" class="filter-input table-search" placeholder="{{ get_translate('placeholders.search', session.user_lang) }}">
@@ -16,6 +19,19 @@
             </tr>
         </thead>
         <tbody id="radius_body">
+            {% for host in hosts.values() %}
+            <tr>
+                <td data-address>{{ host['address'] }}</td>
+                <td data-name>{{ host['name'] }}</td>
+                <td data-authport>{{ host['authport'] }}</td>
+                <td data-acctport>{{ host['acctport'] }}</td>
+                <td data-coaport>{{ host['coaport'] }}</td>
+                <td class="column-controls">
+                    <button class="btn btn-edit btn-controls" onclick="editHostModal(this)">{{ get_translate('buttons.edit', session.user_lang) }}</button>
+                    <button class="btn btn-delete btn-controls" onclick="deleteHostRow(this)">{{ get_translate('buttons.delete', session.user_lang) }}</button>
+                </td>
+            </tr>
+            {% endfor %}
             <tr class="add_row_button">
                 <td colspan="6"><button class="btn btn-add" onclick="addNewHostModal()">{{ get_translate('buttons.add', session.user_lang) }}</button></td>
             </tr>
@@ -51,3 +67,4 @@ radiusSearchInput.addEventListener('input', () => {
     });
 });
 </script>
+{% endblock %}

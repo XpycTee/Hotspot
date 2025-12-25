@@ -280,7 +280,7 @@ function addRowModal(button, type) {
                     <button type="button" class="btn btn-add-phone" onclick="addPhoneField(this, true)">${getTranslate('buttons.add_phone')}</button>
                 </label>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('.buttons.save')}</button>
+                    <button type="submit" class="btn btn-save" data-close-button>${getTranslate('buttons.save')}</button>
                     <button type="button" class="btn btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
                 </div>
             </form>

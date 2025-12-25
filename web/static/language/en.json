@@ -129,7 +129,13 @@
           "title": "Hotspot Settings",
           "online_timeout": "Online timeout (minutes)",
           "staff_user": "Staff user",
-          "guest_user": "Guest user"
+          "guest_user": "Guest user",
+          "delay": "Access duration",
+          "days": "days",
+          "hours": "hours",
+          "min": "minutes",
+          "saved": "Saved",
+          "failed": "Save failed"
         },
         "sender": {
           "title": "Sender"
