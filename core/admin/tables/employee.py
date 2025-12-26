@@ -2,8 +2,10 @@ from sqlalchemy import or_, select
 from core.database.models.employee import Employee
 from core.database.models.employee_phone import EmployeePhone
 from core.database.session import get_session
-from core.logging.logger import logger
+from core.logging import get_logger
 
+
+logger = get_logger('core.admin.tbles.employee')
 
 def get_employees(page: int, rows_per_page: int, search_query: str = None):
     with get_session() as db_session:

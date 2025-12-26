@@ -1,8 +1,9 @@
 from sqlalchemy import select
 from core.database.models.blacklist import Blacklist
 from core.database.session import get_session
-from core.logging.logger import logger
+from core.logging import get_logger
 
+logger = get_logger('core.admin.tables.blacklist')
 
 def get_blacklist(page: int, rows_per_page: int, search_query: str = None):
     with get_session() as db_session:

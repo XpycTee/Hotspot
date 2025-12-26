@@ -5,9 +5,11 @@ from pyrad2 import server, packet
 from pyrad2.exceptions import ServerPacketError
 from pyrad2.constants import PacketType
 
-from radius.logging import logger
+from core.logging import get_logger
 from radius.hotspot.packet import HotspotAcctPacket, HotspotAuthPacket
 
+
+logger = get_logger('radius.hotpsot.server')
 
 class BaseServer(server.Server):
     def __init__(self, addresses = None, authport = 1812, acctport = 1813, coaport = 3799, hosts = None, dict = None, auth_enabled = True, acct_enabled = True, coa_enabled = False):

@@ -1,10 +1,12 @@
 from core.admin.auth.attempts import increment_attempts, reset_attempts
 from core.admin.auth.lockout import check_lockout, update_lockout
 from core.admin.auth.security import check_password
-from core.logging.logger import logger
+from core.logging import get_logger
 from core.config.admin import ADMIN
 from core.utils.language import get_translate
 
+
+logger = get_logger('core.admin.auth.login')
 
 def handle_failed_login(session_id):
     login_attempts = increment_attempts(session_id)

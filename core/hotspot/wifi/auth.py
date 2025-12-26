@@ -9,6 +9,7 @@ from core.hotspot.sms.code import clear_code, increment_attempts, verify_code
 from core.hotspot.user.repository import update_clients_numbers_last_seen
 from core.hotspot.user.employees import check_employee
 from core.hotspot.user.expiration import update_expiration
+from core.logging import get_logger
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 from core.hotspot.wifi.challange import hash_chap
@@ -16,6 +17,8 @@ from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_f
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
 from core.hotspot.wifi.repository import find_by_mac
 
+
+logger = get_logger('core.hotspot.wifi.auth')
 
 
 def authenticate_by_mac(mac, hardware_fp=None):

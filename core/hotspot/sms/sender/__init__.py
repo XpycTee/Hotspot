@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 
-from core.logging.logger import logger
+from core.logging import get_logger
 
+
+logger = get_logger('core.hotspot.sms.sender')
 
 class BaseSender(ABC):
     """

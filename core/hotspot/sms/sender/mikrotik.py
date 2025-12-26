@@ -5,9 +5,11 @@ from urllib import request
 from urllib import error
 from urllib.parse import urlparse
 
-from core.logging.logger import logger
 from core.hotspot.sms.sender import BaseSender
+from core.logging import get_logger
 
+
+logger = get_logger('core.hotspot.sms.sender.mikrotik')
 
 class MikrotikSMSSender(BaseSender):
     """

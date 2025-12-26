@@ -1,8 +1,10 @@
 from smsru_api import Client
 
-from core.logging.logger import logger
 from core.hotspot.sms.sender import BaseSender
+from core.logging import get_logger
 
+
+logger = get_logger('core.hotspot.sms.sender.smsru')
 
 class SMSRUSender(BaseSender):
     """

@@ -7,9 +7,9 @@ from pyrad2 import dictionary, server
 from core.config import CONFIG, ConfigStore
 from core.config.logging import LOG_LEVEL
 from core.config.radius import RADIUS
-from core.redis.config import ConfigListener
+from core.config.listener import ConfigListener
+from core.logging import get_logger
 from radius.hotspot import HotspotRADIUS
-from radius.logging import logger
 
 
 config_lock = threading.RLock()
@@ -53,7 +53,9 @@ def main():
     radius_auth_port = args.port_auth
     radius_acct_port = args.port_acct
     radius_coa_port = args.port_coa
-    
+
+    logger = get_logger(f'RADIUS #{worker_id}')
+
     mapping = logging.getLevelNamesMapping()
     level = mapping.get(args.log_level, LOG_LEVEL)
     logger.setLevel(level)
@@ -69,7 +71,7 @@ def main():
     )
 
     pid = os.getpid()
-    logger.info(f'Started worker #{worker_id} with PID {pid}')
+    logger.info(f'Started worker with PID {pid}')
 
 
     t = threading.Thread(

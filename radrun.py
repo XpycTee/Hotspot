@@ -7,8 +7,10 @@ import sys
 
 from core.config.logging import LOG_LEVEL
 from core.config.radius import RADIUS
-from radius.logging import logger
+from core.logging import get_logger
 
+
+logger = get_logger(f'RADIUS Workers Launcher')
 
 def main():
     parser = argparse.ArgumentParser(description='Launcher for RADIUS server workers')

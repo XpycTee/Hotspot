@@ -1,7 +1,9 @@
-from radius.logging import logger
+from core.logging import get_logger
 
 from pyrad2 import packet
 
+
+logger = get_logger('radius.hotpsot.packet')
 
 class BasePacket(packet.Packet):
     def debug_log_attributes(self):

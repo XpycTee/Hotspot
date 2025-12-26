@@ -7,8 +7,10 @@ from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
-from core.logging.logger import logger
+from core.logging import get_logger
 
+
+logger = get_logger('core.admin.tables.wifi_clients')
 
 def get_wifi_clients(page: int, rows_per_page: int, search_query: str = None,
                     online='all', employee='all', 

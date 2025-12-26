@@ -1,14 +1,15 @@
 import os
 import logging
 
+from core.logging import get_logger
 from web.pages import pages_bp
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
 from core.utils.language import get_translate
-from core.config.logging import configure_logger
 from web.settings import Config
+
 
 def check_required_env(required: list, logger=logging.getLogger()) -> bool:
     missing_vars = []
@@ -36,9 +37,7 @@ def create_app(config_class=Config):
     # Check for required environment variables
     required_env_vars = []
     
-    init_logger = logging.getLogger("Init")
-
-    configure_logger(init_logger)
+    init_logger = get_logger("Init")
 
     init = check_required_env(required_env_vars, init_logger)
 

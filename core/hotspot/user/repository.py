@@ -1,6 +1,5 @@
 import datetime
 
-from core.logging.logger import logger
 from sqlalchemy.exc import IntegrityError
 from core.database.models.clients_number import ClientsNumber
 from core.database.session import get_session
@@ -8,6 +7,10 @@ from core.database.session import get_session
 
 from sqlalchemy import select
 
+from core.logging import get_logger
+
+
+logger = get_logger('core.hotspot.user.repository')
 
 def get_or_create_clients_number(phone_number):
     """Получить или создать запись клиента по номеру телефона."""
