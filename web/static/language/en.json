@@ -139,7 +139,10 @@
           "failed": "Save failed"
         },
         "sender": {
-          "title": "Sender"
+          "title": "Sender",
+          "type": "Type",
+          "url": "URL",
+          "api_key": "API Key"
         },
         "web": {
           "title": "Web"

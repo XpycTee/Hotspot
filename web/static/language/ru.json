@@ -141,7 +141,10 @@
           "failed": "Ошибка сохранения"
         },
         "sender": {
-          "title": "Sender"
+          "title": "Sender",
+          "type": "Тип",
+          "url": "URL",
+          "api_key": "API Ключ"
         },
         "web": {
           "title": "Web"
