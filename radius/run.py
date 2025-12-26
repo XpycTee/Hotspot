@@ -45,33 +45,6 @@ def configure_argparser():
     return parser
 
 
-def config_handler(update: dict, store: ConfigStore):
-    with config_lock:
-        logger.debug(update)
-        up_version = update.get('version')
-        if up_version <= CONFIG.version:
-            return  # устаревшее событие
-        
-        new_cfg = store.load()
-        logger.debug(new_cfg)
-        
-        updated_hosts = new_cfg.get('hosts')
-
-        deleted_hosts = set(RADIUS.hosts) - set(updated_hosts)
-        for host in deleted_hosts:
-            del RADIUS.hosts[host]
-
-        for host, parametres in updated_hosts.items():
-            RADIUS.hosts[host] = server.RemoteHost(**parametres)
-
-        CONFIG.version = up_version
-
-
-def config_listener():
-    listener = ConfigListener(handelr=config_handler, domain='radius')
-    listener.run()
-
-
 def main():
     parser = configure_argparser()
     args = parser.parse_args()
@@ -100,7 +73,7 @@ def main():
 
 
     t = threading.Thread(
-        target=config_listener,
+        target=ConfigListener().run,
         name='redis-config-listener',
         daemon=True
     )

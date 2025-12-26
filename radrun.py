@@ -38,7 +38,7 @@ def main():
         address = f'[{address}]' if ':' in address else address
         logger.info(f'RADIUS Auth server Listening at: {address}:{RADIUS.ports.auth}')
         logger.info(f'RADIUS Accounting  Listening at: {address}:{RADIUS.ports.acct}')
-        logger.info(f'RADIUS CoA server  Listening at: {address}:{RADIUS.ports.CoA}')
+        logger.info(f'RADIUS CoA server  Listening at: {address}:{RADIUS.ports.coa}')
 
     processes = []
     try:

@@ -11,9 +11,9 @@ from core.config.defaults import *
 
 
 class ConfigLoader:
-    def __init__(self, settings: dict | None = None, version: int = 0):
+    def __init__(self, settings: dict | None = None, version: int | None = None):
         self._settings = settings or {}
-        self.version = version
+        self.version = version or self._settings.get('version', 0)
         self._env = Env(prefix='HOTSPOT_')
         self._env.read_env()
 
@@ -190,3 +190,12 @@ class ConfigLoader:
             radius=self.radius(),
             version=self.version
         )
+
+    def update(self, orig: AppConfig):
+        orig.language=self.language()
+        orig.logging=self.logging()
+        orig.hotspot=self.hotspot()
+        orig.sender=self.sender()
+        orig.admin=self.admin()
+        orig.radius=self.radius()
+        orig.version=self.version

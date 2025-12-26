@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, render_template, request
 
-from core.config import CONFIG, ConfigStore
+from core.config import CONFIG
+from core.config.store import ConfigStore
 from web.pages.admin.utils import login_required
 
 
@@ -27,7 +28,7 @@ def update():
     CONFIG.sender.api_key = data.get('api_key', None)
     CONFIG.sender.url = data.get('url', None)
 
-    store = ConfigStore('sender')
+    store = ConfigStore()
     store.save()
 
     return jsonify({'success': True})

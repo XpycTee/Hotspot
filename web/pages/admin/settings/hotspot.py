@@ -1,7 +1,8 @@
 from datetime import timedelta
 from flask import Blueprint, jsonify, render_template, request
 
-from core.config import CONFIG, ConfigStore
+from core.config import CONFIG
+from core.config.store import ConfigStore
 from core.config.hotspot import HOTSPOT
 from core.config.users import GUEST_USER, STAFF_USER
 from web.pages.admin.utils import login_required
@@ -70,7 +71,7 @@ def update():
         GUEST_USER.password = guest_pwd
 
 
-    store = ConfigStore('hotspot')
+    store = ConfigStore()
     store.save()
 
     return jsonify({'success': True})

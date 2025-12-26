@@ -2,8 +2,8 @@ from dataclasses import asdict
 
 from pyrad2 import server
 
-from core.config.radius import RADIUS
-from core.config import ConfigStore
+from core.config import CONFIG
+from core.config.store import ConfigStore
 
 
 def get_radius_hosts():
@@ -22,7 +22,7 @@ def add_radius_host(data: dict):
 
     RADIUS.hosts[data['address']] = server.RemoteHost(**data)
 
-    store = ConfigStore('radius')
+    store = ConfigStore()
     store.save()
 
     return {'status': 'OK'}
@@ -40,7 +40,7 @@ def update_radius_host(host: str, data: dict):
 
     RADIUS.hosts[host] = update_host
 
-    store = ConfigStore('radius')
+    store = ConfigStore()
     store.save()
     
     return {'status': 'OK'}
@@ -49,7 +49,7 @@ def update_radius_host(host: str, data: dict):
 def delete_radius_host(host: str):
     del RADIUS.hosts[host]
 
-    store = ConfigStore('radius')
+    store = ConfigStore()
     store.save()
 
     return {'status': 'OK'}
