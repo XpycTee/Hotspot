@@ -28,8 +28,8 @@ class WifiClient(Model):
 
     @property
     def online(self) -> bool:
-        from core.config.hotspot import ONLINE_TIMEOUT
-        return self.last_seen and (datetime.now() - self.last_seen).seconds < ONLINE_TIMEOUT
+        from core.config.hotspot import HOTSPOT
+        return self.last_seen and (datetime.now() - self.last_seen) < HOTSPOT.online_timeout
 
     @property
     def is_employee(self) -> bool:
