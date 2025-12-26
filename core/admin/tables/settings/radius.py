@@ -16,6 +16,10 @@ def get_radius_hosts():
 
 
 def add_radius_host(data: dict):
+    secret = data.get('secret')
+    if secret is not None:
+        data['secret'] = secret.encode()
+
     RADIUS.hosts[data['address']] = server.RemoteHost(**data)
 
     store = ConfigStore('radius')
