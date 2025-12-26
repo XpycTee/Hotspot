@@ -167,7 +167,7 @@ class ConfigLoader:
         )
 
     def sender(self) -> SenderConfig:
-        sender: dict = self._settings.get('radius', {})
+        sender: dict = self._settings.get('sender', {})
         type = sender.get('type', self._env.str('TYPE', DEFAULT_SENDER_TYPE)).lower()
 
         with self._env.prefixed(f'{type.upper()}_'):
