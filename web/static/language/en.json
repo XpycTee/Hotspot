@@ -116,6 +116,8 @@
         }
       },
       "settings": {
+        "saved": "Saved",
+        "failed": "Save failed",
         "radius": {
           "title": "RADIUS Hosts",
           "add_title": "New host",
@@ -134,9 +136,7 @@
           "delay": "Access duration",
           "days": "days",
           "hours": "hours",
-          "min": "minutes",
-          "saved": "Saved",
-          "failed": "Save failed"
+          "min": "minutes"
         },
         "sender": {
           "title": "Sender",

@@ -54,7 +54,7 @@ if (toggleBtn && filtersBody) {
     toggleBtn.addEventListener('click', () => {
         const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
         toggleBtn.setAttribute('aria-expanded', String(!expanded));
-        toggleBtn.textContent = !expanded ? getTranslate('html.admin.buttons.filters_close') : getTranslate('html.admin.buttons.filters_open');
+        toggleBtn.textContent = !expanded ? getTranslate('buttons.filters_close') : getTranslate('buttons.filters_open');
         filtersBody.hidden = expanded;
     });
 }

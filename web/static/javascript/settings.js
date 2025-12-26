@@ -174,3 +174,29 @@ function deleteHostRow(button) {
     })
     .catch(error => console.error('Error:', error));
 }
+
+const statusEl = document.getElementById('status');
+
+let hideTimer = null;
+
+if (statusEl) {
+    statusEl.style.transition = 'opacity 0.6s ease';
+    statusEl.style.opacity = '0';
+}
+
+function showStatus(msg, ok) {
+    if (!statusEl) return;
+
+    if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+    }
+
+    statusEl.textContent = msg;
+    statusEl.style.color = ok ? 'green' : 'crimson';
+    statusEl.style.opacity = '1';
+
+    hideTimer = setTimeout(() => {
+        statusEl.style.opacity = '0';
+    }, 5000); // 5 seconds
+}

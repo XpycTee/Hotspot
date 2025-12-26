@@ -50,20 +50,14 @@
             <div class="settings-actions">
                 <button type="submit" class="btn btn-settings btn-save">{{ get_translate('buttons.save', session.user_lang) }}</button>
                 <button type="button" id="hotspot-reset" class="btn btn-settings btn-modal-close">{{ get_translate('buttons.reset', session.user_lang) }}</button>
-                <span id="hotspot-status" role="status" aria-live="polite"></span>
+                <span id="status" role="status" aria-live="polite"></span>
             </div>
         </form>
     </section>
 </div>
 <script>
     const form = document.getElementById('hotspot-form');
-    const statusEl = document.getElementById('hotspot-status');
     const resetBtn = document.getElementById('hotspot-reset');
-
-    function showStatus(msg, ok){
-        statusEl.textContent = msg;
-        statusEl.style.color = ok ? 'green' : 'crimson';
-    }
 
     form.addEventListener('submit', function(ev){
         ev.preventDefault();
@@ -90,9 +84,9 @@
         .then(response => response.json())
         .then(result => {
             if (result.success) {
-                showStatus(getTranslate('html.admin.settings.hotspot.saved'), true);
+                showStatus(getTranslate('html.admin.settings.saved'), true);
             } else {
-                showStatus(getTranslate('html.admin.settings.hotspot.failed'), false);
+                showStatus(getTranslate('html.admin.settings.failed'), false);
                 //alert(`Error: ${result.error.description}`);
             }
         })

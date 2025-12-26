@@ -118,6 +118,8 @@
         }
       },
       "settings": {
+        "saved": "Сохранено",
+        "failed": "Ошибка сохранения",
         "radius": {
           "title": "RADIUS Хосты",
           "add_title": "Новый хост",
@@ -131,14 +133,12 @@
         "hotspot": {
           "title": "Настройки Hotspot",
           "online_timeout": "Онлайн таймаут (минуты)",
-          "staff_user": "Staff user",
-          "guest_user": "Guest user",
+          "staff_user": "Сотрудники",
+          "guest_user": "Гости",
           "delay": "Срок доступа",
           "days": "дней",
           "hours": "часов",
-          "min": "минут",
-          "saved": "Сохранено",
-          "failed": "Ошибка сохранения"
+          "min": "минут"
         },
         "sender": {
           "title": "Sender",
