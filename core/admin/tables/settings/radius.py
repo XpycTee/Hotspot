@@ -8,7 +8,7 @@ from core.config.store import ConfigStore
 
 def get_radius_hosts():
     hosts = {}
-    for host, data in RADIUS.hosts.items():
+    for host, data in CONFIG.radius.hosts.items():
         return_data = asdict(data)
         del return_data['secret']
         hosts[host] = return_data
@@ -20,7 +20,7 @@ def add_radius_host(data: dict):
     if secret is not None:
         data['secret'] = secret.encode()
 
-    RADIUS.hosts[data['address']] = server.RemoteHost(**data)
+    CONFIG.radius.hosts[data['address']] = server.RemoteHost(**data)
 
     store = ConfigStore()
     store.save()
@@ -29,7 +29,8 @@ def add_radius_host(data: dict):
 
 
 def update_radius_host(host: str, data: dict):
-    update_host = RADIUS.hosts.pop(host)
+    hosts = CONFIG.radius.hosts
+    update_host = hosts.pop(host)
     
     for key, value in data.items():
         if key == 'secret':
@@ -38,7 +39,7 @@ def update_radius_host(host: str, data: dict):
             host = value
         update_host.__dict__[key] = value
 
-    RADIUS.hosts[host] = update_host
+    hosts[host] = update_host
 
     store = ConfigStore()
     store.save()
@@ -47,7 +48,7 @@ def update_radius_host(host: str, data: dict):
 
 
 def delete_radius_host(host: str):
-    del RADIUS.hosts[host]
+    del CONFIG.radius.hosts[host]
 
     store = ConfigStore()
     store.save()

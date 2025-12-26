@@ -1,7 +1,6 @@
 #!/bin/sh
 set -e
 
-DEBUG=${DEBUG:-false}
 CACHE_SIZE=${CACHE_SIZE:-1024}
 REDIS_MAXMEMORY=${REDIS_MAXMEMORY:-64mb}
 
@@ -92,6 +91,7 @@ echo "Bind: $GUNICORN_ADDR:$GUNICORN_PORT"
 echo "Log level: $GUNICORN_LOG_LEVEL"
 
 exec gunicorn \
+    -c gunicorn_conf.py \
     -w "$GUNICORN_WORKERS" \
     -b "$GUNICORN_ADDR:$GUNICORN_PORT" \
     --log-level="$GUNICORN_LOG_LEVEL" \

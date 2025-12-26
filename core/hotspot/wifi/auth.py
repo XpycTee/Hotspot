@@ -1,10 +1,8 @@
 import datetime
 
+from core.config import CONFIG
 from core.hotspot.user.blacklist import check_blacklist
 from core.hotspot.user.token import generate_token
-from core.logging.logger import logger
-from core.config.radius import RADIUS
-from core.config.users import GUEST_USER, STAFF_USER
 from core.hotspot.sms.code import clear_code, increment_attempts, verify_code
 from core.hotspot.user.repository import update_clients_numbers_last_seen
 from core.hotspot.user.employees import check_employee
@@ -103,16 +101,16 @@ def authenticate_by_code(user_fp, mac, code, phone_number):
 
 
 def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
-    if RADIUS.enabled:
+    if CONFIG.radius.enabled:
         username = phone_number
         password = generate_token(phone_number)
     else:
         if check_employee(phone_number):
             username = 'employee'
-            password = STAFF_USER.password
+            password = CONFIG.hotspot.staff.password
         else:
             username = 'guest'
-            password = GUEST_USER.password
+            password = CONFIG.hotspot.guest.password
 
     if chap_id and chap_challenge:
         password = hash_chap(chap_id, password, chap_challenge)

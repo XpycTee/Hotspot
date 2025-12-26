@@ -105,6 +105,11 @@ class HotspotConfig:
     staff: HotspotUserConfig
     guest: HotspotUserConfig
 
+    def get_delay(self, is_staff: bool) -> timedelta:
+        if is_staff:
+            return self.staff.delay
+        return self.guest.delay
+
 
 @dataclass
 class SenderConfig:

@@ -8,8 +8,8 @@ from flask import Flask
 from sqlalchemy import select
 
 from core import database
+from core.config import CONFIG
 from core.redis import cache
-from core.config.language import LANGUAGE_CONTENT, LANGUAGE
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
 from core.database.models.clients_number import ClientsNumber
@@ -50,8 +50,8 @@ class TestHotspotViews(unittest.TestCase):
         app.register_blueprint(pages_bp)
         app.root_path = os.path.join(ROOD_DIR, 'web')
         app.config['SECRET_KEY'] = 'secret'
-        app.config['LANGUAGE_DEFAULT'] = LANGUAGE
-        app.config['LANGUAGE_CONTENT'] = LANGUAGE_CONTENT
+        app.config['LANGUAGE_DEFAULT'] = CONFIG.language.name
+        app.config['LANGUAGE_CONTENT'] = CONFIG.language.content
 
         @app.context_processor
         def inject_get_translate():

@@ -1,13 +1,16 @@
 import jmespath
 
-from core.config.language import LANGUAGE_CONTENT, LANGUAGE
+from core.config import CONFIG
 
 
 def get_translate(path, lang=None, replace=None, templates={}):
+    content = CONFIG.lanugage.content
+    language = CONFIG.lanugage.name
+    
     if lang is None:
-        lang = LANGUAGE
+        lang = language
     else:
-        lang = lang if lang in LANGUAGE_CONTENT else LANGUAGE
+        lang = lang if lang in content else language
 
     if not replace:
         replace = path
@@ -15,7 +18,7 @@ def get_translate(path, lang=None, replace=None, templates={}):
     expression = f"{lang}.{path}"
 
     # Выполняем поиск перевода
-    translation = jmespath.search(expression, LANGUAGE_CONTENT)
+    translation = jmespath.search(expression, content)
 
     # Возвращаем перевод, если он найден, иначе возвращаем исходный путь
     if isinstance(translation, str):

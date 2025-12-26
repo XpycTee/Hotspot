@@ -2,20 +2,18 @@ import argparse
 import logging
 import os
 import threading
-from pyrad2 import dictionary, server
+from pyrad2 import dictionary
 
-from core.config import CONFIG, ConfigStore
-from core.config.logging import LOG_LEVEL
-from core.config.radius import RADIUS
+from core.config import CONFIG
+
 from core.config.listener import ConfigListener
 from core.logging import get_logger
 from radius.hotspot import HotspotRADIUS
 
 
-config_lock = threading.RLock()
-
 
 def configure_argparser():
+    radius = CONFIG.radius
     parser = argparse.ArgumentParser(description='RADIUS Server runner')
     parser.add_argument(
         '--worker-id',
@@ -31,16 +29,16 @@ def configure_argparser():
         help='Set the logging level'
     )
     parser.add_argument(
-        '--address', action='append', default=RADIUS.addresses
+        '--address', action='append', default=radius.addresses
     )
     parser.add_argument(
-        '--port-auth', type=int, default=RADIUS.ports.auth
+        '--port-auth', type=int, default=radius.ports.auth
     )
     parser.add_argument(
-        '--port-acct', type=int, default=RADIUS.ports.acct
+        '--port-acct', type=int, default=radius.ports.acct
     )
     parser.add_argument(
-        '--port-coa', type=int, default=RADIUS.ports.coa
+        '--port-coa', type=int, default=radius.ports.coa
     )
     return parser
 
@@ -57,17 +55,18 @@ def main():
     logger = get_logger(f'RADIUS #{worker_id}')
 
     mapping = logging.getLevelNamesMapping()
-    level = mapping.get(args.log_level, LOG_LEVEL)
-    logger.setLevel(level)
+    level = mapping.get(args.log_level, CONFIG.logging.level)
+    CONFIG.logging.level = level
     
     srv = HotspotRADIUS(
         addresses=radius_addresses,
         authport=radius_auth_port,
         acctport=radius_acct_port,
         coaport=radius_coa_port,
-        hosts=RADIUS.hosts,
+        hosts=CONFIG.radius.hosts,
         dict=dictionary.Dictionary("radius/dictionary/main"), 
-        coa_enabled=True
+        coa_enabled=True,
+        worker_id=worker_id
     )
 
     pid = os.getpid()

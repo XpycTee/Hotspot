@@ -1,12 +1,12 @@
-from core.config.admin import ADMIN
-
-
 import bcrypt
+
+from core.config import CONFIG
 
 
 def check_password(username: str, password: str):
-    stored_username = ADMIN.username
-    stored_password_hash = ADMIN.password_hash
+    admin = CONFIG.admin
+    stored_username = admin.username
+    stored_password_hash = admin.password_hash
 
     if not stored_password_hash:
         return False

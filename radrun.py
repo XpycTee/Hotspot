@@ -5,8 +5,7 @@ import argparse
 import os
 import sys
 
-from core.config.logging import LOG_LEVEL
-from core.config.radius import RADIUS
+from core.config import CONFIG
 from core.logging import get_logger
 
 
@@ -31,16 +30,16 @@ def main():
     num_workers = args.workers
 
     mapping = logging.getLevelNamesMapping()
-    level = mapping.get(args.log_level, LOG_LEVEL)
-    logger.setLevel(level)
+    level = mapping.get(args.log_level, CONFIG.logging.level)
+    CONFIG.logging.level = level
 
     logger.info(f'Starting RADIUS server with {num_workers} workers...')
-
-    for address in RADIUS.addresses:
+    radius = CONFIG.radius 
+    for address in radius.addresses:
         address = f'[{address}]' if ':' in address else address
-        logger.info(f'RADIUS Auth server Listening at: {address}:{RADIUS.ports.auth}')
-        logger.info(f'RADIUS Accounting  Listening at: {address}:{RADIUS.ports.acct}')
-        logger.info(f'RADIUS CoA server  Listening at: {address}:{RADIUS.ports.coa}')
+        logger.info(f'RADIUS Auth server Listening at: {address}:{radius.ports.auth}')
+        logger.info(f'RADIUS Accounting  Listening at: {address}:{radius.ports.acct}')
+        logger.info(f'RADIUS CoA server  Listening at: {address}:{radius.ports.coa}')
 
     processes = []
     try:
@@ -48,10 +47,10 @@ def main():
             cmd = ['python', '-m', 'radius.run', 
                    '--worker-id', str(i), 
                    '--log-level', args.log_level,
-                   '--port-auth', str(RADIUS.ports.auth),
-                   '--port-acct', str(RADIUS.ports.acct),
-                   '--port-coa', str(RADIUS.ports.CoA)]
-            for address in RADIUS.addresses:
+                   '--port-auth', str(radius.ports.auth),
+                   '--port-acct', str(radius.ports.acct),
+                   '--port-coa', str(radius.ports.coa)]
+            for address in radius.addresses:
                 cmd.extend(['--address', address])
             p = subprocess.Popen(cmd)
             processes.append(p)

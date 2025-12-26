@@ -1,8 +1,8 @@
+from core.config import CONFIG
 from core.redis import cache
 
 from datetime import datetime
 
-from core.config.admin import ADMIN
 
 
 def check_lockout(session_id):
@@ -11,6 +11,6 @@ def check_lockout(session_id):
 
 
 def update_lockout(session_id):
-    lockout_time = ADMIN.lockout_time
+    lockout_time = CONFIG.admin.lockout_time
     lockout_until = datetime.now() + lockout_time
     cache.set(f'admin:login:lockout:{session_id}', lockout_until.timestamp(), lockout_time * 60)

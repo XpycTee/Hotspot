@@ -4,9 +4,6 @@ import logging
 from core.config import CONFIG
 
 
-LOG_LEVEL = CONFIG.logging.level
-
-
 def configure_logger(logger: Logger, level=None):
     if CONFIG.logging.is_gunicorn:
         gunicorn_error_logger = getLogger('gunicorn.error')
@@ -15,7 +12,7 @@ def configure_logger(logger: Logger, level=None):
         logger.propagate = False
     else:
         if level is None:
-            level = LOG_LEVEL
+            level = CONFIG.logging.level
 
         logger.setLevel(level)
         handler = logging.StreamHandler()
@@ -35,9 +32,3 @@ def configure_logger(logger: Logger, level=None):
             logger.addHandler(handler)
 
         logger.propagate = False
-
-
-def get_logger(name):
-    logger = getLogger(name)
-    configure_logger(logger)
-    return logger
