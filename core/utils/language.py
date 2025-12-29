@@ -1,11 +1,13 @@
 import jmespath
 
 from core.config import CONFIG
+from web.config.provider import get_config
 
 
 def get_translate(path, lang=None, replace=None, templates={}):
-    content = CONFIG.lanugage.content
-    language = CONFIG.lanugage.name
+    config = get_config()
+    content = config.language.content
+    language = config.language.name
     
     if lang is None:
         lang = language

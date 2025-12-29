@@ -4,13 +4,11 @@ import os
 import bcrypt
 from environs import Env
 
-from pyrad2 import server
-
 from core.config.models import *
 from core.config.defaults import *
 
 
-class ConfigLoader:
+class Configurator:
     def __init__(self, settings: dict | None = None, version: int | None = None):
         self._settings = settings or {}
         self.version = version or self._settings.get('version', 0)
@@ -41,7 +39,7 @@ class ConfigLoader:
         amount, suffix = (int(delay[:-1]), delay[-1]) if delay[-1] in suffixes else (int(delay), 'h')
         return timedelta(**{suffixes[suffix]: amount})
 
-    def language(self) -> LanguageConfig:
+    def _language(self) -> LanguageConfig:
         language = self._settings.get('language', {})
         name = language.get(
             'name', 
@@ -54,7 +52,7 @@ class ConfigLoader:
             name=name
         )
 
-    def logging(self) -> LoggingConfig:
+    def _logging(self) -> LoggingConfig:
         level_name = self._settings.get('log_level', DEFAULT_LOG_LEVEL)
         mapping = logging.getLevelNamesMapping()
         level = mapping.get(level_name.upper())
@@ -68,7 +66,7 @@ class ConfigLoader:
             is_gunicorn=is_gunicorn
         )
 
-    def admin(self) -> AdminConfig:
+    def _admin(self) -> AdminConfig:
         admin: dict = self._settings.get('admin', {})
 
         with self._env.prefixed('ADMIN_'):
@@ -111,13 +109,13 @@ class ConfigLoader:
             lockout_time=lockout_time,
         )
     
-    def radius(self) -> RadiusConfig:
+    def _radius(self) -> RadiusConfig:
         env = Env(prefix='RADIUS_')
         env.read_env()
 
         radius: dict = self._settings.get('radius', {})
         ports: dict = radius.get('ports', {})
-        raw_hosts: dict = radius.get('hosts', {})
+        raw_hosts: dict = radius.get('hosts_data', {})
 
         enabled = env.bool('ENABLED', DEFAULT_RADIUS_ENABLED)
         addresses = radius.get('addresses', env.list('ADDRESSES', DEFAULT_RADIUS_ADDRESSES))
@@ -131,16 +129,16 @@ class ConfigLoader:
             coa=coa_port
         )
         
-        hosts = {h: server.RemoteHost(**p) for h, p in raw_hosts.items()}
+        hosts = {h: RemoteHost(**p) for h, p in raw_hosts.items()}
 
         return RadiusConfig(
             enabled=enabled,
             addresses=addresses, 
             ports=ports,
-            hosts=hosts
+            hosts_data=hosts
         )
 
-    def hotspot(self) -> HotspotConfig:
+    def _hotspot(self) -> HotspotConfig:
         hotspot: dict = self._settings.get('hotspot', {})
 
         online_timeout = hotspot.get('online_timeout', timedelta(seconds=self._env.int('ONLINE_TIMEOUT', DEFAULT_ONLINE_TIMEOUT)))
@@ -166,7 +164,7 @@ class ConfigLoader:
             guest=guest_user
         )
 
-    def sender(self) -> SenderConfig:
+    def _sender(self) -> SenderConfig:
         sender: dict = self._settings.get('sender', {})
         type = sender.get('type', self._env.str('TYPE', DEFAULT_SENDER_TYPE)).lower()
 
@@ -180,22 +178,13 @@ class ConfigLoader:
             api_key=api_key
         )
     
-    def load(self) -> AppConfig:
+    def create(self) -> AppConfig:
         return AppConfig(
-            language=self.language(),
-            logging=self.logging(),
-            hotspot=self.hotspot(),
-            sender=self.sender(),
-            admin=self.admin(),
-            radius=self.radius(),
+            language=self._language(),
+            logging=self._logging(),
+            hotspot=self._hotspot(),
+            sender=self._sender(),
+            admin=self._admin(),
+            radius=self._radius(),
             version=self.version
         )
-
-    def update(self, orig: AppConfig):
-        orig.language=self.language()
-        orig.logging=self.logging()
-        orig.hotspot=self.hotspot()
-        orig.sender=self.sender()
-        orig.admin=self.admin()
-        orig.radius=self.radius()
-        orig.version=self.version

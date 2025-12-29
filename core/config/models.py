@@ -4,8 +4,6 @@ from core.utils import json
 import os
 from typing import Dict, List, Optional
 
-from pyrad2 import server
-
 
 @dataclass
 class LanguageConfig:
@@ -68,6 +66,27 @@ class RadiusPortsConfig:
     coa: int = 3799
 
 
+@dataclass(frozen=True)
+class RemoteHost:
+    """Remote RADIUS capable host we can talk to.
+
+    Args:
+        address (str): IP address.
+        secret (bytes): RADIUS secret. If connecting to a RadSec server, the secret should be `radsec`.
+        name (str): Short name (used for logging only).
+        authport (int): Port used for authentication packets.
+        acctport (int): Port used for accounting packets.
+        coaport (int): Port used for CoA packets.
+    """
+
+    address: str
+    secret: bytes
+    name: str
+    authport: int = 1812
+    acctport: int = 1813
+    coaport: int = 3799
+
+
 @dataclass
 class RadiusConfig:
     """
@@ -78,14 +97,14 @@ class RadiusConfig:
     addresses: List[str] = field(default_factory=list)
     ports: RadiusPortsConfig = field(default_factory=RadiusPortsConfig)
 
-    #: Optional per-host configuration (loaded from DB)
-    hosts: Dict[str, server.RemoteHost] = field(default_factory=server.RemoteHost)
+    hosts_data: Dict[str, RemoteHost] = field(default_factory=RemoteHost)
+    
+    @property
+    def hosts(self) -> Dict[str, RemoteHost]:
+        return self.hosts_data
 
-    #: Configuration version for synchronization and hot-reload
-    version: int = 0
 
-
-@dataclass
+@dataclass(frozen=True)
 class HotspotUserConfig:
     """
     Per-user hotspot configuration.
@@ -111,7 +130,7 @@ class HotspotConfig:
         return self.guest.delay
 
 
-@dataclass
+@dataclass(frozen=True)
 class SenderConfig:
     """
     External message sender configuration (SMS, HTTP API, etc).

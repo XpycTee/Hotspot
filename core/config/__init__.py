@@ -2,7 +2,7 @@ from sqlalchemy import select
 import yaml
 import yaml_include
 
-from core.config.loader import ConfigLoader
+from core.config.configurator import Configurator
 from core.database.models.settings import SystemConfig
 from core.database.session import get_session
 from core.redis import cache
@@ -15,7 +15,7 @@ def get_config_from_yaml() -> dict:
     with open('config/settings.yaml', 'r', encoding='utf-8') as f:
         config: dict = yaml.full_load(f)
 
-    result = ConfigLoader(config.get('settings'), 0).load()
+    result = Configurator(config.get('settings'), 0).create()
     return result
 
 
@@ -24,7 +24,7 @@ def load_config_from_db():
         db_config = db_session.scalars(select(SystemConfig)).first()
 
         if db_config is None:
-            default_cfg = ConfigLoader().load()
+            default_cfg = Configurator().create()
 
             default_db_config = SystemConfig(data=default_cfg)
             db_session.add(default_db_config)
@@ -32,14 +32,14 @@ def load_config_from_db():
             
             return default_cfg
             
-        result = ConfigLoader(db_config.data, db_config.version).load()
+        result = Configurator(db_config.data, db_config.version).create()
     return result
 
 
 def get_config_from_redis() -> dict:
     config = cache.get('app:config', {})
     version = config.get('version', 0)
-    result = ConfigLoader(config, version).load()
+    result = Configurator(config, version).create()
     return result
 
 

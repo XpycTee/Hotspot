@@ -4,16 +4,14 @@ import os
 import threading
 from pyrad2 import dictionary
 
-from core.config import CONFIG
-
-from core.config.listener import ConfigListener
 from core.logging import get_logger
+from radius.config import config_listener, get_config
+from radius.config import init_config
 from radius.hotspot import HotspotRADIUS
 
 
-
 def configure_argparser():
-    radius = CONFIG.radius
+    radius = get_config().radius
     parser = argparse.ArgumentParser(description='RADIUS Server runner')
     parser.add_argument(
         '--worker-id',
@@ -43,7 +41,18 @@ def configure_argparser():
     return parser
 
 
+def run_config_listener():
+    t = threading.Thread(
+        target=config_listener,
+        name='redis-config-listener',
+        daemon=True
+    )
+    t.start()
+
+
 def main():
+    config = init_config()
+
     parser = configure_argparser()
     args = parser.parse_args()
     worker_id = args.worker_id
@@ -52,33 +61,26 @@ def main():
     radius_acct_port = args.port_acct
     radius_coa_port = args.port_coa
 
-    logger = get_logger(f'RADIUS #{worker_id}')
-
     mapping = logging.getLevelNamesMapping()
-    level = mapping.get(args.log_level, CONFIG.logging.level)
-    CONFIG.logging.level = level
+    level = mapping.get(args.log_level, config.logging.level)
+    config.logging.level = level
     
     srv = HotspotRADIUS(
         addresses=radius_addresses,
         authport=radius_auth_port,
         acctport=radius_acct_port,
         coaport=radius_coa_port,
-        hosts=CONFIG.radius.hosts,
+        hosts=config.radius.hosts,
         dict=dictionary.Dictionary("radius/dictionary/main"), 
         coa_enabled=True,
         worker_id=worker_id
     )
 
     pid = os.getpid()
+    logger = get_logger(f'RADIUS #{worker_id}')
     logger.info(f'Started worker with PID {pid}')
 
-
-    t = threading.Thread(
-        target=ConfigListener().run,
-        name='redis-config-listener',
-        daemon=True
-    )
-    t.start()
+    run_config_listener()
 
     srv.Run()
 
