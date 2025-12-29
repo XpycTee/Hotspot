@@ -13,7 +13,7 @@ import orjson
 
 # ---------- SERIALIZATION ----------
 
-def _default(obj: Any):
+def _default(obj: Any): 
     if is_dataclass(obj):
         return dataclass_to_dict(obj)  # рекурсивно, но безопасно
     
@@ -90,10 +90,9 @@ def dataclass_to_dict(obj):
     if is_dataclass(obj):
         result = {}
         for f in fields(obj):
-            if f.metadata.get('json') is False:
+            if f.metadata.get('json') is False or f.name.startswith('_'):
                 continue
             value = getattr(obj, f.name)
             result[f.name] = dataclass_to_dict(value)
         return result
     return obj
-
