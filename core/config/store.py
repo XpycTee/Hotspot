@@ -53,6 +53,7 @@ class ConfigLoader:
                 db_config.version += 1
                 db_versoin = db_config.version
                 config.version = db_versoin
+                db_config.data = config
                 
         self._r.set('app:config', json.dumps(config))
         self._r.publish('config:update', json.dumps({'version': db_versoin}))
