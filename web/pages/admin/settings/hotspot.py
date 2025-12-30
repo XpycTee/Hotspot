@@ -35,7 +35,8 @@ def index():
         'admin/settings/hotspot.html', 
         online_timeout=online_timeout,
         staff_delay=staff_delay,
-        guest_delay=guest_delay
+        guest_delay=guest_delay,
+        language=config.language.name
     )
     
     return template

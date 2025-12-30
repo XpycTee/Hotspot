@@ -714,10 +714,10 @@ function convertInputsToCells(inputs, data, type, row, button, new_id) {
 
 function setupFilters() {
     // Трехпозиционные переключатели Online / Employee
-    document.querySelectorAll('.tri-toggle').forEach(toggle => {
+    document.querySelectorAll('.select-toggle').forEach(toggle => {
         const target = toggle.dataset.target;
 
-        toggle.querySelectorAll('.tri-option').forEach(opt => {
+        toggle.querySelectorAll('.select-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 activeFilters[target] = opt.dataset.value;
                 reloadWifiTable();

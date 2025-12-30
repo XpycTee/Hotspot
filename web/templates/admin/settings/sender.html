@@ -18,12 +18,12 @@
 
             <div class="settings-panel">
                 <label class="settings-label">{{ get_translate('html.admin.settings.sender.type', session.user_lang) }}</label>
-                <div id="sender_type_toggle" class="sender-panel tri-toggle" data-target="sender_type_input" data-state="{{ type_state }}">
-                    <div class="tri-option" data-value="debug">None</div>
-                    <div class="tri-option" data-value="mikrotik">Mikrotik</div>
-                    <div class="tri-option" data-value="huawei">Huawei</div>
-                    <div class="tri-option" data-value="smsru">sms.ru</div>
-                    <div class="tri-slider"></div>
+                <div id="sender_type_toggle" class="sender-panel select-toggle" data-target="sender_type_input" data-state="{{ type_state }}">
+                    <div class="select-option" data-value="debug">None</div>
+                    <div class="select-option" data-value="mikrotik">Mikrotik</div>
+                    <div class="select-option" data-value="huawei">Huawei</div>
+                    <div class="select-option" data-value="smsru">sms.ru</div>
+                    <div class="select-slider"></div>
                 </div>
                 <input type="hidden" name="type" id="sender_type_input" value="{{ sender.type if sender is defined else 'mikrotik' }}" />
 
@@ -46,20 +46,20 @@
     </section>
 </div>
 <script>
-// use shared tri-toggle logic from filters.js; react to hidden input changes to show/hide panels
+// use shared select-toggle logic from filters.js; react to hidden input changes to show/hide panels
 document.addEventListener('DOMContentLoaded', function () {
     const toggle = document.getElementById('sender_type_toggle');
-    const hiddenInput = document.getElementById('sender_type_input');
+    const toggleInput = document.getElementById(toggle.dataset.target);
     const urlPanel = document.querySelector('.sender-url');
     const apiPanel = document.querySelector('.sender-api_key');
 
-    if (!toggle || !hiddenInput) return;
+    if (!toggle || !toggleInput) return;
 
-    const options = Array.from(toggle.querySelectorAll('.tri-option'));
+    const toggleOptions = Array.from(toggle.querySelectorAll('.select-option'));
 
     // when hidden input changes (set by filters.js), toggle visibility
-    hiddenInput.addEventListener('input', function () {
-        const val = hiddenInput.value;
+    toggleInput.addEventListener('input', function () {
+        const val = toggleInput.value;
         if (val === 'debug') {
             if (apiPanel) apiPanel.style.display = 'none';
             if (urlPanel) urlPanel.style.display = 'none';
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // initialize panels visibility from initial value
-    hiddenInput.dispatchEvent(new Event('input'));
+    toggleInput.dispatchEvent(new Event('input'));
 
     // handle reset: set form back to default values and update toggle visually
     const form = document.getElementById('sender-form');
@@ -82,11 +82,11 @@ document.addEventListener('DOMContentLoaded', function () {
     resetBtn.addEventListener('click', function () {
         form.reset();
         showStatus('', true);
-        const defaultVal = hiddenInput.defaultValue || hiddenInput.getAttribute('value') || '';
-        const idx = options.findIndex(o => o.dataset.value === defaultVal);
+        const defaultVal = toggleInput._origValue || toggleInput.getAttribute('value') || '';
+        const idx = toggleOptions.findIndex(o => o.dataset.value === defaultVal);
         const indexToSet = idx >= 0 ? idx : 0;
         toggle._setState(indexToSet);
-        hiddenInput.dispatchEvent(new Event('input'));
+        toggleInput.dispatchEvent(new Event('input'));
     });
 
     form.addEventListener('submit', function (ev) {

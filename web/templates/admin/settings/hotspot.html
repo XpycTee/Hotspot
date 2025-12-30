@@ -7,6 +7,21 @@
 
         <form id="hotspot-form">
             <div class="settings-panel">
+                {% set type_state = 1 %}
+                {% if lanugage is defined and lanugage == 'en' %}{% set type_state = 1 %}
+                {% elif lanugage is defined and lanugage == 'ru' %}{% set type_state = 2 %}
+                {% endif %}
+
+                <label class="settings-label">{{ get_translate('html.admin.settings.hotspot.language', session.user_lang) }}</label>
+                <div id="language_toggle" class="sender-panel select-toggle" data-target="lanugage_input" data-state="{{ type_state }}">
+                    <div class="select-option" data-value="en">English</div>
+                    <div class="select-option" data-value="ru">Русский</div>
+                    <div class="select-slider"></div>
+                </div>
+                <input type="hidden" name="language" id="lanugage_input" value="{{ lanugage if lanugage is defined else 'en' }}" />
+            </div>
+
+            <div class="settings-panel">
                 <label class="settings-label" for="online_timeout">{{ get_translate('html.admin.settings.hotspot.online_timeout', session.user_lang) }}</label>
                 <input class="input input-settings" type="number" id="online_timeout" name="online_timeout" min="1" step="1" value="{{ online_timeout }}" />
             </div>
@@ -56,6 +71,14 @@
     </section>
 </div>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('language_toggle');
+    const toggleInput = document.getElementById(toggle.dataset.target);
+
+    if (!toggle || !toggleInput) return;
+
+    const toggleOptions = Array.from(toggle.querySelectorAll('.select-option'));
+
     const form = document.getElementById('hotspot-form');
     const resetBtn = document.getElementById('hotspot-reset');
 
@@ -96,6 +119,11 @@
     resetBtn.addEventListener('click', function(){
         form.reset();
         showStatus('', true);
+        const defaultVal = toggleInput._origValue || toggleInput.getAttribute('value') || '';
+        const idx = toggleOptions.findIndex(o => o.dataset.value === defaultVal);
+        const indexToSet = idx >= 0 ? idx : 0;
+        toggle._setState(indexToSet);
     });
+});
 </script>
 {% endblock %}
