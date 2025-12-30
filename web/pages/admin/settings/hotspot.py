@@ -69,7 +69,7 @@ def update():
         config.hotspot.staff = user_update(config.hotspot.staff, staff_pwd, staff_delay)
 
         guest_delay = timedelta(seconds=guest.get('delay', 0))
-        guest_pwd = staff.get('password', '')
+        guest_pwd = guest.get('password', '')
         config.hotspot.guest = user_update(config.hotspot.guest, guest_pwd, guest_delay)
 
     return jsonify({'success': True})
