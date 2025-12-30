@@ -37,7 +37,7 @@ def update_radius_host(host: str,
     with ConfigLoader().update() as config:
         hosts = config.radius.hosts
 
-        orig_host = hosts.pop(host)
+        orig_host = hosts.pop(host, None)
         if not orig_host:
             return {'status': 'FAILED', 'error_message': 'Host not found'}
         
