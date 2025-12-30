@@ -132,6 +132,7 @@
         },
         "hotspot": {
           "title": "Настройки Hotspot",
+          "language": "Системный язык",
           "online_timeout": "Онлайн таймаут (минуты)",
           "staff_user": "Сотрудники",
           "guest_user": "Гости",
@@ -145,9 +146,6 @@
           "type": "Тип",
           "url": "URL",
           "api_key": "API Ключ"
-        },
-        "web": {
-          "title": "Web"
         }
       }
     }

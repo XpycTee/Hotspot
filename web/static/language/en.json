@@ -130,6 +130,7 @@
         },
         "hotspot": {
           "title": "Hotspot Settings",
+          "language": "System language",
           "online_timeout": "Online timeout (minutes)",
           "staff_user": "Staff user",
           "guest_user": "Guest user",
@@ -143,9 +144,6 @@
           "type": "Type",
           "url": "URL",
           "api_key": "API Key"
-        },
-        "web": {
-          "title": "Web"
         }
       }
     }

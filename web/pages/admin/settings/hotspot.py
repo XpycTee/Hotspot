@@ -1,6 +1,6 @@
 from dataclasses import replace
 from datetime import timedelta
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, render_template, request
 
 from core.config.models import HotspotUserConfig
 from core.config.store import ConfigLoader
@@ -22,9 +22,49 @@ def timedelta_to_dhm(td: timedelta) -> dict[str, int]:
     }
 
 
+def user_update(user: HotspotUserConfig, password: str = None, delay: timedelta = None) -> HotspotUserConfig:
+    replaces = {}
+    if delay:
+        replaces['delay'] = delay
+    if password:
+        replaces['password'] = password
+    
+    return replace(user, **replaces)
+
+
 @hotspot_bp.route('', methods=['POST', 'GET'])
 @login_required
 def index():
+    if request.method == 'POST':
+        data: dict = request.form
+
+        online_timeout = timedelta(minutes=data.get('online_timeout', 0, type=int))
+        language = data.get('language', None, type=str)
+
+        staff_pwd = data.get('staff_password', None, type=str)
+        staff_delay = timedelta(
+            days=data.get('staff_delay_days', 0, type=int),
+            hours=data.get('staff_delay_hours', 0, type=int),
+            minutes=data.get('staff_delay_minutes', 0, type=int)
+        )
+
+        guest_pwd = data.get('guest_password', None, type=str)
+        guest_delay = timedelta(
+            days=data.get('guest_delay_days', 0, type=int),
+            hours=data.get('guest_delay_hours', 0, type=int),
+            minutes=data.get('guest_delay_minutes', 0, type=int)
+        )
+
+        with ConfigLoader().update() as config:
+            if online_timeout and online_timeout != config.hotspot.online_timeout:
+                config.hotspot.online_timeout = online_timeout
+
+            if language:
+                config.language.name = language
+
+            config.hotspot.staff = user_update(config.hotspot.staff, staff_pwd, staff_delay)
+            config.hotspot.guest = user_update(config.hotspot.guest, guest_pwd, guest_delay)
+
     config = ConfigLoader().load()
     online_timeout = int(config.hotspot.online_timeout.total_seconds() / 60)
 
@@ -41,36 +81,3 @@ def index():
     
     return template
 
-
-def user_update(user: HotspotUserConfig, password: str = None, delay: timedelta = None) -> HotspotUserConfig:
-    replaces = {}
-    if delay:
-        replaces['delay'] = delay
-    if password:
-        replaces['password'] = password
-    
-    return replace(user, **replaces)
-
-
-@hotspot_bp.route('/update', methods=['POST'])
-@login_required
-def update():
-    data: dict = request.json
-
-    online_timeout = timedelta(minutes=data.get('online_timeout', 0))
-    staff = data.get('staff', {})
-    guest = data.get('guest', {})
-
-    with ConfigLoader().update() as config:
-        if online_timeout and online_timeout != config.hotspot.online_timeout:
-            config.hotspot.online_timeout = online_timeout
-
-        staff_delay = timedelta(seconds=staff.get('delay', 0))
-        staff_pwd = staff.get('password', '')
-        config.hotspot.staff = user_update(config.hotspot.staff, staff_pwd, staff_delay)
-
-        guest_delay = timedelta(seconds=guest.get('delay', 0))
-        guest_pwd = guest.get('password', '')
-        config.hotspot.guest = user_update(config.hotspot.guest, guest_pwd, guest_delay)
-
-    return jsonify({'success': True})

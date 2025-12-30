@@ -43,15 +43,6 @@ function updateSettingsPage(settingId, settings) {
     if (settingId === 'radius') {
         updateRadiusPage(settings);
     }
-    if (settingId === 'hotspot') {
-        console.log(settings);
-    }
-    if (settingId === 'sender') {
-        console.log(settings);
-    }
-    if (settingId === 'web') {
-        console.log(settings);
-    }
 }
 
 function showModal(title, template, settingId, action) {

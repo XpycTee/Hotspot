@@ -5,20 +5,20 @@
     <section class="settings-pane">
         <h2>{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</h2>
 
-        <form id="hotspot-form">
+        <form id="hotspot-form" method="POST">
             <div class="settings-panel">
                 {% set type_state = 1 %}
-                {% if lanugage is defined and lanugage == 'en' %}{% set type_state = 1 %}
-                {% elif lanugage is defined and lanugage == 'ru' %}{% set type_state = 2 %}
+                {% if language is defined and language == 'en' %}{% set type_state = 1 %}
+                {% elif language is defined and language == 'ru' %}{% set type_state = 2 %}
                 {% endif %}
 
                 <label class="settings-label">{{ get_translate('html.admin.settings.hotspot.language', session.user_lang) }}</label>
-                <div id="language_toggle" class="sender-panel select-toggle" data-target="lanugage_input" data-state="{{ type_state }}">
+                <div id="language_toggle" class="sender-panel select-toggle" data-target="language_input" data-state="{{ type_state }}">
                     <div class="select-option" data-value="en">English</div>
                     <div class="select-option" data-value="ru">Русский</div>
                     <div class="select-slider"></div>
                 </div>
-                <input type="hidden" name="language" id="lanugage_input" value="{{ lanugage if lanugage is defined else 'en' }}" />
+                <input type="hidden" name="language" id="language_input" value="{{ language if language is defined else 'en' }}" />
             </div>
 
             <div class="settings-panel">
@@ -71,59 +71,60 @@
     </section>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const toggle = document.getElementById('language_toggle');
-    const toggleInput = document.getElementById(toggle.dataset.target);
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggle = document.getElementById('language_toggle');
+        const toggleInput = document.getElementById(toggle.dataset.target);
 
-    if (!toggle || !toggleInput) return;
+        if (!toggle || !toggleInput) return;
 
-    const toggleOptions = Array.from(toggle.querySelectorAll('.select-option'));
+        const toggleOptions = Array.from(toggle.querySelectorAll('.select-option'));
 
-    const form = document.getElementById('hotspot-form');
-    const resetBtn = document.getElementById('hotspot-reset');
+        const form = document.getElementById('hotspot-form');
+        const resetBtn = document.getElementById('hotspot-reset');
 
-    form.addEventListener('submit', function(ev){
-        ev.preventDefault();
-        const data = {
-            online_timeout: parseInt(document.getElementById('online_timeout').value, 10),
-            staff: {
-                password: document.getElementById('staff_password').value,
-                delay: (parseInt(document.getElementById('staff_delay_days').value,10) || 0) * 86400 +
-                    (parseInt(document.getElementById('staff_delay_hours').value,10) || 0) * 3600 +
-                    (parseInt(document.getElementById('staff_delay_minutes').value,10) || 0) * 60
-            },
-            guest: {
-                password: document.getElementById('guest_password').value,
-                delay: (parseInt(document.getElementById('guest_delay_days').value,10) || 0) * 86400 +
-                    (parseInt(document.getElementById('guest_delay_hours').value,10) || 0) * 3600 +
-                    (parseInt(document.getElementById('guest_delay_minutes').value,10) || 0) * 60
-            }
-        };
-        fetch('/admin/settings/hotspot/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                showStatus(getTranslate('html.admin.settings.saved'), true);
-            } else {
-                showStatus(getTranslate('html.admin.settings.failed'), false);
-                //alert(`Error: ${result.error.description}`);
-            }
-        })
-        .catch(error => console.error('Error:', error));
+        /*form.addEventListener('submit', function(ev){
+            ev.preventDefault();
+            const data = {
+                language: document.getElementById('language_input').value,
+                online_timeout: parseInt(document.getElementById('online_timeout').value, 10),
+                staff: {
+                    password: document.getElementById('staff_password').value,
+                    delay: (parseInt(document.getElementById('staff_delay_days').value,10) || 0) * 86400 +
+                        (parseInt(document.getElementById('staff_delay_hours').value,10) || 0) * 3600 +
+                        (parseInt(document.getElementById('staff_delay_minutes').value,10) || 0) * 60
+                },
+                guest: {
+                    password: document.getElementById('guest_password').value,
+                    delay: (parseInt(document.getElementById('guest_delay_days').value,10) || 0) * 86400 +
+                        (parseInt(document.getElementById('guest_delay_hours').value,10) || 0) * 3600 +
+                        (parseInt(document.getElementById('guest_delay_minutes').value,10) || 0) * 60
+                }
+            };
+            fetch('/admin/settings/hotspot/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showStatus(getTranslate('html.admin.settings.saved'), true);
+                } else {
+                    showStatus(getTranslate('html.admin.settings.failed'), false);
+                    //alert(`Error: ${result.error.description}`);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });*/
+
+        resetBtn.addEventListener('click', function(){
+            form.reset();
+            showStatus('', true);
+            const defaultVal = toggleInput._origValue || toggleInput.getAttribute('value') || '';
+            const idx = toggleOptions.findIndex(o => o.dataset.value === defaultVal);
+            const indexToSet = idx >= 0 ? idx : 0;
+            toggle._setState(indexToSet);
+        });
     });
-
-    resetBtn.addEventListener('click', function(){
-        form.reset();
-        showStatus('', true);
-        const defaultVal = toggleInput._origValue || toggleInput.getAttribute('value') || '';
-        const idx = toggleOptions.findIndex(o => o.dataset.value === defaultVal);
-        const indexToSet = idx >= 0 ? idx : 0;
-        toggle._setState(indexToSet);
-    });
-});
 </script>
 {% endblock %}
