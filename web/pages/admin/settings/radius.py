@@ -65,13 +65,13 @@ def add_host():
     new_host_data = {
         'address': data.get('address').strip(),
         'name': data.get('name').strip(),
-        'secret': data.get('secret'),
+        'secret': data.get('secret', '').strip().encode(),
         'authport': ports.get('authport', DEFAULT_RADIUS_AUTH_PORT),
         'acctport': ports.get('acctport', DEFAULT_RADIUS_ACCT_PORT),
         'coaport': ports.get('coaport', DEFAULT_RADIUS_COA_PORT),
     }
 
-    response = add_radius_host(new_host_data)
+    response = add_radius_host(**new_host_data)
     status = response.get('status')
     if status == 'OK':
         return jsonify({'success': True})
