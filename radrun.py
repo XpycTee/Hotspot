@@ -1,17 +1,15 @@
-# radrun_launcher.py
 import logging
 import subprocess
 import argparse
 import os
 import sys
 
-from core.config import CONFIG
+from core.bootstrap.env import LOG_LEVEL
+from core.config import init_config
 from core.logging import get_logger
 
 
-logger = get_logger(f'RADIUS Workers Launcher')
-
-def main():
+def configure_argparser():
     parser = argparse.ArgumentParser(description='Launcher for RADIUS server workers')
     parser.add_argument(
         '-w', '--workers',
@@ -27,14 +25,22 @@ def main():
         help='Set the logging level'
     )
     args = parser.parse_args()
+    return args
+
+
+def main():
+    cfg = init_config('radius')
+    logger = get_logger(f'RADIUS Workers Launcher')
+    args = configure_argparser()
+
     num_workers = args.workers
 
     mapping = logging.getLevelNamesMapping()
-    level = mapping.get(args.log_level, CONFIG.logging.level)
-    CONFIG.logging.level = level
+    level = mapping.get(args.log_level, LOG_LEVEL)
+    logger.setLevel(level)
 
     logger.info(f'Starting RADIUS server with {num_workers} workers...')
-    radius = CONFIG.radius 
+    radius = cfg.radius 
     for address in radius.addresses:
         address = f'[{address}]' if ':' in address else address
         logger.info(f'RADIUS Auth server Listening at: {address}:{radius.ports.auth}')
@@ -63,6 +69,7 @@ def main():
         for p in processes:
             p.terminate()
         sys.exit(0)
+
 
 if __name__ == '__main__':
     main()

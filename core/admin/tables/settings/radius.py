@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict, replace
 
 from core.config.models import RemoteHost
 from core.config.store import ConfigLoader
@@ -38,19 +38,26 @@ def update_radius_host(host: str,
         hosts = config.radius.hosts
 
         orig_host = hosts.pop(host)
+        if not orig_host:
+            return {'status': 'FAILED', 'error_message': 'Host not found'}
         
         new_host = address if address != host else host
-        if not secret:
-            secret = orig_host.secret
 
-        hosts[new_host] = RemoteHost(
-            address=address,
-            secret=secret,
-            name=name,
-            authport=authport,
-            acctport=acctport,
-            coaport=coaport
-        )
+        updates = {}
+        if address:
+            updates['address'] = address
+        if secret:
+            updates['secret'] = secret
+        if name:
+            updates['name'] = name
+        if authport:
+            updates['authport'] = authport
+        if acctport:
+            updates['acctport'] = acctport
+        if coaport:
+            updates['coaport'] = coaport
+
+        hosts[new_host] = replace(orig_host, **updates)
     
     return {'status': 'OK'}
 
@@ -58,6 +65,9 @@ def update_radius_host(host: str,
 def delete_radius_host(host: str):
 
     with ConfigLoader().update() as config:
-        _ = config.radius.hosts.pop(host)
+        try:
+            del config.radius.hosts[host]
+        except KeyError:
+            return {'status': 'FAILED', 'error_message': 'Host not found'}
 
     return {'status': 'OK'}

@@ -1,6 +1,8 @@
+from dataclasses import replace
 from datetime import timedelta
 from flask import Blueprint, jsonify, render_template, request
 
+from core.config.models import HotspotUserConfig
 from core.config.store import ConfigLoader
 from web.pages.admin.utils import login_required
 
@@ -39,35 +41,35 @@ def index():
     return template
 
 
+def user_update(user: HotspotUserConfig, password: str = None, delay: timedelta = None) -> HotspotUserConfig:
+    replaces = {}
+    if delay:
+        replaces['delay'] = delay
+    if password:
+        replaces['password'] = password
+    
+    return replace(user, **replaces)
+
+
 @hotspot_bp.route('/update', methods=['POST'])
 @login_required
 def update():
     data: dict = request.json
 
     online_timeout = timedelta(minutes=data.get('online_timeout', 0))
+    staff = data.get('staff', {})
+    guest = data.get('guest', {})
 
     with ConfigLoader().update() as config:
         if online_timeout and online_timeout != config.hotspot.online_timeout:
             config.hotspot.online_timeout = online_timeout
 
-        staff = data.get('staff', {})
-
         staff_delay = timedelta(seconds=staff.get('delay', 0))
-        if staff_delay:
-            config.hotspot.staff.delay = staff_delay
-
         staff_pwd = staff.get('password', '')
-        if staff_pwd:
-            config.hotspot.staff.password = staff_pwd
-
-        guest = data.get('guest', {})
+        config.hotspot.staff = user_update(config.hotspot.staff, staff_pwd, staff_delay)
 
         guest_delay = timedelta(seconds=guest.get('delay', 0))
-        if guest_delay:
-            config.hotspot.guest.delay = guest_delay
-
         guest_pwd = staff.get('password', '')
-        if guest_pwd:
-            config.hotspot.guest.password = guest_pwd
+        config.hotspot.guest = user_update(config.hotspot.guest, guest_pwd, guest_delay)
 
     return jsonify({'success': True})
