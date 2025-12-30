@@ -1,7 +1,7 @@
 import os
 import logging
 
-from core.config import init_config
+from core.config import get_config, init_config
 from core.logging import get_logger
 from web.pages import pages_bp
 
@@ -57,6 +57,10 @@ def create_app(config_class=Config):
         @app.context_processor
         def inject_get_translate():
             return dict(get_translate=get_translate)
+
+        @app.context_processor
+        def inject_get_config():
+            return dict(get_config=get_config)
 
         return app
     return None
