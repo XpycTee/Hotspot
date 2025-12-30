@@ -39,9 +39,10 @@ def configure_argparser():
     return parser
 
 
-def run_runtime_listener():
+def run_runtime_listener(handler):
     t = threading.Thread(
         target=runtime_listener,
+        args=(handler,),
         name='redis-config-listener',
         daemon=True
     )
@@ -49,7 +50,7 @@ def run_runtime_listener():
 
 
 def main():
-    init_config('radius')
+    cfg = init_config('radius')
 
     parser = configure_argparser()
     args = parser.parse_args()
@@ -64,6 +65,7 @@ def main():
         authport=radius_auth_port,
         acctport=radius_acct_port,
         coaport=radius_coa_port,
+        hosts=cfg.radius.hosts,
         dict=dictionary.Dictionary("radius/dictionary/main"), 
         coa_enabled=True,
         worker_id=worker_id
@@ -73,7 +75,7 @@ def main():
     logger = get_logger(f'RADIUS #{worker_id}')
     logger.info(f'Started worker with PID {pid}')
 
-    run_runtime_listener()
+    run_runtime_listener(srv.update_hosts)
 
     srv.Run()
 

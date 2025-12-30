@@ -1,3 +1,4 @@
+from typing import Callable
 from redis import Redis
 from core.bootstrap.env import REDIS_URL
 from core.config.models import AppConfig
@@ -44,7 +45,7 @@ def get_config():
     raise RuntimeError(f'Unknown config backend: {_backend}')
 
 
-def runtime_listener():
+def runtime_listener(handler: Callable):
     logger = get_logger('Config listener')
     redis = Redis.from_url(REDIS_URL, decode_responses=True)
     pubsub = redis.pubsub()
@@ -56,3 +57,4 @@ def runtime_listener():
             logger.debug(data)
             if _runtime.version < data.get('version'):
                 _runtime.force_reload()
+                handler()

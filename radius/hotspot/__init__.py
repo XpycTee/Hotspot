@@ -1,3 +1,4 @@
+from core.config import get_config
 from core.hotspot.user.employees import check_employee
 from core.hotspot.user.statistic import update_statistic
 from core.hotspot.user.token import get_token
@@ -15,6 +16,9 @@ class HotspotRADIUS(BaseServer):
     def __init__(self, addresses=None, authport=1812, acctport=1813, coaport=3799, hosts=None, dict=None, auth_enabled=True, acct_enabled=True, coa_enabled=False, worker_id=0):
         super().__init__(addresses, authport, acctport, coaport, hosts, dict, auth_enabled, acct_enabled, coa_enabled)
         self.logger = get_logger(f'RADIUS #{worker_id} server')
+
+    def update_hosts(self):
+        self.hosts = get_config().radius.hosts
 
     def handle_auth_packet(self, packet: HotspotAuthPacket):
         self.logger.info('Received an authentication request')
