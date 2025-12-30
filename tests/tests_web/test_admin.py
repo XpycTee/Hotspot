@@ -6,7 +6,7 @@ from unittest.mock import patch
 from flask import Flask
 
 from core import database
-from core.config import CONFIG
+from core.config import get_config, init_config
 from core.redis import cache
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
@@ -24,6 +24,7 @@ class TestAdminViews(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         database.create_all()
+        init_config('web')
 
     def setUp(self):
         self.app = self._create_flask()
@@ -45,8 +46,9 @@ class TestAdminViews(unittest.TestCase):
         app.register_blueprint(pages_bp)
         app.root_path = os.path.join(ROOD_DIR, 'web')
         app.config['SECRET_KEY'] = 'secret'
-        app.config['LANGUAGE_DEFAULT'] = CONFIG.language.name
-        app.config['LANGUAGE_CONTENT'] = CONFIG.language.content
+        config = get_config('web')
+        app.config['LANGUAGE_DEFAULT'] = config.language.name
+        app.config['LANGUAGE_CONTENT'] = config.language.content
 
         @app.context_processor
         def inject_get_translate():

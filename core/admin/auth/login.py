@@ -1,7 +1,7 @@
 from core.admin.auth.attempts import increment_attempts, reset_attempts
 from core.admin.auth.lockout import check_lockout, update_lockout
 from core.admin.auth.security import check_password
-from core.config import CONFIG
+from core.config import get_config
 from core.logging import get_logger
 from core.utils.language import get_translate
 
@@ -9,7 +9,8 @@ from core.utils.language import get_translate
 logger = get_logger('core.admin.auth.login')
 
 def handle_failed_login(session_id):
-    admin = CONFIG.admin
+    config = get_config()
+    admin = config.admin
     login_attempts = increment_attempts(session_id)
     max_login_attempts = admin.max_login_attempts
     if login_attempts >= max_login_attempts:
@@ -26,7 +27,8 @@ def login_by_password(session_id, username, password):
     logger.info(f'Start login by {username}')
 
     if check_lockout(session_id):
-        lockout_time = CONFIG.admin.lockout_time
+        config = get_config()
+        lockout_time = config.admin.lockout_time
         error_message = get_translate('errors.admin.end_tries', templates={'lockout_time': lockout_time})
         return {'status': 'LOCKOUT', 'error_message': error_message}
 

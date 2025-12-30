@@ -1,7 +1,7 @@
 from datetime import timedelta
 from flask import Blueprint, abort, current_app, redirect, render_template, request, session, url_for
 
-from core.config import CONFIG
+from core.config import get_config
 import web.logger as logger
 from core.admin.auth.login import login_by_password
 from web.pages.admin import session
@@ -41,7 +41,8 @@ def check():
     username = request.form.get('username')
     password = request.form.get('password')
     client_ip = request.remote_addr
-    user_lang = request.form.get('language', CONFIG.language.name)
+    config = get_config()
+    user_lang = request.form.get('language', config.language.name)
 
     session_id = session.get('_id')
 

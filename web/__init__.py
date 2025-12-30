@@ -1,6 +1,7 @@
 import os
 import logging
 
+from core.config import init_config
 from core.logging import get_logger
 from web.pages import pages_bp
 
@@ -42,6 +43,8 @@ def create_app(config_class=Config):
     init = check_required_env(required_env_vars, init_logger)
 
     if init:
+        init_config('web')
+
         app = Flask(__name__)
 
         config_class.init_app(app)

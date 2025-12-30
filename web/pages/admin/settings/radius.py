@@ -111,15 +111,13 @@ def update_host():
     new_host_data = {
         'address': data.get('address').strip(),
         'name': data.get('name').strip(),
+        'secret': data.get('secret', '').strip().encode(),
         'authport': ports.get('authport', DEFAULT_RADIUS_AUTH_PORT),
         'acctport': ports.get('acctport', DEFAULT_RADIUS_ACCT_PORT),
         'coaport': ports.get('coaport', DEFAULT_RADIUS_COA_PORT),
     }
 
-    if secret:=data.get('secret').strip():
-        new_host_data['secret'] = secret
-
-    response = update_radius_host(host, new_host_data)
+    response = update_radius_host(host, **new_host_data)
     status = response.get('status')
     if status == 'OK':
         return jsonify({'success': True})

@@ -4,24 +4,29 @@ import unittest
 from core import database
 from core.admin.auth.attempts import increment_attempts, reset_attempts
 from core.admin.auth.lockout import check_lockout, update_lockout
+
 from core.admin.auth.login import handle_failed_login, login_by_password
 from core.admin.auth.security import check_password
 from core.admin.tables.blacklist import get_blacklist
 from core.admin.tables.employee import get_employees
 from core.admin.tables.wifi_clients import get_wifi_clients
-from core.config import CONFIG
+from core.config import get_config, init_config
+
 from core.redis import cache
 from core.utils.language import get_translate
 
 
+
 class TestCoreAdminAuth(unittest.TestCase):
     def tearDown(self):
+        init_config('web')
         cache.clear()
 
     def test_handle_failed_login(self):
         session_id = 'test_handle_failed_login'
-        lockout_time = CONFIG.admin.lockout_time
-        max_login_attempts = CONFIG.admin.max_login_attempts
+        config = get_config()
+        lockout_time = config.admin.lockout_time
+        max_login_attempts = config.admin.max_login_attempts
         before_lockout = get_translate('errors.admin.wrong_credentials')
         after_lockout = get_translate('errors.admin.end_tries', templates={'lockout_time': lockout_time})
 
@@ -32,8 +37,9 @@ class TestCoreAdminAuth(unittest.TestCase):
             self.assertEqual(error_message, expected)
 
     def test_login_by_password(self):
-        lockout_time = CONFIG.admin.lockout_time
-        max_login_attempts = CONFIG.admin.max_login_attempts
+        config = get_config()
+        lockout_time = config.admin.lockout_time
+        max_login_attempts = config.admin.max_login_attempts
         expected_responses = [
             {'status': 'OK'},
             {'status': 'BAD_LOGIN', 'error_message': get_translate('errors.admin.wrong_credentials')},

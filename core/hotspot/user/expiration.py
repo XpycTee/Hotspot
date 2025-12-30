@@ -2,13 +2,14 @@ import datetime
 
 from sqlalchemy import select
 
-from core.config import CONFIG
+from core.config import get_config
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
 
 
 def get_delay(is_employee: bool) -> datetime.timedelta:
-    delay = CONFIG.hotspot.get_delay(is_employee)
+    config = get_config()
+    delay = config.hotspot.get_delay(is_employee)
     return delay
 
 def new_expiration(is_employee: bool):

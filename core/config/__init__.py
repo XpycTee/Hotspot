@@ -1,46 +1,58 @@
-from sqlalchemy import select
-import yaml
-import yaml_include
-
-from core.config.configurator import Configurator
-from core.database.models.settings import SystemConfig
-from core.database.session import get_session
-from core.redis import cache
+from redis import Redis
+from core.bootstrap.env import REDIS_URL
+from core.config.models import AppConfig
+from core.config.store import ConfigRuntime, ConfigLoader
+from core.logging import get_logger
+from core.utils import json
 
 
-yaml.add_constructor("!import", yaml_include.Constructor(base_dir='config'))
+_runtime: ConfigRuntime | None = None
+_backend: str | None = None
 
 
-def get_config_from_yaml() -> dict:
-    with open('config/settings.yaml', 'r', encoding='utf-8') as f:
-        config: dict = yaml.full_load(f)
+def init_config(backend: str) -> AppConfig:
+    global _runtime, _backend
 
-    result = Configurator(config.get('settings'), 0).create()
-    return result
+    if backend not in ('web', 'radius'):
+        raise ValueError(f'Unknown backend: {backend}')
+    
+    if _backend is not None:
+        assert _backend in ('web', 'radius'), _backend
 
-
-def load_config_from_db():
-    with get_session() as db_session:
-        db_config = db_session.scalars(select(SystemConfig)).first()
-
-        if db_config is None:
-            default_cfg = Configurator().create()
-
-            default_db_config = SystemConfig(data=default_cfg)
-            db_session.add(default_db_config)
-            db_session.commit()
-            
-            return default_cfg
-            
-        result = Configurator(db_config.data, db_config.version).create()
-    return result
+    if backend == 'radius':
+        _runtime = ConfigRuntime()
+        _backend = backend
+        return _runtime.get()
+    
+    if backend == 'web':
+        _backend = backend
+        return ConfigLoader().load()
+    
+    raise ValueError(f'Unknown backend: {backend}')
 
 
-def get_config_from_redis() -> dict:
-    config = cache.get('app:config', {})
-    version = config.get('version', 0)
-    result = Configurator(config, version).create()
-    return result
+def get_config():
+    if _backend is None:
+        raise RuntimeError('Config backend not initialized')
+
+    if _backend == 'radius':
+        return _runtime.get()
+
+    if _backend == 'web':
+        return ConfigLoader().load()
+
+    raise RuntimeError(f'Unknown config backend: {_backend}')
 
 
-CONFIG = load_config_from_db()
+def runtime_listener():
+    logger = get_logger('Config listener')
+    redis = Redis.from_url(REDIS_URL, decode_responses=True)
+    pubsub = redis.pubsub()
+    pubsub.subscribe("config:update")
+
+    for msg in pubsub.listen():
+        if msg["type"] == "message":
+            data = json.loads(msg["data"])
+            logger.debug(data)
+            if _runtime.version < data.get('version'):
+                _runtime.force_reload()

@@ -1,7 +1,6 @@
 import jmespath
 
-from core.config import CONFIG
-from web.config.provider import get_config
+from core.config import get_config
 
 
 def get_translate(path, lang=None, replace=None, templates={}):
