@@ -47,37 +47,36 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const tabs = document.querySelectorAll('.nav-tabs a');
-        const contentTabs = document.querySelectorAll('.content-tab');
+        let activeTab = 'hotspot'
 
         // Check localStorage for saved tab
         const savedTab = localStorage.getItem('activeSettingsTab');
         if (savedTab) {
             const tab = document.getElementById(savedTab);
             tab.classList.add('active');
+            activeTab = savedTab;
         } else {
-            // Default to first tab if no saved tab
-            contentTabs[0].style.display = 'block';
             tabs[0].classList.add('active');
         }
 
         tabs.forEach(tab => {
             tab.addEventListener('click', function (e) {
                 const target = this.getAttribute('id');
-
-                // Hide all content tabs
-                contentTabs.forEach(content => content.style.display = 'none');
-                // Show the selected tab content
-                document.getElementById(target).style.display = 'block';
-
                 // Remove active class from all tabs
                 tabs.forEach(link => link.classList.remove('active'));
                 // Add active class to the clicked tab
                 this.classList.add('active');
-
                 // Save the active tab to localStorage
                 localStorage.setItem('activeSettingsTab', target);
+
+                activeTab = target;
             });
         });
+
+        if (window.location.pathname != `{{ url_for('pages.admin.settings.index') }}/${activeTab}`) {
+            console.log(window.location.pathname + '!=' + `{{ url_for('pages.admin.settings.index') }}/${activeTab}`);
+            window.location.href = `{{ url_for('pages.admin.settings.index') }}/${activeTab}`;
+        }
     });
 </script>
 {% endblock %}
