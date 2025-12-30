@@ -64,13 +64,12 @@ class Configurator:
                 )
             )
 
-            password_hash = admin.get(
-                'password_hash', 
-                self._hashpw(self._env.str(
+            password_hash = admin.get('password_hash', None)
+            if not password_hash:
+                password_hash = self._hashpw(self._env.str(
                     'PASSWORD', 
                     DEFAULT_ADMIN_PASSWORD
                 ))
-            )
 
             max_login_attempts = admin.get(
                 'max_login_attempts', 
