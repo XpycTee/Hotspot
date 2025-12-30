@@ -27,12 +27,6 @@ class LanguageConfig:
         return language_content
 
 
-@dataclass
-class LoggingConfig:
-    level: int
-    is_gunicorn: bool
-
-
 @dataclass(frozen=True)
 class DatabaseConfig:
     url: str
@@ -96,13 +90,8 @@ class RadiusConfig:
     enabled: bool = True
     addresses: List[str] = field(default_factory=list)
     ports: RadiusPortsConfig = field(default_factory=RadiusPortsConfig)
-
-    hosts_data: Dict[str, RemoteHost] = field(default_factory=RemoteHost)
+    hosts: Dict[str, RemoteHost] = field(default_factory=RemoteHost)
     
-    @property
-    def hosts(self) -> Dict[str, RemoteHost]:
-        return self.hosts_data
-
 
 @dataclass(frozen=True)
 class HotspotUserConfig:
@@ -162,7 +151,6 @@ class AppConfig:
     """
 
     language: LanguageConfig
-    logging: LoggingConfig
     hotspot: HotspotConfig
     sender: SenderConfig
     admin: AdminConfig

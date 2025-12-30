@@ -11,7 +11,7 @@ from core.config.defaults import *
 class Configurator:
     def __init__(self, settings: dict | None = None, version: int | None = None):
         self._settings = settings or {}
-        self.version = version or self._settings.get('version', 0)
+        self.version = version or self._settings.get('version', 1)
         self._env = Env(prefix='HOTSPOT_')
         self._env.read_env()
 
@@ -50,20 +50,6 @@ class Configurator:
         )
         return LanguageConfig(
             name=name
-        )
-
-    def _logging(self) -> LoggingConfig:
-        level_name = self._settings.get('log_level', DEFAULT_LOG_LEVEL)
-        mapping = logging.getLevelNamesMapping()
-        level = mapping.get(level_name.upper())
-
-        level = self._env.log_level('LOG_LEVEL', level)
-
-        is_gunicorn = os.environ.get('SERVER_SOFTWARE', '').startswith('gunicorn')
-
-        return LoggingConfig(
-            level=level,
-            is_gunicorn=is_gunicorn
         )
 
     def _admin(self) -> AdminConfig:
@@ -115,7 +101,7 @@ class Configurator:
 
         radius: dict = self._settings.get('radius', {})
         ports: dict = radius.get('ports', {})
-        raw_hosts: dict = radius.get('hosts_data', {})
+        raw_hosts: dict = radius.get('hosts', {})
 
         enabled = env.bool('ENABLED', DEFAULT_RADIUS_ENABLED)
         addresses = radius.get('addresses', env.list('ADDRESSES', DEFAULT_RADIUS_ADDRESSES))
@@ -135,7 +121,7 @@ class Configurator:
             enabled=enabled,
             addresses=addresses, 
             ports=ports,
-            hosts_data=hosts
+            hosts=hosts
         )
 
     def _hotspot(self) -> HotspotConfig:
@@ -181,7 +167,6 @@ class Configurator:
     def create(self) -> AppConfig:
         return AppConfig(
             language=self._language(),
-            logging=self._logging(),
             hotspot=self._hotspot(),
             sender=self._sender(),
             admin=self._admin(),

@@ -1,18 +1,18 @@
 from logging import Logger, getLogger
 import logging
 
-from core.config import CONFIG
+from core.bootstrap.env import IS_GUNICORN, LOG_LEVEL
 
 
 def configure_logger(logger: Logger, level=None):
-    if CONFIG.logging.is_gunicorn:
+    if IS_GUNICORN:
         gunicorn_error_logger = getLogger('gunicorn.error')
         logger.handlers = gunicorn_error_logger.handlers
         logger.setLevel(gunicorn_error_logger.level)
         logger.propagate = False
     else:
         if level is None:
-            level = CONFIG.logging.level
+            level = LOG_LEVEL
 
         logger.setLevel(level)
         handler = logging.StreamHandler()

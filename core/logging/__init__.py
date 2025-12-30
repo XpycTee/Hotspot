@@ -2,7 +2,7 @@
 
 from logging import getLogger
 
-from core.config.logging import configure_logger
+from core.bootstrap.logging import configure_logger
 
 
 def get_logger(name: str):
