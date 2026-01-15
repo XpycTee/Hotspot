@@ -1,0 +1,64 @@
+{% extends 'admin/settings.html' %}
+
+{% block settings_content %}
+<div id="radius" class="content-tab table-container">
+    <div class="filters-panel">
+        <div class="filters-row">
+            <input type="text" class="filter-input table-search" placeholder="{{ get_translate('placeholders.search', session.user_lang) }}">
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ get_translate('html.admin.settings.users.username', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.settings.users.access', session.user_lang) }}</th>
+                <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
+            </tr>
+        </thead>
+        <tbody id="users_body">
+            {% for username, data in users.items() %}
+            <tr>
+                <td data-username>{{ username }}</td>
+                <td data-access>{{ data['access'] }}</td>
+                <td class="column-controls">
+                    <button class="btn btn-edit btn-controls" onclick="editUserModal(this)">{{ get_translate('buttons.edit', session.user_lang) }}</button>
+                    <button class="btn btn-delete btn-controls" onclick="deleteUserRow(this)">{{ get_translate('buttons.delete', session.user_lang) }}</button>
+                </td>
+            </tr>
+            {% endfor %}
+            <tr class="add_row_button">
+                <td colspan="6"><button class="btn btn-add" onclick="addNewUserModal()">{{ get_translate('buttons.add', session.user_lang) }}</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<script>
+const radiusSearchInput = document.querySelector('#radius .table-search');
+const radiusTbody = document.getElementById('radius_body');
+
+radiusSearchInput.addEventListener('input', () => {
+    const query = radiusSearchInput.value.trim().toLowerCase();
+
+    const rows = radiusTbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        // строку "Добавить" не фильтруем
+        if (row.classList.contains('add_row_button')) {
+            row.style.display = '';
+            return;
+        }
+
+        // берём только td с данными, без кнопок
+        const cells = row.querySelectorAll(
+            'td[data-username], td[data-access]'
+        );
+
+        const match = [...cells].some(td =>
+            td.textContent.toLowerCase().includes(query)
+        );
+
+        row.style.display = match ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

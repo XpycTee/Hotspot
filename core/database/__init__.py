@@ -10,6 +10,7 @@ def create_all():
     import core.database.models.clients_number
     import core.database.models.blacklist
     import core.database.models.settings
+    import core.database.models.admin_users
 
     Model.metadata.create_all(engine)
 

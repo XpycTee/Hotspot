@@ -43,8 +43,6 @@ class AdminConfig:
     Configuration for administrative access to the system.
     """
 
-    username: str
-    password_hash: bytes
     max_login_attempts: int
     lockout_time: timedelta
 

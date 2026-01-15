@@ -38,6 +38,7 @@
         <li><a id="hotspot" href="{{ url_for('pages.admin.settings.hotspot.index') }}">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
         <li><a id="radius" href="{{ url_for('pages.admin.settings.radius.index') }}">{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</a></li>
         <li><a id="sender" href="{{ url_for('pages.admin.settings.sender.index') }}">{{ get_translate('html.admin.settings.sender.title', session.user_lang) }}</a></li>
+        <li><a id="users" href="{{ url_for('pages.admin.settings.users.index') }}">{{ get_translate('html.admin.settings.users.title', session.user_lang) }}</a></li>
     </ul>
     <div class="table-container">
         {% block settings_content %}{% endblock %}
