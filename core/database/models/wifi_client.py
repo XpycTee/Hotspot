@@ -3,6 +3,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 
 from sqlalchemy.orm import relationship
 
+from core.config import get_config
 from core.database.models import Model
 from core.database.models.clients_number import ClientsNumber
 from core.database.models.employee import Employee
@@ -28,8 +29,8 @@ class WifiClient(Model):
 
     @property
     def online(self) -> bool:
-        from core.config.hotspot import HOTSPOT
-        return self.last_seen and (datetime.now() - self.last_seen) < HOTSPOT.online_timeout
+        config = get_config()
+        return self.last_seen and (datetime.now() - self.last_seen) < config.hotspot.online_timeout
 
     @property
     def is_employee(self) -> bool:
