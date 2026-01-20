@@ -31,7 +31,7 @@ def login_by_password(session_id, username, password):
         lockout_time = config.admin.lockout_time
         error_message = get_translate('errors.admin.end_tries', templates={'lockout_time': lockout_time})
         return {'status': 'LOCKOUT', 'error_message': error_message}
-
+    
     if check_password(username, password):
         reset_attempts(session_id)
         return {'status': 'OK'}

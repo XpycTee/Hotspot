@@ -52,6 +52,7 @@ def check():
     if status == 'OK':
         session['is_authenticated'] = True
         session['user_lang'] = user_lang if user_lang != 'auto' else None
+        session['username'] = username
         session.permanent = True
         current_app.permanent_session_lifetime = timedelta(minutes=30)
 

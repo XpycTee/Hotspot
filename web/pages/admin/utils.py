@@ -1,7 +1,8 @@
+from core.admin.auth.security import has_access
 import web.logger as logger
 
 
-from flask import redirect, session, url_for
+from flask import abort, redirect, request, session, url_for
 
 
 from functools import wraps
@@ -29,5 +30,7 @@ def login_required(f):
         if not session.get('is_authenticated'):
             logger.debug('User is not authenticated')
             return redirect(url_for('pages.admin.auth.login'), 302)
+        if not has_access(session['username'], request.blueprints, 'admin'):
+            return abort(403)
         return f(*args, **kwargs)
     return decorated_function

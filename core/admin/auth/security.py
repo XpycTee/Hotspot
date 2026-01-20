@@ -25,11 +25,18 @@ def check_password(username: str, password: str):
             return False
         
         return bcrypt.checkpw(password.encode('utf-8'), user.password_hash)
+    
 
-
-def has_access(username: str, section: str, level: str) -> bool:
+def has_access(username: str, sections: list[str], level: str) -> bool:
      with get_session() as db_session:
         query = select(AdminUsers).where(username==username)
         user = db_session.scalars(query).first()
-        user_level = user.access.get(section, "none")
-        return ACCESS_LEVELS[user_level] >= ACCESS_LEVELS[level]
+        access = False
+
+        for section in sections:
+            user_level = user.access.get(section, "none")
+            access = ACCESS_LEVELS[user_level] >= ACCESS_LEVELS[level]
+            if access:
+                break
+
+        return access
