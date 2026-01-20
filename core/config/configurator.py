@@ -1,12 +1,10 @@
 from datetime import timedelta
 import bcrypt
 from environs import Env
-from sqlalchemy import select
 
+from core.admin.repository import create_user
 from core.config.models import *
 from core.config.defaults import *
-from core.database.models.admin_users import AdminUsers
-from core.database.session import get_session
 
 
 class Configurator:
@@ -57,32 +55,17 @@ class Configurator:
         admin: dict = self._settings.get('admin', {})
 
         with self._env.prefixed('ADMIN_'):
-            with get_session() as db_session:
-                username = self._env.str(
-                        'USERNAME',
-                        DEFAULT_ADMIN_USERNAME,
-                    )
-                
-                query = select(AdminUsers).where(username==username)
-                db_user = db_session.scalars(query).first()
+            username = self._env.str(
+                'USERNAME',
+                DEFAULT_ADMIN_USERNAME,
+            )
+        
+            password = self._env.str(
+                'PASSWORD', 
+                DEFAULT_ADMIN_PASSWORD,
+            )
 
-                if not db_user:
-                    password_hash = self._hashpw(self._env.str(
-                        'PASSWORD', 
-                        DEFAULT_ADMIN_PASSWORD,
-                    ))
-                    access = {
-                        'hotspot': 'admin',
-                        'radius': 'admin',
-                        'sender': 'admin',
-                        'users': 'admin',
-                    }
-                    new_user = AdminUsers(
-                        username=username, 
-                        password_hash=password_hash, 
-                        access=access,
-                    )
-                    db_session.add(new_user)
+            create_user(username, password)
 
             max_login_attempts = admin.get(
                 'max_login_attempts', 
