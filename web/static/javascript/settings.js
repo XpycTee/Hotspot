@@ -37,11 +37,32 @@ function updateRadiusPage(settings) {
     radiusBody.appendChild(addRowButton); // Возвращаем строку с кнопкой добавления
 }
 
+function updateUsersPage(settings) {
+    const usersBody = document.getElementById('users_body');
+    const addRowButton = usersBody.querySelector('.add_row_button'); // Сохраняем строку с кнопкой добавления
+    usersBody.innerHTML = ''; // Очищаем таблицу
+
+    Object.values(settings).forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td data-username>${user.username}</td>
+        <td data-access>${JSON.stringify(user.access)}</td>
+        <td class="column-controls">
+            <button class="btn btn-edit btn-controls" onclick="editUserModal(this)">${getTranslate('buttons.edit')}</button>
+            <button class="btn btn-delete btn-controls" onclick="deleteUserRow(this)">${getTranslate('buttons.delete')}</button>
+        </td>
+        `
+        usersBody.appendChild(tr);
+    });
+    usersBody.appendChild(addRowButton); // Возвращаем строку с кнопкой добавления
+}
 
 // Функция для обновления таблицы
 function updateSettingsPage(settingId, settings) {
     if (settingId === 'radius') {
         updateRadiusPage(settings);
+    } else if (settingId === 'users') {
+        updateUsersPage(settings);
     }
 }
 
@@ -159,6 +180,74 @@ function deleteHostRow(button) {
     .then(result => {
         if (result.success) {
             loadSettingsData('radius'); // Обновляем таблицу
+        } else {
+            alert(`Error: ${result.error.description}`);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function addNewUserModal() {
+    const tittle = getTranslate(`html.admin.settings.users.add_title`);
+    const template = `
+        <form class="form form-modal" id="addRowForm">
+            <label for="username">${getTranslate('html.admin.settings.users.username')}</label>
+            <input class="input modal-input" type="text" name="username" placeholder="${getTranslate('html.admin.settings.users.username')}" required>
+            <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
+            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
+            <label for="access">${getTranslate('html.admin.settings.users.access')}</label>
+            <input class="input modal-input" type="text" name="access" placeholder="${getTranslate('html.admin.settings.users.access')}">
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
+            </div>
+        </form>
+    `
+    showModal(tittle, template, 'users', 'add');
+}
+
+function editUserModal(button) {
+    const tittle = getTranslate(`html.admin.settings.users.edit_title`);
+    const row = button.closest('tr');
+    const username = row.querySelector('td[data-username]').textContent;
+    const access = row.querySelector('td[data-access]').textContent;
+
+    const template = `
+        <form class="form form-modal" id="addRowForm">
+            <input type="hidden" name="username" value="${username}">
+            <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
+            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
+            <label for="access">${getTranslate('html.admin.settings.users.access')}</label>
+            <input class="input modal-input" type="text" name="access" placeholder="${getTranslate('html.admin.settings.users.access')}" value="${access}"s>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
+            </div>
+        </form>
+    `
+    showModal(tittle, template, 'users', 'update');
+}
+
+function deleteUserRow(button) {
+    const row = button.closest('tr');
+    const username = row.querySelector('td[data-username]').textContent;
+
+    const data = {
+        username: username.trim()
+    };
+
+    // Отправляем запрос на сервер
+    fetch(`/admin/settings/users/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            loadSettingsData('users'); // Обновляем таблицу
         } else {
             alert(`Error: ${result.error.description}`);
         }

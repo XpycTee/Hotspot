@@ -58,3 +58,20 @@ def delete_user(username: str):
             'status': 'OK', 
             'user': user,
         }
+
+
+def update_user(username: str, password: str | None = None, access: dict | None = None):
+    with get_session() as db_session:        
+        query = select(AdminUsers).where(AdminUsers.username==username)
+        db_user = db_session.scalars(query).first()
+        if not db_user:
+            return {'status': 'NOT_FOUND'}
+        
+        if password:
+            password_hash = hashpw(password)
+            db_user.password_hash = password_hash
+        
+        if access:
+            db_user.access = access
+
+        return {'status': 'OK'}

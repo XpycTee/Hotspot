@@ -10,6 +10,7 @@ def get_users():
         db_users = db_session.scalars(query).all()
         for user in db_users:
             users[user.username] = {
+                'username': user.username,
                 'access': user.access,
             }
     return users
