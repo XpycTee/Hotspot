@@ -146,6 +146,12 @@
           "type": "Тип",
           "url": "URL",
           "api_key": "API Ключ"
+        },
+        "users": {
+          "title": "Пользователи",
+          "group": "Группа",
+          "add_title": "Добавить пользователя",
+          "edit_title": "Редактировать пользователя {username}"
         }
       }
     }
@@ -174,11 +180,15 @@
     "all": "Все",
     "yes": "Да",
     "no": "Нет",
-    "add_phone": "+ номер"
+    "add_phone": "+ номер",
+    "change_password": "Изменить пароль"
   },
   "placeholders": {
     "login": "Логин",
     "password": "Пароль",
+    "password_new": "Новый пароль для {username}",
+    "password_confirm": "Подтвержение пароля",
+    "confirm": "Подтвержение (Ваш пароль)",
     "code": "Код из СМС",
     "phone_number": "Номер телефона",
     "search": "Поиск...",

@@ -144,6 +144,12 @@
           "type": "Type",
           "url": "URL",
           "api_key": "API Key"
+        },
+        "users": {
+          "title": "Users",
+          "group": "Group",
+          "add_title": "Add new user",
+          "edit_title": "Edit user {username}"
         }
       }
     }
@@ -172,11 +178,15 @@
     "all": "All",
     "yes": "Yes",
     "no": "No",
-    "add_phone": "+ phone"
+    "add_phone": "+ phone",
+    "change_password": "Change password"
   },
   "placeholders": {
     "login": "Login",
     "password": "Password",
+    "password_new": "New password for {username}",
+    "password_confirm": "Password confirmation",
+    "confirm": "Confirmation (Your password)",
     "code": "SMS code",
     "phone_number": "Phone number",
     "search": "Search...",
