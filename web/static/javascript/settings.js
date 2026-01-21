@@ -69,6 +69,7 @@ function updateSettingsPage(settingId, settings) {
 
 function showModal(title, template, settingId, action) {
     const modal = document.getElementById('addRowModal')
+    const overlay = document.getElementById('modal-overlay');
 
     triggerModalHtml(modal, title, template);
 
@@ -94,6 +95,7 @@ function showModal(title, template, settingId, action) {
         .then(response => response.json())
         .then(result => {
             if (result.success) {
+                closeModal(modal, overlay)
                 loadSettingsData(settingId); // Обновляем таблицу
             } else {
                 alert(`Error: ${result.error.description}`);
@@ -121,7 +123,7 @@ function addNewHostModal() {
             <input class="input modal-input" type="text" name="coaport" value="3799" placeholder="${getTranslate('html.admin.settings.radius.coaport')}" required>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="submit" class="btn btn-controls btn-save">${getTranslate('buttons.save')}</button>
                 <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
             </div>
         </form>
@@ -155,7 +157,7 @@ function editHostModal(button) {
             <input class="input modal-input" type="text" name="coaport" placeholder="${getTranslate('html.admin.settings.radius.coaport')}" value="${coaPort}" required>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="submit" class="btn btn-controls btn-save">${getTranslate('buttons.save')}</button>
                 <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
             </div>
         </form>
@@ -192,12 +194,12 @@ function addNewUserModal() {
     const tittle = getTranslate(`html.admin.settings.users.add_title`);
     const template = `
         <form class="form form-modal" id="addRowForm">
-            <label for="username">${getTranslate('html.admin.settings.users.username')}</label>
-            <input class="input modal-input" type="text" name="username" placeholder="${getTranslate('html.admin.settings.users.username')}" required>
-            <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
-            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
-            <label for="password_confirm">${getTranslate('html.admin.settings.users.password_confirm')}</label>
-            <input class="input modal-input" type="password" name="password_confirm" placeholder="${getTranslate('html.admin.settings.users.password_confirm')}" required>
+            <label for="username">${getTranslate('placeholders.login')}</label>
+            <input class="input modal-input" type="text" name="username" placeholder="${getTranslate('placeholders.login')}" required>
+            <label for="password">${getTranslate('placeholders.password')}</label>
+            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('placeholders.password')}" required>
+            <label for="password_confirm">${getTranslate('placeholders.password_confirm')}</label>
+            <input class="input modal-input" type="password" name="password_confirm" placeholder="${getTranslate('placeholders.password_confirm')}" required>
             <label for="group">${getTranslate('html.admin.settings.users.group')}</label>
             <select class="input modal-input" name="group" required>
                 <option value="">-- Выберите группу --</option>
@@ -207,7 +209,7 @@ function addNewUserModal() {
             </select>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="submit" class="btn btn-controls btn-save">${getTranslate('buttons.save')}</button>
                 <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
             </div>
         </form>
@@ -216,7 +218,6 @@ function addNewUserModal() {
 }
 
 function editUserModal(button) {
-    const tittle = getTranslate(`html.admin.settings.users.edit_title`);
     const row = button.closest('tr');
     const username = row.querySelector('td[data-username]').textContent;
     const group = row.querySelector('td[data-group]').textContent.trim();
@@ -232,35 +233,36 @@ function editUserModal(button) {
             </select>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="submit" class="btn btn-controls btn-save">${getTranslate('buttons.save')}</button>
                 <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
             </div>
         </form>
     `
+    const tittle = getTranslate(`html.admin.settings.users.edit_title`, {'username': username});
     showModal(tittle, template, 'users', 'update');
 }
 
 function editUserPasswordModal(button) {
-    const tittle = getTranslate(`html.admin.settings.users.edit_title`);
     const row = button.closest('tr');
     const username = row.querySelector('td[data-username]').textContent;
 
     const template = `
         <form class="form form-modal" id="addRowForm">
             <input type="hidden" name="username" value="${username}">
-            <label for="confirm">${getTranslate('html.admin.settings.users.confirm')}</label>
-            <input class="input modal-input" type="password" name="confirm" placeholder="${getTranslate('html.admin.settings.users.confirm')}" required>
-            <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
-            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
-            <label for="password_confirm">${getTranslate('html.admin.settings.users.password_confirm')}</label>
-            <input class="input modal-input" type="password" name="password_confirm" placeholder="${getTranslate('html.admin.settings.users.password_confirm')}" required>
+            <label for="confirm">${getTranslate('placeholders.confirm')}</label>
+            <input class="input modal-input" type="password" name="confirm" placeholder="${getTranslate('placeholders.confirm')}" required>
+            <label for="password">${getTranslate('placeholders.password_new')}</label>
+            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('placeholders.password_new', {'username': username})}" required>
+            <label for="password_confirm">${getTranslate('placeholders.password_confirm')}</label>
+            <input class="input modal-input" type="password" name="password_confirm" placeholder="${getTranslate('placeholders.password_confirm')}" required>
 
             <div class="modal-footer">
-                <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
+                <button type="submit" class="btn btn-controls btn-save">${getTranslate('buttons.save')}</button>
                 <button type="button" class="btn btn-controls btn-modal-close" data-close-button>${getTranslate('buttons.cancel')}</button>
             </div>
         </form>
     `
+    const tittle = getTranslate(`html.admin.settings.users.edit_title`, {'username': username});
     showModal(tittle, template, 'users', 'change_password');
 }
 
