@@ -22,6 +22,7 @@
                 <td data-group>{{ data['group'] }}</td>
                 <td class="column-controls">
                     <button class="btn btn-edit btn-controls" onclick="editUserModal(this)">{{ get_translate('buttons.edit', session.user_lang) }}</button>
+                    <button class="btn btn-edit btn-controls" onclick="editUserPasswordModal(this)">{{ get_translate('buttons.change_password', session.user_lang) }}</button>
                     <button class="btn btn-delete btn-controls" onclick="deleteUserRow(this)">{{ get_translate('buttons.delete', session.user_lang) }}</button>
                 </td>
             </tr>
