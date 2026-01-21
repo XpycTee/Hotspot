@@ -6,7 +6,7 @@ from core.utils.password import hashpw
 
 def create_user(username: str, password: str, access: dict | None = None):
     with get_session() as db_session:        
-        query = select(AdminUsers).where(username==username)
+        query = select(AdminUsers).where(AdminUsers.username==username)
         db_user = db_session.scalars(query).first()
 
         if not db_user:
@@ -26,7 +26,7 @@ def create_user(username: str, password: str, access: dict | None = None):
 
 def get_user(username: str):
     with get_session() as db_session:        
-        query = select(AdminUsers).where(username==username)
+        query = select(AdminUsers).where(AdminUsers.username==username)
         db_user = db_session.scalars(query).first()
         if not db_user:
             return {'status': 'NOT_FOUND'}
@@ -43,7 +43,7 @@ def get_user(username: str):
 
 def delete_user(username: str):
      with get_session() as db_session:        
-        query = select(AdminUsers).where(username==username)
+        query = select(AdminUsers).where(AdminUsers.username==username)
         db_user = db_session.scalars(query).first()
         if not db_user:
             return {'status': 'NOT_FOUND'}

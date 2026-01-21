@@ -15,7 +15,7 @@ ACCESS_LEVELS = {
 
 def check_password(username: str, password: str):
     with get_session() as db_session:
-        query = select(AdminUsers).where(username==username)
+        query = select(AdminUsers).where(AdminUsers.username==username)
         user = db_session.scalars(query).first()
 
         if not user:
@@ -29,7 +29,7 @@ def check_password(username: str, password: str):
 
 def has_access(username: str, sections: list[str], level: str) -> bool:
      with get_session() as db_session:
-        query = select(AdminUsers).where(username==username)
+        query = select(AdminUsers).where(AdminUsers.username==username)
         user = db_session.scalars(query).first()
         access = False
 
