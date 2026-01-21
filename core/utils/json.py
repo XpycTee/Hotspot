@@ -76,7 +76,9 @@ def _walk(obj: Any):
     return _restore(obj)
 
 
-def loads(data: bytes) -> Any:
+def loads(data: bytes | str) -> Any:
+    if isinstance(data, str):
+        data = data.encode()
     raw = orjson.loads(data)
     return _walk(raw)
 
