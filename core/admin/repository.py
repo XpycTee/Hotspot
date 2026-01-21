@@ -61,7 +61,7 @@ def delete_user(username: str):
         }
 
 
-def update_user(username: str, password: str | None = None, access: dict | None = None):
+def update_user(username: str, password: str | None = None, group: str | None = None, access: dict | None = None):
     with get_session() as db_session:        
         query = select(AdminUsers).where(AdminUsers.username==username)
         db_user = db_session.scalars(query).first()
@@ -71,7 +71,8 @@ def update_user(username: str, password: str | None = None, access: dict | None 
         if password:
             password_hash = hashpw(password)
             db_user.password_hash = password_hash
-        
+        if group:
+            db_user.group = group
         if access:
             db_user.access = access
 

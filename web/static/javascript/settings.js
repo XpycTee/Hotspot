@@ -196,7 +196,12 @@ function addNewUserModal() {
             <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
             <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
             <label for="group">${getTranslate('html.admin.settings.users.group')}</label>
-            <input class="input modal-input" type="text" name="group" placeholder="${getTranslate('html.admin.settings.users.group')}">
+            <select class="input modal-input" name="group" required>
+                <option value="">-- Выберите группу --</option>
+                <option value="read">read</option>
+                <option value="write">write</option>
+                <option value="full">full</option>
+            </select>
 
             <div class="modal-footer">
                 <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
@@ -211,15 +216,19 @@ function editUserModal(button) {
     const tittle = getTranslate(`html.admin.settings.users.edit_title`);
     const row = button.closest('tr');
     const username = row.querySelector('td[data-username]').textContent;
-    const group = row.querySelector('td[data-group]').textContent;
+    const group = row.querySelector('td[data-group]').textContent.trim();
 
     const template = `
         <form class="form form-modal" id="addRowForm">
             <input type="hidden" name="username" value="${username}">
             <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
-            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
+            <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}">
             <label for="group">${getTranslate('html.admin.settings.users.group')}</label>
-            <input class="input modal-input" type="text" name="group" placeholder="${getTranslate('html.admin.settings.users.group')}" value="${group}"s>
+            <select class="input modal-input" name="group" required>
+                <option value="read" ${group === 'read' ? 'selected' : ''}>read</option>
+                <option value="write" ${group === 'write' ? 'selected' : ''}>write</option>
+                <option value="full" ${group === 'full' ? 'selected' : ''}>full</option>
+            </select>
 
             <div class="modal-footer">
                 <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
