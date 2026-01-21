@@ -11,6 +11,7 @@ def get_users():
         for user in db_users:
             users[user.username] = {
                 'username': user.username,
+                'group': user.group,
                 'access': user.access,
             }
     return users

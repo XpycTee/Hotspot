@@ -46,7 +46,7 @@ function updateUsersPage(settings) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
         <td data-username>${user.username}</td>
-        <td data-access>${JSON.stringify(user.access)}</td>
+        <td data-group>${user.group}</td>
         <td class="column-controls">
             <button class="btn btn-edit btn-controls" onclick="editUserModal(this)">${getTranslate('buttons.edit')}</button>
             <button class="btn btn-delete btn-controls" onclick="deleteUserRow(this)">${getTranslate('buttons.delete')}</button>
@@ -195,8 +195,8 @@ function addNewUserModal() {
             <input class="input modal-input" type="text" name="username" placeholder="${getTranslate('html.admin.settings.users.username')}" required>
             <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
             <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
-            <label for="access">${getTranslate('html.admin.settings.users.access')}</label>
-            <input class="input modal-input" type="text" name="access" placeholder="${getTranslate('html.admin.settings.users.access')}">
+            <label for="group">${getTranslate('html.admin.settings.users.group')}</label>
+            <input class="input modal-input" type="text" name="group" placeholder="${getTranslate('html.admin.settings.users.group')}">
 
             <div class="modal-footer">
                 <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>
@@ -211,15 +211,15 @@ function editUserModal(button) {
     const tittle = getTranslate(`html.admin.settings.users.edit_title`);
     const row = button.closest('tr');
     const username = row.querySelector('td[data-username]').textContent;
-    const access = row.querySelector('td[data-access]').textContent;
+    const group = row.querySelector('td[data-group]').textContent;
 
     const template = `
         <form class="form form-modal" id="addRowForm">
             <input type="hidden" name="username" value="${username}">
             <label for="password">${getTranslate('html.admin.settings.users.password')}</label>
             <input class="input modal-input" type="password" name="password" placeholder="${getTranslate('html.admin.settings.users.password')}" required>
-            <label for="access">${getTranslate('html.admin.settings.users.access')}</label>
-            <input class="input modal-input" type="text" name="access" placeholder="${getTranslate('html.admin.settings.users.access')}" value="${access}"s>
+            <label for="group">${getTranslate('html.admin.settings.users.group')}</label>
+            <input class="input modal-input" type="text" name="group" placeholder="${getTranslate('html.admin.settings.users.group')}" value="${group}"s>
 
             <div class="modal-footer">
                 <button type="submit" class="btn btn-controls btn-save" data-close-button>${getTranslate('buttons.save')}</button>

@@ -33,7 +33,7 @@ def user_update(user: HotspotUserConfig, password: str = None, delay: timedelta 
 
 
 @hotspot_bp.route('', methods=['POST', 'GET'])
-@login_required
+@login_required(group='full')
 def index():
     if request.method == 'POST':
         data: dict = request.form

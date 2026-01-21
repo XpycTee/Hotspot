@@ -4,7 +4,7 @@ from core.database.session import get_session
 from core.utils.password import hashpw
 
 
-def create_user(username: str, password: str, access: dict | None = None):
+def create_user(username: str, password: str, group: str, access: dict | None = None):
     with get_session() as db_session:        
         query = select(AdminUsers).where(AdminUsers.username==username)
         db_user = db_session.scalars(query).first()
@@ -12,11 +12,12 @@ def create_user(username: str, password: str, access: dict | None = None):
         if not db_user:
             password_hash = hashpw(password)
             if not access:
-                access = {'pages.admin': 'admin'}
+                access = {}
 
             new_user = AdminUsers(
                 username=username, 
-                password_hash=password_hash, 
+                password_hash=password_hash,
+                group=group,
                 access=access,
             )
             db_session.add(new_user)

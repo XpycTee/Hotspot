@@ -1,4 +1,4 @@
-from core.admin.auth.security import has_access
+from core.admin.security.access import has_access
 import web.logger as logger
 
 
@@ -22,15 +22,23 @@ def _log_masked_session():
     return result
 
 
-def login_required(f):
-    """Декоратор для проверки авторизации."""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        logger.debug(f'session data {_log_masked_session()}')
-        if not session.get('is_authenticated'):
-            logger.debug('User is not authenticated')
-            return redirect(url_for('pages.admin.auth.login'), 302)
-        if not has_access(session['username'], request.blueprints, 'admin'):
-            return abort(403)
-        return f(*args, **kwargs)
-    return decorated_function
+def login_required(_func=None, *, group='read'):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            logger.debug(f'session data {_log_masked_session()}')
+
+            if not session.get('is_authenticated'):
+                logger.debug('User is not authenticated')
+                return redirect(url_for('pages.admin.auth.login'), 302)
+
+            if not has_access(session['username'], group):
+                return abort(403)
+
+            return f(*args, **kwargs)
+        return decorated_function
+
+    if _func is not None:
+        return decorator(_func)
+
+    return decorator

@@ -20,7 +20,7 @@ for bp in bluepints:
 
 
 @settings_bp.route('', methods=['POST', 'GET'])
-@login_required
+@login_required(group='full')
 def index():
     error = session.pop('error', None)
 

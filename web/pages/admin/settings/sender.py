@@ -8,7 +8,7 @@ sender_bp = Blueprint('sender', __name__, url_prefix='/sender')
 
 
 @sender_bp.route('', methods=['GET'])
-@login_required
+@login_required(group='full')
 def index():
 
     template = render_template(
@@ -19,7 +19,7 @@ def index():
     return template
 
 @sender_bp.route('/update', methods=['POST'])
-@login_required
+@login_required(group='full')
 def update():
     data: dict = request.json
 

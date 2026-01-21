@@ -10,7 +10,7 @@ users_bp = Blueprint('users', __name__, url_prefix='/users')
 
 
 @users_bp.route('', methods=['GET'])
-@login_required
+@login_required(group='full')
 def index():
     users = get_users()
 
@@ -23,7 +23,7 @@ def index():
 
 
 @users_bp.route('/get', methods=['GET'])
-@login_required
+@login_required(group='full')
 def get():
     users = get_users()
 
@@ -33,19 +33,15 @@ def get():
 
 
 @users_bp.route('/add', methods=['POST'])
-@login_required
+@login_required(group='full')
 def add():
     data: dict = request.json
 
     username = data.get('username')
     password = data.get('password')
-    access = {}
-
-    json_access = data.get('access', None)
-    if json_access:
-        access = json.loads(json_access)
+    group = data.get('group')
         
-    response = create_user(username, password, access)
+    response = create_user(username, password, group)
     status = response.get('status')
     if status == 'OK':
         return jsonify({'success': True})
@@ -53,19 +49,15 @@ def add():
 
 
 @users_bp.route('/update', methods=['POST'])
-@login_required
+@login_required(group='full')
 def update():
     data: dict = request.json
 
     username = data.get('username')
     password = data.get('password', None)
-    access = {}
+    group = data.get('group', None)
 
-    json_access = data.get('access', None)
-    if json_access:
-        access = json.loads(json_access)
-
-    response = update_user(username, password, access)
+    response = update_user(username, password, group)
     status = response.get('status')
     if status == 'OK':
         return jsonify({'success': True})
@@ -73,7 +65,7 @@ def update():
 
 
 @users_bp.route('/delete', methods=['POST'])
-@login_required
+@login_required(group='full')
 def delete():
     data: dict = request.json
 

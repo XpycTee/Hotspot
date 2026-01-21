@@ -10,7 +10,7 @@ radius_bp = Blueprint('radius', __name__, url_prefix='/radius')
 
 
 @radius_bp.route('', methods=['GET'])
-@login_required
+@login_required(group='full')
 def index():
     hosts = get_radius_hosts()
 
@@ -23,7 +23,7 @@ def index():
 
 
 @radius_bp.route('/get', methods=['GET'])
-@login_required
+@login_required(group='full')
 def get_hosts():
     hosts = get_radius_hosts()
 
@@ -33,7 +33,7 @@ def get_hosts():
 
 
 @radius_bp.route('/add', methods=['POST'])
-@login_required
+@login_required(group='full')
 def add_host():
     data: dict = request.json
 
@@ -81,7 +81,7 @@ def add_host():
 
 
 @radius_bp.route('/update', methods=['POST'])
-@login_required
+@login_required(group='full')
 def update_host():
     data: dict = request.json
 
@@ -127,7 +127,7 @@ def update_host():
 
 
 @radius_bp.route('/delete', methods=['POST'])
-@login_required
+@login_required(group='full')
 def delete_host():
     data = request.json
 

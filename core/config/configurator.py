@@ -65,7 +65,7 @@ class Configurator:
                 DEFAULT_ADMIN_PASSWORD,
             )
 
-            create_user(username, password)
+            create_user(username, password, 'full')
 
             max_login_attempts = admin.get(
                 'max_login_attempts', 
