@@ -13,4 +13,3 @@ def create_all():
     import core.database.models.admin_users
 
     Model.metadata.create_all(engine)
-

@@ -1,8 +1,6 @@
 from datetime import timedelta
-import bcrypt
 from environs import Env
 
-from core.admin.repository import create_user
 from core.config.models import *
 from core.config.defaults import *
 
@@ -13,14 +11,6 @@ class Configurator:
         self.version = version or self._settings.get('version', 1)
         self._env = Env(prefix='HOTSPOT_')
         self._env.read_env()
-
-    @staticmethod
-    def _hashpw(password: str):
-        password_hash = bcrypt.hashpw(
-            password.encode(),
-            bcrypt.gensalt(),
-        )
-        return password_hash
 
     @staticmethod
     def _convert_delay(delay):
@@ -55,18 +45,6 @@ class Configurator:
         admin: dict = self._settings.get('admin', {})
 
         with self._env.prefixed('ADMIN_'):
-            username = self._env.str(
-                'USERNAME',
-                DEFAULT_ADMIN_USERNAME,
-            )
-        
-            password = self._env.str(
-                'PASSWORD', 
-                DEFAULT_ADMIN_PASSWORD,
-            )
-
-            create_user(username, password, 'full')
-
             max_login_attempts = admin.get(
                 'max_login_attempts', 
                 self._env.int(
