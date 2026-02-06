@@ -19,6 +19,11 @@ jobs:
       with:
         python-version: '3.13'
 
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.8.1
+      with:
+        redis-version: 8
+
     - name: Cache pip
       uses: actions/cache@v4
       with:
@@ -33,10 +38,16 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install pytest
 
+    - name: Init DB
+      env: 
+        DB_URL: "sqlite:///test.db"
+      run: |
+        python init_database.py
+        
     - name: Run tests
       env: 
         LOG_LEVEL: debug
-        DB_URL: "sqlite:///:memory:"
-        HOTSPOT_CACHE_URL: simple
+        DB_URL: "sqlite:///test.db"
+        REDIS_URL: "redis://127.0.0.1:6379/0"
       run: |
         pytest tests
