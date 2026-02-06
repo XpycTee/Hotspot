@@ -40,14 +40,14 @@ jobs:
 
     - name: Init DB
       env: 
-        DB_URL: "sqlite:///test.db"
+        HOTSPOT_DB_URL: "sqlite:///test.db"
       run: |
         python init_database.py
         
     - name: Run tests
       env: 
-        LOG_LEVEL: debug
-        DB_URL: "sqlite:///test.db"
-        REDIS_URL: "redis://127.0.0.1:6379/0"
+        HOTSPOT_LOG_LEVEL: debug
+        HOTSPOT_DB_URL: "sqlite:///test.db"
+        HOTSPOT_REDIS_URL: "redis://127.0.0.1:6379/0"
       run: |
         pytest tests
