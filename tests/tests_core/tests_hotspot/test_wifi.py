@@ -1,10 +1,11 @@
 import datetime
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from sqlalchemy import select
 
 from core import database
+from core.config import init_config
 from core.redis import cache
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
@@ -22,6 +23,7 @@ from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_f
 class TestCoreHotpsotWiFi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        init_config('web')
         database.create_all()
 
     def tearDown(self):
@@ -31,7 +33,8 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
     def _clear_users():
         with get_session() as db_session:
             # очищаем все таблицы
-            for table in reversed(Model.metadata.sorted_tables):
+            tables = Model.metadata.sorted_tables
+            for table in [tables[6], tables[5], tables[3], tables[2], tables[1]]:
                 db_session.execute(table.delete())
             db_session.commit()
 
@@ -486,15 +489,18 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         self.assertDictEqual(result, expected)
     
     @patch('core.hotspot.wifi.auth.generate_token')
-    @patch('core.hotspot.wifi.auth.RADIUS')
-    def test_get_credentials(self, mock_radius, mock_generate_token):
+    @patch('core.hotspot.wifi.auth.get_config')
+    def test_get_credentials(self, mock_get_config, mock_generate_token):
         staff_mac = 'AA:AA:AA:00:00:02'
         staff_phone = '79990000002'
         guest_mac = '00:00:00:00:00:02'
         guest_phone = '70000000002'
 
-
-        mock_radius.enabled.__bool__.return_value = False
+        mock_config = MagicMock()
+        mock_config.radius.enabled.__bool__.return_value = False
+        mock_config.hotspot.staff.password = 'supersecret'
+        mock_config.hotspot.guest.password = 'secret'
+        mock_get_config.return_value = mock_config
 
         self._db_authed_emp(staff_mac, staff_phone)
         expected = {'username': 'employee', 'password': 'supersecret'}
@@ -506,8 +512,9 @@ class TestCoreHotpsotWiFi(unittest.TestCase):
         result = get_credentials(guest_mac, guest_phone)
         self.assertDictEqual(result, expected)
 
+        mock_config.radius.enabled.__bool__.return_value = True
+        mock_get_config.return_value = mock_config
 
-        mock_radius.enabled.__bool__.return_value = True
         mock_token = 'a' * 64
         mock_generate_token.return_value = mock_token
         cache.set(f'auth:token:{staff_phone}', mock_token)

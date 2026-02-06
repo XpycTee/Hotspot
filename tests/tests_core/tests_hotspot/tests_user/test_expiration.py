@@ -1,6 +1,6 @@
 import datetime
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from sqlalchemy import select
 
@@ -25,7 +25,9 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
     @staticmethod
     def _clear_users():
         with get_session() as db_session:
-            for table in reversed(Model.metadata.sorted_tables):
+            # очищаем все таблицы
+            tables = Model.metadata.sorted_tables
+            for table in [tables[6], tables[5], tables[3], tables[2], tables[1]]:
                 db_session.execute(table.delete())
             db_session.commit()
 
@@ -59,23 +61,28 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             db_session.add(wifi_client)
             db_session.commit()
 
-    @patch('core.hotspot.user.expiration.STAFF_USER')
-    def test_get_delay_employee(self, mock_staff):
-        mock_staff.delay = datetime.timedelta(days=30)
+    @patch('core.hotspot.user.expiration.get_config')
+    def test_get_delay_employee(self, mock_get_config):
+        mock_config = MagicMock()
+        mock_config.hotspot.get_delay.return_value = datetime.timedelta(days=30)
+        mock_get_config.return_value = mock_config
         result = get_delay(is_employee=True)
         self.assertEqual(result, datetime.timedelta(days=30))
 
-    @patch('core.hotspot.user.expiration.GUEST_USER')
-    def test_get_delay_guest(self, mock_guest):
-        mock_guest.delay = datetime.timedelta(days=1)
+    @patch('core.hotspot.user.expiration.get_config')
+    def test_get_delay_guest(self, mock_get_config):
+        mock_config = MagicMock()
+        mock_config.hotspot.get_delay.return_value = datetime.timedelta(days=1)
+        mock_get_config.return_value = mock_config
         result = get_delay(is_employee=False)
         self.assertEqual(result, datetime.timedelta(days=1))
 
-    @patch('core.hotspot.user.expiration.STAFF_USER')
-    @patch('core.hotspot.user.expiration.GUEST_USER')
-    def test_new_expiration_employee_before_6am(self, mock_guest, mock_staff, *args):
-        mock_guest.delay = datetime.timedelta(hours=2)
-        mock_staff.delay = datetime.timedelta(hours=8)
+    @patch('core.hotspot.user.expiration.get_config')
+    def test_new_expiration_employee_before_6am(self, mock_get_config, *args):
+        mock_config = MagicMock()
+        mock_get_dalay = lambda ub: datetime.timedelta(hours=8) if ub else datetime.timedelta(hours=2)
+        mock_config.hotspot.get_delay = mock_get_dalay
+        mock_get_config.return_value = mock_config
 
         with patch('core.hotspot.user.expiration.datetime') as mock_datetime:
             today = datetime.date.today()
@@ -92,11 +99,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             expected = expected_start + datetime.timedelta(hours=8)
             self.assertEqual(result, expected)
 
-    @patch('core.hotspot.user.expiration.STAFF_USER')
-    @patch('core.hotspot.user.expiration.GUEST_USER')
-    def test_new_expiration_employee_after_6am(self, mock_guest, mock_staff, *args):
-        mock_guest.delay = datetime.timedelta(hours=2)
-        mock_staff.delay = datetime.timedelta(hours=8)
+    @patch('core.hotspot.user.expiration.get_config')
+    def test_new_expiration_employee_after_6am(self, mock_get_config, *args):
+        mock_config = MagicMock()
+        mock_get_dalay = lambda ub: datetime.timedelta(hours=8) if ub else datetime.timedelta(hours=2)
+        mock_config.hotspot.get_delay = mock_get_dalay
+        mock_get_config.return_value = mock_config
 
         with patch('core.hotspot.user.expiration.datetime') as mock_datetime:
             today = datetime.date.today()
@@ -113,11 +121,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             expected = expected_start + datetime.timedelta(hours=8) + datetime.timedelta(days=1)
             self.assertEqual(result, expected)
 
-    @patch('core.hotspot.user.expiration.STAFF_USER')
-    @patch('core.hotspot.user.expiration.GUEST_USER')
-    def test_new_expiration_guest(self, mock_guest, mock_staff, *args):
-        mock_guest.delay = datetime.timedelta(hours=2)
-        mock_staff.delay = datetime.timedelta(hours=8)
+    @patch('core.hotspot.user.expiration.get_config')
+    def test_new_expiration_guest(self, mock_get_config, *args):
+        mock_config = MagicMock()
+        mock_get_dalay = lambda ub: datetime.timedelta(hours=8) if ub else datetime.timedelta(hours=2)
+        mock_config.hotspot.get_delay = mock_get_dalay
+        mock_get_config.return_value = mock_config
 
         with patch('core.hotspot.user.expiration.datetime') as mock_datetime:
             today = datetime.date.today()
@@ -134,11 +143,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             expected = expected_start + datetime.timedelta(hours=2) + datetime.timedelta(days=1)
             self.assertEqual(result, expected)
 
-    @patch('core.hotspot.user.expiration.STAFF_USER')
-    @patch('core.hotspot.user.expiration.GUEST_USER')
-    def test_update_expiration_employee(self, mock_guest, mock_staff, *args):
-        mock_guest.delay = datetime.timedelta(days=1)
-        mock_staff.delay = datetime.timedelta(days=30)
+    @patch('core.hotspot.user.expiration.get_config')
+    def test_update_expiration_employee(self, mock_get_config, *args):
+        mock_config = MagicMock()
+        mock_get_dalay = lambda ub: datetime.timedelta(days=30) if ub else datetime.timedelta(days=1)
+        mock_config.hotspot.get_delay = mock_get_dalay
+        mock_get_config.return_value = mock_config
 
         mac = 'CC:CC:CC:00:00:01'
         self._create_wifi_client(mac=mac, is_employee=True)
@@ -158,11 +168,12 @@ class TestCoreHotpsotUserExpiration(unittest.TestCase):
             self.assertNotEqual(new_expiration_time, old_expiration)
             self.assertGreater(new_expiration_time, datetime.datetime.now())
 
-    @patch('core.hotspot.user.expiration.STAFF_USER')
-    @patch('core.hotspot.user.expiration.GUEST_USER')
-    def test_update_expiration_guest(self, mock_guest, mock_staff, *args):
-        mock_guest.delay = datetime.timedelta(days=1)
-        mock_staff.delay = datetime.timedelta(days=30)
+    @patch('core.hotspot.user.expiration.get_config')
+    def test_update_expiration_guest(self, mock_get_config, *args):
+        mock_config = MagicMock()
+        mock_get_dalay = lambda ub: datetime.timedelta(days=30) if ub else datetime.timedelta(days=1)
+        mock_config.hotspot.get_delay = mock_get_dalay
+        mock_get_config.return_value = mock_config
 
         mac = 'DD:DD:DD:00:00:01'
         self._create_wifi_client(mac=mac, is_employee=False)

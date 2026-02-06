@@ -58,6 +58,9 @@ class TestHotspotViews(unittest.TestCase):
         @app.context_processor
         def inject_get_translate():
             return dict(get_translate=get_translate)
+        @app.context_processor
+        def inject_get_config():
+            return dict(get_config=get_config)
         
         return app
 
@@ -179,7 +182,8 @@ class TestHotspotViews(unittest.TestCase):
     def _clear_users():
         with get_session() as db_session:
             # очищаем все таблицы
-            for table in reversed(Model.metadata.sorted_tables):
+            tables = Model.metadata.sorted_tables
+            for table in [tables[6], tables[5], tables[3], tables[2], tables[1]]:
                 db_session.execute(table.delete())
             db_session.commit()
 

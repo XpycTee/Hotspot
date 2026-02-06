@@ -18,8 +18,11 @@ from core.utils.language import get_translate
 
 
 class TestCoreAdminAuth(unittest.TestCase):
-    def tearDown(self):
+    @classmethod
+    def setUpClass(cls):
         init_config('web')
+
+    def tearDown(self):
         cache.clear()
 
     def test_handle_failed_login(self):

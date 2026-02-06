@@ -1,10 +1,15 @@
 import unittest
 from unittest.mock import patch
 
+from core.config import init_config
 from core.hotspot.sms.code import clear_code, code_sended, generate_code, get_code, increment_attempts, send_code, set_sended, verify_code
 
 
 class TestCoreHotpsotSMSCode(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        init_config('web')
+
     @patch('core.hotspot.sms.code.cache')
     def test_generate_code(self, mock_cache):
         mock_cache.set = unittest.mock.MagicMock()

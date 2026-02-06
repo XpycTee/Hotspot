@@ -22,7 +22,9 @@ class TestCoreHotpsotUserRepository(unittest.TestCase):
     @staticmethod
     def _clear_users():
         with get_session() as db_session:
-            for table in reversed(Model.metadata.sorted_tables):
+            # очищаем все таблицы
+            tables = Model.metadata.sorted_tables
+            for table in [tables[6], tables[5], tables[3], tables[2], tables[1]]:
                 db_session.execute(table.delete())
             db_session.commit()
 
