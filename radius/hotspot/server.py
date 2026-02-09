@@ -30,13 +30,10 @@ class BaseServer(server.Server):
         reply.code = PacketType.AccessAccept
         return reply
 
-    def reply_reject(self, packet, error_message: str, log_=logger.info):
+    def reply_reject(self, packet, error_message: str):
         reply = self.create_reply_packet(packet)
         reply.AddAttribute('Reply-Message', error_message)
         reply.code = PacketType.AccessReject
-
-        log_(error_message)
-
         return reply
 
     def send_reply(self, fd, pkt):
