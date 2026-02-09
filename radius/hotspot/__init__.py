@@ -46,7 +46,7 @@ class HotspotRADIUS(BaseServer):
                     if status == 'OK':
                         is_employee = client.get('is_employee')
                         reply = self.reply_accept(packet, is_employee)
-                        self.logger.info('Auth by mac')
+                        reply_message = 'Auth by mac'
                     else:
                         reply_message = f'Auth failed with status: {status}'
                         reply = self.reply_reject(packet, reply_message)
@@ -60,6 +60,7 @@ class HotspotRADIUS(BaseServer):
                 if token and packet.verify_password(token):
                     is_employee = check_employee(phone_number)
                     reply = self.reply_accept(packet, is_employee)
+                    reply_message = 'Auth by token'
                 else:
                     reply_message = 'Auth failed bad token'
                     reply = self.reply_reject(packet, reply_message)
