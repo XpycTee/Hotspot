@@ -18,7 +18,11 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
-
+    
+    - name: Cleanup old redis container
+      run: |
+        docker rm -f redis || true
+    
     - name: Start Redis
       uses: supercharge/redis-github-action@1.8.1
       with:
