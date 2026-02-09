@@ -123,11 +123,12 @@ class Configurator:
 
     def _sender(self) -> SenderConfig:
         sender: dict = self._settings.get('sender', {})
-        type = sender.get('type', self._env.str('TYPE', DEFAULT_SENDER_TYPE)).lower()
+        with self._env.prefixed('SENDER_'):
+            type = sender.get('type', self._env.str('TYPE', DEFAULT_SENDER_TYPE)).lower()
 
-        with self._env.prefixed(f'{type.upper()}_'):
-            url = sender.get('url', self._env.url('URL', None))
-            api_key = sender.get('api_key', self._env.str('APIKEY', None))
+            with self._env.prefixed(f'{type.upper()}_'):
+                url = sender.get('url', self._env.url('URL', None))
+                api_key = sender.get('api_key', self._env.str('APIKEY', None))
 
         return SenderConfig(
             type=type,
