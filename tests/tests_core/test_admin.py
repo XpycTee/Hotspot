@@ -7,9 +7,12 @@ from core.admin.auth.lockout import check_lockout, update_lockout
 
 from core.admin.auth.login import handle_failed_login, login_by_password
 from core.admin.auth.security import check_password
+from core.admin.repository import create_user, delete_user, get_user, update_user
 from core.admin.tables.blacklist import get_blacklist
 from core.admin.tables.employee import get_employees
+from core.admin.tables.settings.users import get_users
 from core.admin.tables.wifi_clients import get_wifi_clients
+from core.bootstrap.env import ADMIN_PASSWORD, ADMIN_USERNAME
 from core.config import get_config, init_config
 
 from core.redis import cache
@@ -133,4 +136,65 @@ class TestCoreAdminTables(unittest.TestCase):
     def test_get_blacklist(self):
         expected = {'blacklist': [], 'total_rows': 0}
         result = get_blacklist(1, 10)
+        self.assertEqual(result, expected)
+
+
+class TestCoreAdminUsers(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        database.create_all()
+        create_user(ADMIN_USERNAME, ADMIN_PASSWORD, 'full')
+
+    def test_get_users(self):
+        expected = {'admin': {'username': 'admin', 'group': 'full', 'access': {}}}
+        result = get_users()
+        self.assertEqual(result, expected)
+            
+    def test_get_user(self):
+        expected_ok = {
+            'status': 'OK', 
+            'user': {
+                'username': 'admin',
+                'access': {},
+            },
+        }
+        expected_notfound = {'status': 'NOT_FOUND'}
+                             
+        result = get_user('admin')
+        self.assertEqual(result, expected_ok)
+
+        result = get_user('test')
+        self.assertEqual(result, expected_notfound)
+
+    def test_create_user(self):
+        expected_ok = {'status': 'OK'}
+        expected_already = {'status': 'ALREADY'}
+
+        result = create_user('test', 'test', 'read')
+        self.assertEqual(result, expected_ok)
+
+        result = create_user('admin', 'test', 'full')
+        self.assertEqual(result, expected_already)
+
+    def test_update_user(self):
+        _ = create_user('test', 'test', 'read')
+
+        expected_ok = {'status': 'OK'}
+        expected_notfound = {'status': 'NOT_FOUND'}
+
+        result = update_user('test', 'testSECRET', 'full')
+        self.assertEqual(result, expected_ok)
+
+        result = update_user('unknown', 'testSECRET', 'full')
+        self.assertEqual(result, expected_notfound)
+
+    def test_delete_user(self):
+        expected = {
+            'status': 'OK', 
+            'user': {
+                'username': 'test',
+                'access': {},
+            },
+        }
+        result = delete_user('test')
         self.assertEqual(result, expected)
