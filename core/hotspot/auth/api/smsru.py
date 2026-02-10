@@ -97,6 +97,3 @@ class SMSRU(BaseSender):
         
         logger.error("Phone wasn't auth")
         return NOT_AUTH
-
-    def confirm_phone(self, phone: str):
-        pass

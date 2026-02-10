@@ -30,15 +30,3 @@ class AsteriskCallcheck():
         else:
             logger.info('Phone was auth successfully')
             return OK
-
-    def confirm_phone(self, phone: str):
-        phone_data = cache.get(f'callcheck:asterisk:{phone}')
-        if phone_data is None:
-            logger.error('Callcheck not found')
-            return NOT_FOUND
-        
-        check_status = phone_data.get('status')
-        if not check_status:
-            phone_data['status'] = True
-            cache.set(f'callcheck:asterisk:{phone}', phone_data, 300)
-            return OK

@@ -1,4 +1,31 @@
-from flask import Blueprint
+import hashlib
+import re
+from flask import Blueprint, Response, request
+
+from core.logging import get_logger
+from core.redis import cache
 
 
-asterisk_bp = Blueprint('asterisk', __name__)
+asterisk_bp = Blueprint('asterisk', __name__, url_prefix='/asterisk')
+
+logger = get_logger('web.webhooks.asterisk')
+
+@asterisk_bp.route('', methods=['GET'])
+def index():
+    api_key = request.args.get('api_key')
+    if not api_key:
+        return Response(text='Bad api key', status=403)
+    
+    phone = request.args.get('phone')
+
+    phone_data = cache.get(f'callcheck:asterisk:{phone}')
+    if phone_data is None:
+        logger.error('Callcheck not found')
+        return Response(text='Callcheck not found', status=404)
+    
+    check_status = phone_data.get('status')
+    if not check_status:
+        phone_data['status'] = True
+        cache.set(f'callcheck:asterisk:{phone}', phone_data, 300)
+
+    return Response(text='OK', status=200)
