@@ -34,6 +34,13 @@ class BaseSender(ABC):
         pass
 
 
+class BaseCallcheck(ABC):
+    @abstractmethod
+    def __init__(self, *args, **kwargs):
+        logger.debug((args, kwargs))
+        pass
+    
+
 class DebugSender(BaseSender):
     def __init__(self, *args, **kwargs):
         logger.debug('Debug Sender using')

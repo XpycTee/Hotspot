@@ -4,11 +4,11 @@ from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
-from core.hotspot.sms.sender import BaseSender
+from core.hotspot.auth.api import BaseSender
 from core.logging import get_logger
 
 
-logger = get_logger('core.hotspot.sms.sender.huawei')
+logger = get_logger('core.hotspot.auth.api.huawei')
 
 class HuaweiSMSSender(BaseSender):
     """
