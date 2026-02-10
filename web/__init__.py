@@ -4,6 +4,7 @@ import logging
 from core.config import get_config, init_config
 from core.logging import get_logger
 from web.pages import pages_bp
+from web.webhooks import webhooks_bp
 
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
@@ -52,6 +53,7 @@ def create_app(config_class=Config):
         app.json = CustomJSONProvider(app)
 
         app.register_blueprint(pages_bp)
+        app.register_blueprint(webhooks_bp)
 
         # Добавляем контекстный процессор
         @app.context_processor
