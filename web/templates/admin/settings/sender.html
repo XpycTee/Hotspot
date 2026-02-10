@@ -34,7 +34,8 @@
 
                 <div class="sender-panel sender-api_key" style="{{ 'display:block;' if show_api else 'display:none;' }}">
                     <label class="settings-label" for="sender_api_key">{{ get_translate('html.admin.settings.sender.api_key', session.user_lang) }}</label>
-                    <input class="input input-settings" type="text" id="sender_api_key" name="api_key" value="{{ sender.api_key if sender is defined and sender.api_key is not none else '' }}" />
+                    <input class="input input-settings" type="password" id="sender_api_key" name="api_key" value="{{ sender.api_key if sender is defined and sender.api_key is not none else '' }}" />
+                    <button type="button" id="toggle_api_key" class="btn btn-settings">👁</button>
                 </div>
             </div>
             <div class="settings-actions">
@@ -48,6 +49,13 @@
 <script>
 // use shared select-toggle logic from filters.js; react to hidden input changes to show/hide panels
 document.addEventListener('DOMContentLoaded', function () {
+    const api_key = document.getElementById('sender_api_key');
+    const toggle_api_key = document.getElementById('toggle_api_key');
+
+    toggle_api_key.addEventListener('click', () => {
+        api_key.type = api_key.type === 'password' ? 'text' : 'password';
+    });
+
     const toggle = document.getElementById('sender_type_toggle');
     const toggleInput = document.getElementById(toggle.dataset.target);
     const urlPanel = document.querySelector('.sender-url');
