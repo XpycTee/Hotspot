@@ -1,5 +1,6 @@
 from random import randint
 
+from core.config.response_code import OK
 from core.hotspot.auth.confirm import auth_confirm
 from core.logging import get_logger
 from core.redis import cache
@@ -18,6 +19,5 @@ def add_phone(user_fp, phone_number):
 def check_phone(user_fp, phone_number):
     callchecker = get_callcheck()
     response = callchecker.check_phone(phone_number)
-    if response.get('status') == "OK":
-        auth_confirm(user_fp)
-    return response
+    return response == OK
+

@@ -100,3 +100,13 @@
     padding: 8px 14px;
     margin-right: 8px;
 }
+
+.btn-link {
+    width: auto;
+    cursor: pointer;
+	margin: 0;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+}

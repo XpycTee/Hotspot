@@ -20,9 +20,10 @@ from flask import (
 from core.hotspot.auth.callcheck import add_phone, check_phone
 from core.hotspot.auth.code import send_code
 from core.hotspot.auth.confirm import check_confirm
+from core.hotspot.wifi.fingerprint import hash_fingerprint
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
-from core.hotspot.wifi.auth import authenticate_by_mac, authenticate_by_phone
+from core.hotspot.wifi.auth import authenticate_by_call, authenticate_by_mac, authenticate_by_phone
 
 from core.hotspot.wifi.auth import authenticate_by_code
 from core.hotspot.wifi.auth import get_credentials
@@ -81,7 +82,7 @@ def index():
 def test_login():
     if not current_app.debug:
         abort(404)
-    required_keys = ['link-login-only', 'link-orig', 'mac']
+    required_keys = ['link-login-only', 'link-orig', 'mac', 'hardware_fp']
     has_requirements = all(key in set(request.values.keys()) for key in required_keys)
     if not has_requirements:
         abort(400)
@@ -114,12 +115,9 @@ def login():
 
     status = response.get('status')
     if status == "OK":
-        phone = response.get('phone')
-        user_fp = response.get('user_fp')
 
-        session['phone'] = phone
-        if user_fp:
-            session['user_fp'] = user_fp
+        session['phone'] = response.get('phone')
+        session['user_fp'] = response.get('user_fp')
 
         return redirect(url_for('pages.hotspot.sendin'), 302)
     elif status == "BLOCKED":
@@ -134,7 +132,6 @@ def login():
 def preauth():
     logger.debug(f'Session data before code: {_log_masked_session()}')
 
-    method = request.form.get('method')
     phone_number = request.form.get('phone')
     phone_number = normalize_phone(phone_number)
 
@@ -142,8 +139,10 @@ def preauth():
     hardware_fp = session.get('hardware_fp')
 
     session['phone'] = phone_number
+    
 
     response = authenticate_by_phone(mac, phone_number, hardware_fp)
+    
     status = response.get('status')
     if status == "OK":
         session['user_fp'] = response.get('user_fp')
@@ -154,13 +153,16 @@ def preauth():
 
     if status == 'NOT_FOUND':
         logger.debug('User not found. Continue...')
-        if method == 'code':
-            return redirect(url_for('pages.hotspot.code_send'), 302)
-        elif method == 'callcheck':
-            return redirect(url_for('pages.hotspot.call_add'), 302)
-        else:
-            abort(400)
+        session['user_fp'] = hash_fingerprint(phone_number, hardware_fp)
 
+        response = add_phone(session['user_fp'], phone_number)
+
+        status = response.get('status')
+        if status == "OK":
+            return render_template('hotspot/callcheck.html', call_phone='TODO')
+        else:
+            return redirect(url_for('pages.hotspot.code_send'), 302)
+        
     abort(500)
 
 
@@ -242,32 +244,6 @@ def code_auth():
     abort(500)
 
 
-@hotspot_bp.route('/call/add', methods=['POST', 'GET'])
-def call_add():
-    error = session.pop('error', None)
-    logger.debug(f'Session data before code: {_log_masked_session()}')
-    phone_number = request.form.get('phone')
-
-    if not phone_number:
-        phone_number = session.get('phone')
-        logger.debug(f'User phone from session: {_mask_phone(phone_number)}')
-        if not phone_number:
-            abort(400)
-
-    user_fp = session.get('user_fp')
-
-    response = add_phone(user_fp, phone_number)
-
-    status = response.get('status')
-    if status == "OK":
-        return render_template('hotspot/callcheck.html', error=error)
-    if status == "ALREDY_SENDED":
-        error_message = response.get('error_message')
-        return render_template('hotspot/callcheck.html', error=error_message)
-    else:
-        abort(500)
-
-
 @hotspot_bp.route('/call/check', methods=['POST'])
 def call_check():
     phone_number = session.get('phone')
@@ -277,17 +253,29 @@ def call_check():
     
     user_fp = session.get('user_fp')
 
-    response = check_phone(user_fp, phone_number)
+    phone_status = check_phone(user_fp, phone_number)
+    return jsonify({'success': phone_status})
+
+
+@hotspot_bp.route('/call/auth', methods=['POST', 'GET'])
+def call_auth():
+    mac = session.get('mac')
+    phone_number = session.get('phone')
+    if not mac or not phone_number:
+        abort(400)
+
+    user_fp = session.get('user_fp')
+
+    response = authenticate_by_call(user_fp, mac, phone_number)
     status = response.get('status')
+
     if status == "OK":
-        return jsonify({'success': True}, 200)
-    if status == "NOT_AUTH":
-        return jsonify({'success': False, 'message': 'Not auth'}, 200)
-    if status == "TIMEOUT":
-        return jsonify({'success': False, 'message': 'Timeout'}, 408)
-    if status == "ERROR":
-        return jsonify({'success': False, 'error_message': 'Callcheck error'}, 500)
-    
+        return redirect(url_for('pages.hotspot.sendin'), 302)
+
+    session['error'] = response.get('error_message')
+    if status == "":
+        return redirect(url_for('pages.hotspot.preauth'), 302)
+
     abort(500)
 
 
