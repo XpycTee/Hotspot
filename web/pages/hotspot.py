@@ -239,6 +239,9 @@ def sendin():
     user_fp = session.get('user_fp')
     session.clear()
 
+    if not check_confirm(user_fp):
+        abort(401)
+
     if chap_id and chap_challenge:
         link_login_only = link_login_only.replace('https', 'http')
 
