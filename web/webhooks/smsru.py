@@ -1,5 +1,4 @@
 import hashlib
-import re
 from flask import Blueprint, Response, request
 
 from core.config import get_config
@@ -8,24 +7,21 @@ from core.redis import cache
 
 smsru_bp = Blueprint('smsru', __name__, url_prefix='/smsru')
 
-DATA_KEY_RE = re.compile(r"^data\[(\d+)]$")
-
 
 @smsru_bp.route('', methods=['POST'])
 def index():
     post = request.form
 
     indexed_data: dict[int, str] = {}
-    received_hash = post.get("hash")
+    received_hash = post.get('hash')
 
     config = get_config()
     api_key = config.sender.api_key
 
-    for key in post.keys():
-        m = DATA_KEY_RE.match(key)
-        if m:
-            index = int(m.group(1))
-            indexed_data[index] = post.get(key)
+    for key, value in post.items():
+        if key.startswith('data'):
+            index = int(key[5:-1])
+            indexed_data[index] = value
 
     if not indexed_data:
         return Response("data missing", status=400)
@@ -54,6 +50,6 @@ def index():
                 'unix_timestamp': float(lines[3]),
             }
             check_id = lines[1]
-            cache.set(f'callcheck:smsru:{check_id}', data, 120)
+            cache.set(f'callcheck:smsru:id:{check_id}', data, 120)
 
     return Response("100", status=200)

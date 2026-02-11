@@ -32,14 +32,12 @@ class SMSRU(BaseSender):
         return OK
         
     def add_phone(self, phone: str):
-        resp = self._api.callcheck_add(phone)
-        if resp.get('status') != 'OK':
+        phone_data = self._api.callcheck_add(phone)
+        if phone_data.get('status') != 'OK':
             logger.error('Error')
             return ERROR
         
-        check_id = resp.get('check_id')
-
-        cache.set(f'callcheck:smsru:id:{phone}', check_id, 600)
+        cache.set(f'callcheck:smsru:phone:{phone}', phone_data, 600)
 
         logger.info('Phone was added successfully')
         return OK
@@ -50,17 +48,21 @@ class SMSRU(BaseSender):
             401: True,
             402: TIMEOUT,
         }
-        check_id = cache.get(f'callcheck:smsru:id:{phone}')
+
+        phone_data = cache.get(f'callcheck:smsru:phone:{phone}')
+        check_id = phone_data.get('check_id')
         if check_id is None:
             logger.error('Callcheck not found')
             return NOT_FOUND
 
-        phone_data = cache.get(f'callcheck:smsru:{check_id}')
-        if phone_data is None:
+        check_data = cache.get(f'callcheck:smsru:id:{check_id}')
+        if check_data is None:
             logger.error("Phone wasn't auth")
             return NOT_AUTH
 
-        check_status = check_statuses.get(phone_data.get('check_status'))
+        check_status = check_statuses.get(
+            check_data.get('check_status')
+        )
 
         if check_status == TIMEOUT:
             logger.error('Callcheck tiomeout')
@@ -77,17 +79,20 @@ class SMSRU(BaseSender):
             401: True,
             402: TIMEOUT,
         }
-        check_id = cache.get(f'callcheck:smsru:id:{phone}')
+        phone_data = cache.get(f'callcheck:smsru:phone:{phone}')
+        check_id = phone_data.get('check_id')
         if check_id is None:
             logger.error('Callcheck not found')
             return NOT_FOUND
 
-        resp = self._api.callcheck_status(check_id)
-        if resp.get('status') != 'OK':
+        check_data = self._api.callcheck_status(check_id)
+        if check_data.get('status') != 'OK':
             logger.error('Error')
             return ERROR
         
-        check_status = check_statuses.get(int(resp.get('check_status')))
+        check_status = check_statuses.get(
+            int(check_data.get('check_status'))
+        )
         if check_status == TIMEOUT:
             logger.error('Callcheck tiomeout')
             return TIMEOUT
