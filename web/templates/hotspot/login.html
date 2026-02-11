@@ -5,20 +5,30 @@
 {% endblock %}
 
 {% block content %}
-<form class="form form-login" action="/code" method="post">
+<form class="form form-login" action="/preauth" method="post">
+    <input type="hidden" name="method" id="method" value="callcheck">
 
     <label for="phone">{{ get_translate('html.login.label_phone', session.user_lang) }}</label>
     <input class="input input-auth" type="tel" id="phone" name="phone" data-tel-input placeholder="{{ get_translate('placeholders.phone', session.user_lang) }}">
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
-    <input class="btn btn-submit" type="submit" value="{{ get_translate('buttons.send_sms', session.user_lang) }}">
+    <input class="btn btn-submit" type="submit" onclick="setMethod('callcheck')" value="{{ get_translate('buttons.callcheck', session.user_lang) }}">
+    <input class="btn" type="submit" onclick="setMethod('code')" value="{{ get_translate('buttons.send_sms', session.user_lang) }}">
 
     <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </form>
 {% endblock %}
 
 {% block footer %}
+<script>
+    function setMethod(method)
+    {
+        const method_input = document.getElementById('method');
+        method_input.value = method;
+    }
+</script>
+
 <div id="modal-overlay" class="modal-overlay"></div>
 
 <div id="privacyPolicyModal" class="modal modal-large">
