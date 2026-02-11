@@ -14,18 +14,18 @@ logger = get_logger('web.webhooks.asterisk')
 def index():
     api_key = request.args.get('api_key')
     if not api_key:
-        return Response(text='Bad api key', status=403)
+        return Response('Bad api key', status=403)
     
     phone = request.args.get('phone')
 
     phone_data = cache.get(f'callcheck:asterisk:{phone}')
     if phone_data is None:
         logger.error('Callcheck not found')
-        return Response(text='Callcheck not found', status=404)
+        return Response('Callcheck not found', status=404)
     
     check_status = phone_data.get('status')
     if not check_status:
         phone_data['status'] = True
         cache.set(f'callcheck:asterisk:{phone}', phone_data, 300)
 
-    return Response(text='OK', status=200)
+    return Response('OK', status=200)
