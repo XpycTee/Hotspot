@@ -61,8 +61,7 @@
 
     resendLink.addEventListener('click', function(event) {
         event.preventDefault(); // Prevent default link behavior
-
-        fetch('/resend', {
+        fetch(resendLink.href, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
