@@ -1,7 +1,8 @@
 import datetime
 
 from core.config import get_config
-from core.config.response_code import BLOCKED, EXPIRED, NOT_FOUND, OK
+from core.config.response_code import BLOCKED, ERROR, EXPIRED, NOT_FOUND, OK
+from core.hotspot.auth.callcheck import check_phone
 from core.hotspot.user.blacklist import check_blacklist
 from core.hotspot.user.token import generate_token
 from core.hotspot.auth.code import clear_code, increment_attempts, verify_code
@@ -104,6 +105,14 @@ def authenticate_by_code(user_fp, mac, code, phone_number):
     clear_code(user_fp)
     return {"status": "BAD_CODE", 'error_message': get_translate('errors.auth.bad_code_all')}
 
+def authenticate_by_call(user_fp, mac, phone_number):
+    if check_phone(user_fp, phone_number):
+        create_or_udpate_wifi_client(mac, phone_number)
+        logger.debug("Auth by call")
+        auth_confirm(user_fp)
+        return OK
+    else:
+        return ERROR
 
 def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
     config = get_config()
