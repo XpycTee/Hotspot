@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, render_template, request
 
+from core.config.models import SenderConfig
 from core.config.store import ConfigLoader
 from web.pages.admin.utils import login_required
 
@@ -24,8 +25,12 @@ def update():
     data: dict = request.json
 
     with ConfigLoader().update() as config:
-        config.sender.type = data.get('type')
-        config.sender.api_key = data.get('api_key', None)
-        config.sender.url = data.get('url', None)
+        new_config = SenderConfig(
+            type = data.get('type'),
+            api_key = data.get('api_key', None),
+            url = data.get('url', None),
+        )
+        config.sender = new_config
+
 
     return jsonify({'success': True})
