@@ -1,9 +1,11 @@
 import datetime
 
 from core.config import get_config
+from core.config.response_code import BLOCKED, EXPIRED, NOT_FOUND, OK
 from core.hotspot.user.blacklist import check_blacklist
 from core.hotspot.user.token import generate_token
-from core.hotspot.sms.code import clear_code, increment_attempts, verify_code
+from core.hotspot.auth.code import clear_code, increment_attempts, verify_code
+from core.hotspot.auth.confirm import auth_confirm
 from core.hotspot.user.repository import update_clients_numbers_last_seen
 from core.hotspot.user.employees import check_employee
 from core.hotspot.user.expiration import update_expiration
@@ -25,18 +27,19 @@ def authenticate_by_mac(mac, hardware_fp=None):
     if wifi_client:
         if now_time > wifi_client.get('expiration'):
             logger.info(f"{mac} is exired")
-            return {"status": "EXPIRED"}
+            return EXPIRED
 
         phone_number = wifi_client.get('phone')
         if not phone_number:
             logger.warning(f"{mac}'s phone not found")
-            return {"status": "NOT_FOUND"}
+            return NOT_FOUND
         
         if check_blacklist(phone_number):
             logger.info(f"{mac} is blocked")
-            return {"status": "BLOCKED"}
+            return BLOCKED
 
         user_fp = hash_fingerprint(phone_number, hardware_fp)
+        auth_confirm(user_fp)
         logger.info(f"{mac} authing by expiration")
         response = {
             "status": "OK", 
@@ -46,7 +49,7 @@ def authenticate_by_mac(mac, hardware_fp=None):
             "is_employee": wifi_client.get('is_employee')
         }
         return response
-    return {"status": "NOT_FOUND"}
+    return NOT_FOUND
 
 
 def authenticate_by_phone(mac, phone_number, hardware_fp):
@@ -54,7 +57,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp):
 
     if check_blacklist(phone_number):
         logger.info(f"{mac} is blocked")
-        return {"status": "BLOCKED"}
+        return BLOCKED
 
     use_fp = False
     wifi_client = find_by_mac(mac)
@@ -73,6 +76,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp):
         if user_fp:
             update_mac(wifi_client_mac, mac)
 
+        auth_confirm(user_fp)
         logger.info(f"{mac} authing by {'phone & fp' if use_fp else 'phone & mac'}")
         response = {
             "status": "OK", 
@@ -80,7 +84,7 @@ def authenticate_by_phone(mac, phone_number, hardware_fp):
             "user_fp": user_fp
         }
         return response
-    return {"status": "NOT_FOUND"}
+    return NOT_FOUND
 
 
 def authenticate_by_code(user_fp, mac, code, phone_number):
@@ -88,7 +92,8 @@ def authenticate_by_code(user_fp, mac, code, phone_number):
         create_or_udpate_wifi_client(mac, phone_number)
         clear_code(user_fp)
         logger.debug("Auth by code")
-        return {"status": "OK"}
+        auth_confirm(user_fp)
+        return OK
     elif verify is None:
         return {"status": "CODE_EXPIRED", 'error_message': get_translate('errors.auth.expired_code')}
 

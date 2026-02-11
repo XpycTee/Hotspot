@@ -16,6 +16,7 @@ class AsteriskCallcheck():
         }
         cache.set(f'callcheck:asterisk:{phone}', phone_data, 300)
         logger.info('Phone was added successfully')
+        return OK
 
     def check_phone(self, phone: str):
         phone_data = cache.get(f'callcheck:asterisk:{phone}')
