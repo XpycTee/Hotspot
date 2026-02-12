@@ -1,23 +1,44 @@
 from smsru_api import Client
 
 from core.config.response_code import ERROR, NOT_AUTH, NOT_FOUND, OK, TIMEOUT
-from core.hotspot.auth.api import BaseSender
+from core.hotspot.auth.api import BaseCallcheck, BaseSender
 from core.logging import get_logger
 from core.redis import cache
 
 
 logger = get_logger('core.hotspot.auth.api.smsru')
 
-class SMSRU(BaseSender):
+class SMSRU(BaseSender, BaseCallcheck):
     """
-    SMSRUSender class for sending SMS using the SmsRu API.
+    SMSRU provider implementation for the SmsRu API.
+
+    This class implements both:
+        • SMS sending functionality (BaseSender)
+        • Phone verification via call-check mechanism (BaseCallcheck)
+
+    Supported features:
+        1. Sending SMS messages.
+        2. Registering a phone number for call-check verification.
+        3. Checking verification status from cache.
+        4. Polling SmsRu API for real-time call-check status.
 
     Args:
-        api_key (str): The API key for accessing the SmsRu API.
+        api_key (str): API key for authenticating with the SmsRu service.
 
     Example:
-        sender = SMSRUSender('your_api_key')
-        sender.send_sms('+1234567890', 'Test message')
+        provider = SMSRU('your_api_key')
+
+        # Send SMS
+        provider.send_sms('+1234567890', 'Test message')
+
+        # Start call-check verification
+        provider.add_phone('+1234567890')
+
+        # Check verification status from cache
+        provider.check_phone('+1234567890')
+
+        # Poll SmsRu API for verification status
+        provider.check_polling('+1234567890')
     """
     def __init__(self, api_key, *args, **kwargs):
         self._api = Client(api_key)
