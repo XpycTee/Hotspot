@@ -1,5 +1,5 @@
 from core.config import get_config
-from core.hotspot.auth.api import BaseSender, DebugSender
+from core.hotspot.auth.api import BaseCallcheck, BaseSender, DebugCallcheck, DebugSender
 from core.hotspot.auth.api.asterisk import AsteriskCallcheck
 from core.hotspot.auth.api.huawei import HuaweiSMSSender
 from core.hotspot.auth.api.mikrotik import MikrotikSMSSender
@@ -19,15 +19,14 @@ def get_sender() -> BaseSender:
     Sender = senders.get(config.sender.type, DebugSender)
     return Sender(**config.sender.params)
 
-def get_callcheck() -> AsteriskCallcheck:
+def get_callcheck() -> BaseCallcheck:
     config = get_config()
 
     callers = {
         'smsru': SMSRU,
         'asterisk': AsteriskCallcheck,
-        'debug': 'DebugCaller',
+        'debug': DebugCallcheck,
     }
-    return AsteriskCallcheck()
 
-    Caller = callers.get('asterisk', 'DebugCaller')
-    return Caller(**config.caller.params)
+    Callcheck = callers.get(config.callcheck.type, DebugCallcheck)
+    return Callcheck(**config.callcheck.params)

@@ -136,11 +136,26 @@ class Configurator:
             api_key=api_key,
         )
     
+    def _callcheck(self) -> CallcheckConfig:
+        sender: dict = self._settings.get('callcheck', {})
+        with self._env.prefixed('CALLCHECK_'):
+            type = sender.get('type', self._env.str('TYPE', DEFAULT_CALLCHECK_TYPE)).lower()
+            with self._env.prefixed(f'{type.upper()}_'):
+                call_phone = sender.get('call_phone', self._env.url('CALLPHONE', None))
+                api_key = sender.get('api_key', self._env.str('APIKEY', None))
+
+        return CallcheckConfig(
+            type=type,
+            call_phone=call_phone,
+            api_key=api_key,
+        )
+    
     def create(self) -> AppConfig:
         return AppConfig(
             language=self._language(),
             hotspot=self._hotspot(),
             sender=self._sender(),
+            callcheck=self._callcheck(),
             admin=self._admin(),
             radius=self._radius(),
             version=self.version,

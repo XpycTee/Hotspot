@@ -32,7 +32,7 @@ def init_config(backend: str) -> AppConfig:
     raise ValueError(f'Unknown backend: {backend}')
 
 
-def get_config():
+def get_config() -> AppConfig:
     if _backend is None:
         raise RuntimeError('Config backend not initialized')
 

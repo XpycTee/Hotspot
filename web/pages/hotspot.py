@@ -159,7 +159,8 @@ def preauth():
 
         status = response.get('status')
         if status == "OK":
-            return render_template('hotspot/callcheck.html', call_phone='TODO')
+            call_phone = response.get('call_phone')
+            return render_template('hotspot/callcheck.html', call_phone=call_phone)
         else:
             return redirect(url_for('pages.hotspot.code_send'), 302)
         

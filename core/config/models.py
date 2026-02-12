@@ -136,6 +136,25 @@ class SenderConfig:
         return {}
 
 
+@dataclass(frozen=True)
+class CallcheckConfig:
+    """
+
+    """
+
+    type: str
+    call_phone: Optional[str] = None
+    api_key: Optional[str] = None
+
+    @property
+    def params(self):
+        if self.call_phone is not None:
+            return {'call_phone': self.call_phone}
+        if self.api_key is not None:
+            return {'api_key': self.api_key}
+        return {}
+
+
 @dataclass
 class AppConfig:
     """
@@ -151,6 +170,7 @@ class AppConfig:
     language: LanguageConfig
     hotspot: HotspotConfig
     sender: SenderConfig
+    callcheck: CallcheckConfig
     admin: AdminConfig
     radius: RadiusConfig
 
