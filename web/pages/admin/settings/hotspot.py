@@ -2,7 +2,7 @@ from dataclasses import replace
 from datetime import timedelta
 from flask import Blueprint, render_template, request
 
-from core.config.models import HotspotUserConfig
+from core.config.models.hotspot import HotspotUserConfig
 from core.config.store import ConfigLoader
 from web.pages.admin.utils import login_required
 

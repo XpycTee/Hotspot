@@ -1,6 +1,6 @@
 from dataclasses import asdict, replace
 
-from core.config.models import RemoteHost
+from core.config.models.radius import RemoteHost
 from core.config.store import ConfigLoader
 
 

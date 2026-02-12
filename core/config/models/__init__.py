@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
 from datetime import timedelta
-from enum import Enum
+from core.config.models.hotspot import HotspotConfig
+from core.config.models.radius import RadiusConfig
+from core.config.models.verificators import CallcheckConfig, SenderConfig, VerificationProvider
 from core.utils import json
 import os
-from typing import Any, Dict, FrozenSet, List, Mapping, Optional
+from typing import List
 
 
 @dataclass
@@ -46,150 +48,7 @@ class AdminConfig:
 
     max_login_attempts: int
     lockout_time: timedelta
-
-
-@dataclass(frozen=True)
-class RadiusPortsConfig:
-    """
-    RADIUS service ports configuration.
-    """
-
-    auth: int = 1812
-    acct: int = 1813
-    coa: int = 3799
-
-
-@dataclass(frozen=True)
-class RemoteHost:
-    """Remote RADIUS capable host we can talk to.
-
-    Args:
-        address (str): IP address.
-        secret (bytes): RADIUS secret. If connecting to a RadSec server, the secret should be `radsec`.
-        name (str): Short name (used for logging only).
-        authport (int): Port used for authentication packets.
-        acctport (int): Port used for accounting packets.
-        coaport (int): Port used for CoA packets.
-    """
-
-    address: str
-    secret: bytes
-    name: str
-    authport: int = 1812
-    acctport: int = 1813
-    coaport: int = 3799
-
-
-@dataclass
-class RadiusConfig:
-    """
-    RADIUS server configuration.
-    """
-
-    enabled: bool = True
-    addresses: List[str] = field(default_factory=list)
-    ports: RadiusPortsConfig = field(default_factory=RadiusPortsConfig)
-    hosts: Dict[str, RemoteHost] = field(default_factory=RemoteHost)
     
-
-@dataclass(frozen=True)
-class HotspotUserConfig:
-    """
-    Per-user hotspot configuration.
-    """
-
-    password: str
-    delay: timedelta
-
-
-@dataclass
-class HotspotConfig:
-    """
-    Hotspot runtime configuration.
-    """
-
-    online_timeout: timedelta
-    staff: HotspotUserConfig
-    guest: HotspotUserConfig
-
-    def get_delay(self, is_staff: bool) -> timedelta:
-        if is_staff:
-            return self.staff.delay
-        return self.guest.delay
-
-
-@dataclass(frozen=True)
-class SenderConfig:
-    """
-    External message sender configuration (SMS, HTTP API, etc).
-    """
-
-    type: str
-    url: Optional[str] = None
-    api_key: Optional[str] = None
-
-    @property
-    def params(self):
-        if self.url is not None:
-            return {'url': self.url}
-        if self.api_key is not None:
-            return {'api_key': self.api_key}
-        return {}
-
-
-@dataclass(frozen=True)
-class CallcheckConfig:
-    """
-
-    """
-
-    type: str
-    call_phone: Optional[str] = None
-    api_key: Optional[str] = None
-
-    @property
-    def params(self):
-        if self.call_phone is not None:
-            return {'call_phone': self.call_phone}
-        if self.api_key is not None:
-            return {'api_key': self.api_key}
-        return {}
-
-
-class VerificationMethod(str, Enum):
-    SMS_CODE = "sms_code"
-    TELEGRAM_CODE = "telegram_code"
-    VOICE_CODE = "voice_code"
-    CALL_CONFIRMATION = "call_confirmation"
-    
-    
-class RoutingStrategy(str, Enum):
-    FAILOVER = "failover"
-    PARALLEL = "parallel"
-    SINGLE = "single"
-
-
-@dataclass(frozen=True)
-class VerificationProvider:
-    id: str
-    name: str
-    supported_methods: FrozenSet[VerificationMethod]
-    config: Mapping[str, Any]
-    is_enabled: bool
-
-
-@dataclass(frozen=True)
-class RoutingPolicy:
-    method: VerificationMethod
-    strategy: RoutingStrategy
-
-
-@dataclass(frozen=True)
-class RoutingEntry:
-    method: VerificationMethod
-    provider_id: str
-    priority: int
-
 
 @dataclass
 class AppConfig:

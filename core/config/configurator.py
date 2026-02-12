@@ -1,8 +1,12 @@
 from datetime import timedelta
 from environs import Env
 
-from core.config.models import *
 from core.config.defaults import *
+
+from core.config.models import AdminConfig, AppConfig, LanguageConfig
+from core.config.models.hotspot import HotspotConfig, HotspotUserConfig
+from core.config.models.radius import RadiusConfig, RadiusPortsConfig, RemoteHost
+from core.config.models.verificators import CallcheckConfig, SenderConfig
 
 
 class Configurator:
@@ -156,6 +160,7 @@ class Configurator:
             hotspot=self._hotspot(),
             sender=self._sender(),
             callcheck=self._callcheck(),
+            verificators={},
             admin=self._admin(),
             radius=self._radius(),
             version=self.version,
