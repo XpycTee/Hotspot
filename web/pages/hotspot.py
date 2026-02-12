@@ -17,9 +17,9 @@ from flask import (
     current_app
 )
 
-from core.hotspot.auth.callcheck import add_phone, check_phone
-from core.hotspot.auth.code import send_code
-from core.hotspot.auth.confirm import check_confirm
+from core.hotspot.verification.callcheck import add_phone, check_phone
+from core.hotspot.verification.code import send_code
+from core.hotspot.verification.confirm import check_confirm
 from core.hotspot.wifi.fingerprint import hash_fingerprint
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone

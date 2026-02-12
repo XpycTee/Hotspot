@@ -2,11 +2,11 @@ import datetime
 
 from core.config import get_config
 from core.config.response_code import BLOCKED, ERROR, EXPIRED, NOT_FOUND, OK
-from core.hotspot.auth.callcheck import check_phone
+from core.hotspot.verification.callcheck import check_phone
 from core.hotspot.user.blacklist import check_blacklist
 from core.hotspot.user.token import generate_token
-from core.hotspot.auth.code import clear_code, increment_attempts, verify_code
-from core.hotspot.auth.confirm import auth_confirm
+from core.hotspot.verification.code import clear_code, increment_attempts, verify_code
+from core.hotspot.verification.confirm import auth_confirm
 from core.hotspot.user.repository import update_clients_numbers_last_seen
 from core.hotspot.user.employees import check_employee
 from core.hotspot.user.expiration import update_expiration
