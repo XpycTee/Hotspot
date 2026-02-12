@@ -52,10 +52,10 @@ def send_code(user_fp, phone_number):
         sending_code = generate_code(user_fp)
 
     sender = get_sender()
-    sms_error = sender.send_sms(phone_number, get_translate('sms_code', templates={"code": sending_code}))
+    sender_error = sender.send_code(phone_number, sending_code)
 
-    if sms_error:
-        logger.error(f"Failed to send SMS to {phone_number}")
+    if sender_error:
+        logger.error(f"Failed to send code to {phone_number}")
         return ERROR
     
     set_sended(user_fp)

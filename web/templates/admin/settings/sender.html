@@ -14,7 +14,7 @@
             {% elif sender is defined and sender.type == 'huawei' %}{% set type_state = 3 %}
             {% elif sender is defined and sender.type == 'smsru' %}{% set type_state = 4 %}{% endif %}
             {% set show_url = sender is defined and (sender.type in ['mikrotik', 'huawei']) %}
-            {% set show_api = sender is defined and sender.type == 'smsru' %}
+            {% set show_api = sender is defined and (sender.type in ['smsru']) %}
 
             <div class="settings-panel">
                 <label class="settings-label">{{ get_translate('html.admin.settings.sender.type', session.user_lang) }}</label>
@@ -25,7 +25,7 @@
                     <div class="select-option" data-value="smsru">sms.ru</div>
                     <div class="select-slider"></div>
                 </div>
-                <input type="hidden" name="type" id="sender_type_input" value="{{ sender.type if sender is defined else 'mikrotik' }}" />
+                <input type="hidden" name="type" id="sender_type_input" value="{{ sender.type if sender is defined else 'debug' }}" />
 
                 <div class="sender-panel sender-url" style="{{ 'display:block;' if show_url else 'display:none;' }}">
                     <label class="settings-label" for="sender_url">{{ get_translate('html.admin.settings.sender.url', session.user_lang) }}</label>

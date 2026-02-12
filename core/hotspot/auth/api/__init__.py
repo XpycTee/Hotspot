@@ -4,15 +4,15 @@ from core.config.response_code import NOT_AUTH, OK
 from core.logging import get_logger
 
 
-logger = get_logger('core.hotspot.sms.sender')
+logger = get_logger('core.hotspot.auth.api')
 
 class BaseSender(ABC):
     """
-    BaseSender class for sending SMS using different SMS gateways.
+    BaseSender class for sending code using different SMS gateways.
 
     Example:
         sender = BaseSender()
-        sender.send_sms('+1234567890', 'Test message')
+        sender.send_code('+1234567890', 1234)
     """
     @abstractmethod
     def __init__(self, *args, **kwargs):
@@ -22,15 +22,15 @@ class BaseSender(ABC):
         logger.debug((args, kwargs))
 
     @abstractmethod
-    def send_sms(self, recipient: str, message: str):
+    def send_code(self, recipient: str, code: str | int):
         """
-        Defines a method for sending an SMS.
+        Defines a method for sending an code.
 
         Args:
-            recipient (str): The phone number or recipient of the SMS.
-            message (str): The content of the SMS.
+            recipient (str): The phone number or recipient of the code.
+            code (str): The code to be sent.
         """
-        logger.debug(f"{recipient}: {message}")
+        logger.debug(f"{recipient}: {code}")
 
 
 class BaseCallcheck(ABC):
@@ -81,7 +81,7 @@ class DebugSender(BaseSender):
     def __init__(self, *args, **kwargs):
         logger.debug('Debug Sender using')
 
-    def send_sms(self, recipient: str, message: str):
+    def send_code(self, recipient: str, message: str):
         logger.info(f"{recipient}: {message}")
 
 

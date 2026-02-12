@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from core.hotspot.auth.api import BaseSender
 from core.logging import get_logger
+from core.utils.language import get_translate
 
 
 logger = get_logger('core.hotspot.auth.api.mikrotik')
@@ -20,7 +21,7 @@ class MikrotikSMSSender(BaseSender):
 
     Example:
         sender = MikrotikSMSSender('https://username:password@192.168.88.1/[?interface=lte1]')
-        sender.send_sms('+1234567890', 'Test message')
+        sender.send_code('+1234567890', 1234)
     """
     def __init__(self, url, *args, **kwargs):
         url_parsed = urlparse(url)
@@ -51,10 +52,10 @@ class MikrotikSMSSender(BaseSender):
         with request.urlopen(req, data=json.dumps(data).encode() if data else None) as res:
             return json.loads(res.read())
 
-    def send_sms(self, recipient, message):
+    def send_code(self, recipient, code):
         data = {
             "phone-number": recipient,
-            "message": message,
+            "message": get_translate('sms_code', templates={"code": code}),
             "port": self._interface
         }
         try:

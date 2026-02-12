@@ -6,6 +6,7 @@ from huawei_lte_api.enums.client import ResponseEnum
 
 from core.hotspot.auth.api import BaseSender
 from core.logging import get_logger
+from core.utils.language import get_translate
 
 
 logger = get_logger('core.hotspot.auth.api.huawei')
@@ -19,7 +20,7 @@ class HuaweiSMSSender(BaseSender):
 
     Example:
         sender = HuaweiSMSSender('http://username:password@192.168.8.1/')
-        sender.send_sms('+1234567890', 'Test message')
+        sender.send_code('+1234567890', 1234)
     """
     def __init__(self, url, *args, **kwargs):
         url_parsed = urlparse(url)
@@ -34,10 +35,10 @@ class HuaweiSMSSender(BaseSender):
 
         self._url = url
 
-    def send_sms(self, recipient, message):
+    def send_code(self, recipient, code):
         with Connection(self._url) as connection:
             client = Client(connection)
-
+            message = get_translate('sms_code', templates={"code": code})
             if client.sms.send_sms([recipient], message) == ResponseEnum.OK.value:
                 logger.info('SMS was send successfully')
             else:

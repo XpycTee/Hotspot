@@ -4,6 +4,7 @@ from core.config.response_code import ERROR, NOT_AUTH, NOT_FOUND, OK, TIMEOUT
 from core.hotspot.auth.api import BaseCallcheck, BaseSender
 from core.logging import get_logger
 from core.redis import cache
+from core.utils.language import get_translate
 
 
 logger = get_logger('core.hotspot.auth.api.smsru')
@@ -29,7 +30,7 @@ class SMSRU(BaseSender, BaseCallcheck):
         provider = SMSRU('your_api_key')
 
         # Send SMS
-        provider.send_sms('+1234567890', 'Test message')
+        provider.send_code('+1234567890', 1234)
 
         # Start call-check verification
         provider.add_phone('+1234567890')
@@ -43,7 +44,8 @@ class SMSRU(BaseSender, BaseCallcheck):
     def __init__(self, api_key, *args, **kwargs):
         self._api = Client(api_key)
 
-    def send_sms(self, recipient, message):
+    def send_code(self, recipient, code):
+        message = get_translate('sms_code', templates={"code": code})
         resp = self._api.send(recipient, message=message)
         if resp.get('status') != "OK":
             logger.error('Error')
