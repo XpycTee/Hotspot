@@ -1,11 +1,11 @@
 
 from core.config.response_code import NOT_AUTH, OK, TIMEOUT
-from core.hotspot.auth.api import BaseCallcheck
+from core.hotspot.verification.api import BaseCallcheck
 from core.logging import get_logger
 from core.redis import cache
 
 
-logger = get_logger('core.hotspot.auth.api.asterisk')
+logger = get_logger('core.hotspot.verification.api.asterisk')
 
 class AsteriskCallcheck(BaseCallcheck):
     """

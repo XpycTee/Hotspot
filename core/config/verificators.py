@@ -1,9 +1,9 @@
 from core.config import get_config
-from core.hotspot.auth.api import BaseCallcheck, BaseSender, DebugCallcheck, DebugSender
-from core.hotspot.auth.api.asterisk import AsteriskCallcheck
-from core.hotspot.auth.api.huawei import HuaweiSMSSender
-from core.hotspot.auth.api.mikrotik import MikrotikSMSSender
-from core.hotspot.auth.api.smsru import SMSRU
+from core.hotspot.verification.api import BaseCallcheck, BaseSender, DebugCallcheck, DebugSender
+from core.hotspot.verification.api.asterisk import AsteriskCallcheck
+from core.hotspot.verification.api.huawei import HuaweiSMSSender
+from core.hotspot.verification.api.mikrotik import MikrotikSMSSender
+from core.hotspot.verification.api.smsru import SMSRU
 
 
 def get_sender() -> BaseSender:

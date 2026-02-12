@@ -1,14 +1,10 @@
-from random import randint
-
 from core.config.response_code import OK
-from core.hotspot.auth.confirm import auth_confirm
+
 from core.logging import get_logger
-from core.redis import cache
-from core.config.authentificators import get_callcheck
-from core.utils.language import get_translate
+from core.config.verificators import get_callcheck
 
 
-logger = get_logger('core.hotspot.auth.callcheck')
+logger = get_logger('core.hotspot.verification.callcheck')
 
 
 def add_phone(user_fp, phone_number):

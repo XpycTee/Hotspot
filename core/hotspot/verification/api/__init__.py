@@ -4,11 +4,11 @@ from core.config.response_code import NOT_AUTH, OK
 from core.logging import get_logger
 
 
-logger = get_logger('core.hotspot.auth.api')
+logger = get_logger('core.hotspot.verification.api')
 
 class BaseSender(ABC):
     """
-    BaseSender class for sending code using different SMS gateways.
+    BaseSender class for sending code using different verification gateways.
 
     Example:
         sender = BaseSender()

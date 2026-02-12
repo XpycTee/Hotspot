@@ -3,11 +3,11 @@ from random import randint
 from core.config.response_code import ERROR, OK
 from core.logging import get_logger
 from core.redis import cache
-from core.config.authentificators import get_sender
+from core.config.verificators import get_sender
 from core.utils.language import get_translate
 
 
-logger = get_logger('core.hotspot.auth.code')
+logger = get_logger('core.hotspot.verification.code')
 
 def generate_code(user_fp):
     code = str(randint(0, 9999)).zfill(4)

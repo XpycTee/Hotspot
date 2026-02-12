@@ -5,12 +5,12 @@ from urllib import request
 from urllib import error
 from urllib.parse import urlparse
 
-from core.hotspot.auth.api import BaseSender
+from core.hotspot.verification.api import BaseSender
 from core.logging import get_logger
 from core.utils.language import get_translate
 
 
-logger = get_logger('core.hotspot.auth.api.mikrotik')
+logger = get_logger('core.hotspot.verification.api.mikrotik')
 
 class MikrotikSMSSender(BaseSender):
     """
