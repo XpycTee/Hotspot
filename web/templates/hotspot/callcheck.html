@@ -12,22 +12,94 @@
         {{ get_translate('html.code.validity_message', session.user_lang) }}
     </label>
 
-    <canvas id="qr"></canvas>
+    <canvas id="qrCanvas"></canvas>
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
-    <a class="mt-2 btn btn-submit btn-link" href="tel:+{{ call_phone }}">{{ get_translate('buttons.call', session.user_lang) }}</a>
+    <a class="mt-2 btn btn-submit btn-link" href="tel:{{ call_phone }}">{{ get_translate('buttons.call', session.user_lang) }}</a>
 
     <a class="text-center mt-2 link-line" href="/code/send">{{ get_translate('buttons.send_code', session.user_lang) }}</a>
 
     <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </div>
 <script>
+    function generateQR(content, text) {
+        const qrSize = 240;
+        const padding = 30;
+        const footerHeight = 50;
+        const radius = 15;
+
+        const borderColor = "#000" //"#0f172a";
+        const white = "#ffffff";
+
+        const canvas = document.getElementById("qrCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = qrSize + padding * 2;
+        canvas.height = qrSize + padding * 2 + footerHeight;
+
+        const width = canvas.width;
+        const height = canvas.height;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // ===== Внешняя карточка (цвет рамки) =====
+        ctx.beginPath();
+        ctx.roundRect(0, 0, width, height, radius);
+        ctx.fillStyle = borderColor;
+        ctx.fill();
+
+        // ===== Белая зона под QR (со скруглением только сверху) =====
+        ctx.beginPath();
+
+        const qrZoneHeight = qrSize + padding * 2;
+        const qrPadding = Math.round(padding / 2)
+
+        ctx.moveTo(qrPadding, qrPadding + radius);
+        ctx.arcTo(qrPadding, qrPadding, qrPadding + radius, qrPadding, radius);
+        ctx.lineTo(width - radius - qrPadding, qrPadding);
+        ctx.arcTo(width - qrPadding, qrPadding, width - qrPadding, qrPadding + radius, radius);
+        ctx.lineTo(width - qrPadding, qrZoneHeight - radius - qrPadding);
+        ctx.arcTo(width - qrPadding, qrZoneHeight - qrPadding, width - qrPadding - radius, qrZoneHeight - qrPadding, radius);
+        ctx.lineTo(radius + qrPadding, qrZoneHeight - qrPadding);
+        ctx.arcTo(qrPadding, qrZoneHeight - qrPadding, qrPadding, qrZoneHeight - qrPadding - radius, radius);
+
+        ctx.closePath();
+
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+
+        // ===== Генерация QR =====
+        const qrCanvas = document.createElement("canvas");
+
+        QRCode.toCanvas(qrCanvas, content, {
+            width: qrSize,
+            margin: 0,
+            errorCorrectionLevel: 'H'
+        }, function (error) {
+            if (error) console.error(error);
+
+            ctx.drawImage(qrCanvas, padding, padding);
+
+            // ===== Текст =====
+            ctx.fillStyle = white;
+            ctx.font = "bold 26px Arial";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            ctx.fillText(
+                text,
+                width / 2,
+                qrZoneHeight + footerHeight / 2
+            );
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const errorNotify = document.querySelector('.error-notify');
-        const qr_canvas = document.getElementById('qr');
         
-        QRCode.toCanvas(qr_canvas, 'tel:+{{ call_phone }}', {width: 300, height: 300});
+        // Пример
+        generateQR("tel:{{ call_phone }}", "{{ call_phone }}");
 
         let stopped = false;
 
