@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import timedelta
+from enum import Enum
 from core.utils import json
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional
 
 
 @dataclass
@@ -155,6 +156,41 @@ class CallcheckConfig:
         return {}
 
 
+class VerificationMethod(str, Enum):
+    SMS_CODE = "sms_code"
+    TELEGRAM_CODE = "telegram_code"
+    VOICE_CODE = "voice_code"
+    CALL_CONFIRMATION = "call_confirmation"
+    
+    
+class RoutingStrategy(str, Enum):
+    FAILOVER = "failover"
+    PARALLEL = "parallel"
+    SINGLE = "single"
+
+
+@dataclass(frozen=True)
+class VerificationProvider:
+    id: str
+    name: str
+    supported_methods: FrozenSet[VerificationMethod]
+    config: Mapping[str, Any]
+    is_enabled: bool
+
+
+@dataclass(frozen=True)
+class RoutingPolicy:
+    method: VerificationMethod
+    strategy: RoutingStrategy
+
+
+@dataclass(frozen=True)
+class RoutingEntry:
+    method: VerificationMethod
+    provider_id: str
+    priority: int
+
+
 @dataclass
 class AppConfig:
     """
@@ -171,6 +207,7 @@ class AppConfig:
     hotspot: HotspotConfig
     sender: SenderConfig
     callcheck: CallcheckConfig
+    verificators: List[VerificationProvider]
     admin: AdminConfig
     radius: RadiusConfig
 
