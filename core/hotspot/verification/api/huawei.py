@@ -4,6 +4,7 @@ from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
+from core.config.models.verificators import DeliveryStatus, SendCodeResult
 from core.hotspot.verification.api import BaseSender
 from core.logging import get_logger
 from core.utils.language import get_translate
@@ -41,6 +42,11 @@ class HuaweiSMSSender(BaseSender):
             message = get_translate('sms_code', templates={"code": code})
             if client.sms.send_sms([recipient], message) == ResponseEnum.OK.value:
                 logger.info('SMS was send successfully')
+                return SendCodeResult(
+                    status=DeliveryStatus.SENT,
+                )
             else:
                 logger.error('Error')
-                return 1
+                return SendCodeResult(
+                    status=DeliveryStatus.ERROR,
+                )

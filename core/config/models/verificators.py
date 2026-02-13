@@ -76,7 +76,6 @@ class DeliveryStatus(str, Enum):
 @dataclass
 class SendCodeResult:
     status: DeliveryStatus
-    provider_message_id: str | None = None
     error_message: str | None = None
 
 

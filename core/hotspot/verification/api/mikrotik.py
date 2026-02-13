@@ -5,14 +5,15 @@ from urllib import request
 from urllib import error
 from urllib.parse import urlparse
 
-from core.hotspot.verification.api import BaseSender
+from core.config.models.verificators import DeliveryStatus, SendCodeResult
+from core.hotspot.verification.api import CodeDeliveryProvider
 from core.logging import get_logger
 from core.utils.language import get_translate
 
 
 logger = get_logger('core.hotspot.verification.api.mikrotik')
 
-class MikrotikSMSSender(BaseSender):
+class MikrotikSMSSender(CodeDeliveryProvider):
     """
     A class for sending SMS using Mikrotik RouterOS API.
 
@@ -59,8 +60,15 @@ class MikrotikSMSSender(BaseSender):
             "port": self._interface
         }
         try:
-            self._request(data=data)
+            _ = self._request(data=data)
+            logger.info('SMS was send successfully')
+            return SendCodeResult(
+                status=DeliveryStatus.SENT,
+            )
         except error.HTTPError as e:
             res = json.loads(e.read())
             logger.error(res.get('detail'))
-            return 1
+            return SendCodeResult(
+                status=DeliveryStatus.ERROR,
+                error_message=res.get('detail'),
+            )

@@ -50,20 +50,18 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
         if resp.get('status') != "OK":
             if 104 <= resp.get('status_code') <= 150:
                 return SendCodeResult(
-                    DeliveryStatus.FAILED,
-                    resp,
+                    status=DeliveryStatus.FAILED,
+                    error_message=resp.get('status_text'),
                 )
             logger.error(f'Error: {resp}')
             return SendCodeResult(
-                DeliveryStatus.ERROR,
-                resp,
+                status=DeliveryStatus.ERROR,
+                error_message=resp.get('status_text'),
             )
         
         logger.info('Code was send successfully')
         return SendCodeResult(
-                DeliveryStatus.SENT,
-                resp,
-                'Code was send successfully',
+                status=DeliveryStatus.SENT,
             )
         
     def start_verification(self, phone):

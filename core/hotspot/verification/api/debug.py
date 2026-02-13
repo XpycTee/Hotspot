@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from core.config.models.verificators import VerificationMethod
+from core.config.models.verificators import DeliveryStatus, SendCodeResult, VerificationMethod
 from core.hotspot.verification.api import CallConfirmationProvider, CodeDeliveryProvider
 from core.logging import get_logger
 
@@ -14,7 +14,9 @@ class DebugCodeDelivery(CodeDeliveryProvider):
     def send_code(self, phone: str, code: str, method: VerificationMethod) -> bool:
         logger.info(f"[{self.name}] send_code called: phone={phone}, code={code}, method={method}")
         # Просто возвращаем True, как будто доставка прошла успешно
-        return True
+        return SendCodeResult(
+                status=DeliveryStatus.SENT,
+            )
     
 
 @dataclass
