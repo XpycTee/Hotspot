@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import List
 from environs import Env
 
 from core.config.defaults import *
@@ -6,7 +7,7 @@ from core.config.defaults import *
 from core.config.models import AdminConfig, AppConfig, LanguageConfig
 from core.config.models.hotspot import HotspotConfig, HotspotUserConfig
 from core.config.models.radius import RadiusConfig, RadiusPortsConfig, RemoteHost
-from core.config.models.verificators import CallcheckConfig, SenderConfig
+from core.config.models.verificators import CallcheckConfig, SenderConfig, VerificationProvider
 
 
 class Configurator:
@@ -154,13 +155,14 @@ class Configurator:
             api_key=api_key,
         )
     
+    def _verificators(self) -> List[VerificationProvider]:
+        return []
+
     def create(self) -> AppConfig:
         return AppConfig(
             language=self._language(),
             hotspot=self._hotspot(),
-            sender=self._sender(),
-            callcheck=self._callcheck(),
-            verificators={},
+            verificators=self._verificators(),
             admin=self._admin(),
             radius=self._radius(),
             version=self.version,

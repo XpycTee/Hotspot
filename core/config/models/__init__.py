@@ -5,7 +5,7 @@ from core.config.models.radius import RadiusConfig
 from core.config.models.verificators import CallcheckConfig, SenderConfig, VerificationProvider
 from core.utils import json
 import os
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -64,8 +64,8 @@ class AppConfig:
 
     language: LanguageConfig
     hotspot: HotspotConfig
-    sender: SenderConfig
-    callcheck: CallcheckConfig
+    sender: Optional[SenderConfig] # Legacy
+    callcheck: Optional[CallcheckConfig] # Legacy
     verificators: List[VerificationProvider]
     admin: AdminConfig
     radius: RadiusConfig

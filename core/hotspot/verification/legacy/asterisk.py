@@ -1,12 +1,13 @@
-from core.config.models.verificators import StartVerificationResult, VerificationAction, VerificationStatus
-from core.hotspot.verification.api import CallConfirmationProvider
+
+from core.config.response_code import NOT_AUTH, OK, TIMEOUT
+from core.hotspot.verification.api import BaseCallcheck
 from core.logging import get_logger
 from core.redis import cache
 
 
 logger = get_logger('core.hotspot.verification.api.asterisk')
 
-class AsteriskCallcheck(CallConfirmationProvider):
+class AsteriskCallcheck(BaseCallcheck):
     """
     AsteriskCallcheck implementation for phone verification using an Asterisk PBX system.
 
@@ -38,29 +39,24 @@ class AsteriskCallcheck(CallConfirmationProvider):
     def __init__(self, call_phone: str):
         self._call_phone = call_phone
 
-    def start_verification(self, phone: str):
+    def add_phone(self, phone: str):
         phone_data = {
             'status': False,
         }
         cache.set(f'callcheck:asterisk:{phone}', phone_data, 300)
         logger.info('Phone was added successfully')
-        return StartVerificationResult(
-            request_id=phone, 
-            action=VerificationAction.CALL_NUMBER,
-            call_phone=self._call_phone,
-            ttl_seconds=300,
-        )
+        return {'status': 'OK', 'call_phone': self._call_phone}
 
-    def check_verification(self, request_id: str):
-        phone_data = cache.get(f'callcheck:asterisk:{request_id}')
+    def check_phone(self, phone: str):
+        phone_data = cache.get(f'callcheck:asterisk:{phone}')
         if phone_data is None:
             logger.error('Callcheck tiomeout')
-            return VerificationStatus.TIMEOUT
+            return TIMEOUT
         
         check_status = phone_data.get('status')
         if not check_status:
             logger.error("Phone wasn't auth")
-            return VerificationStatus.PENDING
+            return NOT_AUTH
         else:
             logger.info('Phone was auth successfully')
-            return VerificationStatus.VERIFIED
+            return OK
