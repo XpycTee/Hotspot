@@ -1,6 +1,8 @@
 # Importing Blueprint for creating Flask blueprints
+import random
+import secrets
 from flask import Blueprint, jsonify
-
+import string
 
 # Importing functions for rendering templates, redirecting, generating URLs, and aborting requests
 from flask import (
@@ -89,6 +91,26 @@ def test_login():
     else:
         [session.update({k: v}) for k, v in request.values.items()]
         logger.debug(f'Session data in test: {_log_masked_session()}')
+    return login()
+
+@hotspot_bp.route('/test', methods=['GET'])
+def test():
+    if not current_app.debug:
+        abort(404)
+
+    characters = string.ascii_letters + string.digits
+    mac = "02:00:00:%02x:%02x:%02x" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+    hardware_fp = "".join(secrets.choice(characters) for i in range(8))
+
+    gen_request = {
+        'mac': mac,
+        'link-orig': 'http://test.lan:81/orig',
+        'link-login-only': 'http://test.lan:81/test',
+        'hardware_fp': hardware_fp,
+    }
+
+    [session.update({k: v}) for k, v in gen_request.items()]
+    logger.debug(f'Session data in test: {_log_masked_session()}')
     return login()
 
 
