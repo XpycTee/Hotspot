@@ -18,7 +18,7 @@
 
     <a class="mt-2 btn btn-submit btn-link" href="tel:{{ call_phone }}">{{ get_translate('buttons.call', session.user_lang) }}</a>
 
-    <a class="text-center mt-2 link-line" href="/code/send">{{ get_translate('buttons.send_code', session.user_lang) }}</a>
+    <a class="text-center mt-2 link-line" href="{{ url_for('pages.hotspot.code_send') }}">{{ get_translate('buttons.send_code', session.user_lang) }}</a>
 
     <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </div>

@@ -216,26 +216,6 @@ def code_send():
     abort(500)
 
 
-@hotspot_bp.route('/code/resend', methods=['POST'])
-def code_resend():
-    phone_number = session.get('phone')
-    logger.debug(f'Session data before code: {_log_masked_session()}')
-    if not phone_number:
-        abort(400)
-    
-    user_fp = session.get('user_fp')
-    response = send_code(user_fp, phone_number)
-    status = response.get('status')
-    if status == "OK":
-        return jsonify({'success': True})
-    if status == "ALREDY_SENDED":
-        error_message = response.get('error_message')
-        abort(400, description=error_message)
-    if status == "SENDER_ERROR":
-        return jsonify({'success': False, 'error_message': 'Sender error'})
-    abort(500)
-
-
 @hotspot_bp.route('/code/auth', methods=['POST'])
 def code_auth():
     mac = session.get('mac')
