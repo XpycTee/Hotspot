@@ -37,8 +37,6 @@ def update_radius_hosts(hosts: dict):
 
         for host, data in hosts.items():
             orig_host = cfg.pop(host, None)
-            if not orig_host:
-                return {'status': 'FAILED', 'error_message': 'Host not found'}
             
             address = data.get('address')
             new_host = address if address != host else host
@@ -52,7 +50,10 @@ def update_radius_hosts(hosts: dict):
             updates['acctport'] = data.get('acctport')
             updates['coaport'] = data.get('coaport')
 
-            cfg[new_host] = replace(orig_host, **updates)
+            if orig_host is None:
+                cfg[new_host] = RemoteHost(**updates)
+            else:
+                cfg[new_host] = replace(orig_host, **updates)
     return {'status': 'OK'}
 
 

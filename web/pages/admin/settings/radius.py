@@ -90,9 +90,13 @@ def update_host():
     update = {}
     hosts = req.get('hosts')
     for h in hosts:
-        host = h.get('id')
+        host_id = h.get('id')
         enabled = h.get('enabled')
         fields = h.get('fields')
+
+        address = fields.get('address')
+        host = address if host_id.startswith('new_') else host_id
+
         update[host] = {
             'enabled': enabled,
             'address': fields.get('address').strip(),

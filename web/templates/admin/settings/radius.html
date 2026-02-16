@@ -12,7 +12,7 @@
 
         <div class="radius-hosts-list">
             {% for host, data in hosts.items() %}
-            <div class="settings-item" data-host="{{ host }}">
+            <div class="settings-item" data-id="{{ host }}">
                 <div class="settings-item-header{{ '' if data.enabled else ' settings-item-disabled' }}">
                     <span class="settings-item-title">{{ data.name }}</span>
                     <span class="settings-item-toggle">▼</span>
@@ -68,7 +68,9 @@
                 </div>
             </div>
             {% endfor %}
+            
         </div>
+        <button id="add-host-btn" class="btn btn-add" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
         <div class="settings-actions">
             <button id="saveBtn" class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
             <span class="notify" id="status" role="status" aria-live="polite"></span>
@@ -77,12 +79,116 @@
 </div>
 
 <script>
+function attachAccordion(item) {
+    const header = item.querySelector('.settings-item-header');
+    const body = item.querySelector('.settings-item-body');
+
+    header.addEventListener('click', (e) => {
+        if (e.target.classList.contains('drag-handle')) return;
+        toggleAccordion(item);
+    });
+}
+
+function toggleAccordion(item) {
+    const body = item.querySelector('.settings-item-body');
+
+    const isOpen = body.style.height && body.style.height !== '0px';
+
+    if (isOpen) {
+        body.style.height = body.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+            body.style.height = '0px';
+        });
+    } else {
+        body.style.height = body.scrollHeight + 'px';
+
+        body.addEventListener('transitionend', function handler() {
+            body.style.height = 'auto';
+            body.removeEventListener('transitionend', handler);
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    const addBtn = document.getElementById('add-host-btn');
+    let verificatorCounter = 1000; // временный ID до сохранения
+
+    addBtn.addEventListener('click', () => {
+        const newId = 'new_' + verificatorCounter++;
+
+        const item = document.createElement('div');
+        item.className = 'settings-item';
+        item.dataset.id = newId;
+
+        item.innerHTML = `
+            <div class="settings-item-header">
+                <span class="settings-item-title">{{ get_translate('html.admin.settings.radius.add_title', session.user_lang) }}</span>
+                <span class="settings-item-toggle">▼</span>
+            </div>
+
+            <div class="settings-item-body">
+                <div class="settings-item-body-inner">
+                    <div class="settings-item-settings">
+                        <div class="field">
+                            <label class="settings-label">
+                                Enabled:
+                                <input type="checkbox" name="enabled_${newId}" checked>
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="settings-label">
+                                Name:
+                                <input class="input input-settings" type="text" name="name_${newId}" value="">
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="settings-label">
+                                Address:
+                                <input class="input input-settings" type="text" name="address_${newId}" value="">
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="settings-label">
+                                Secret:
+                                <input class="input input-settings" type="password" name="secret_${newId}" value="">
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="settings-label">
+                                Auth port:
+                                <input class="input input-settings" type="text" name="auth_${newId}" value="1812">
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="settings-label">
+                                Acct port:
+                                <input class="input input-settings" type="text" name="acct_${newId}" value="1813">
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="settings-label">
+                                CoA port:
+                                <input class="input input-settings" type="text" name="coa_${newId}" value="3799">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.querySelector('.radius-hosts-list').appendChild(item);
+
+        attachAccordion(item);
+        // сразу раскрываем
+        toggleAccordion(item);
+    });
+
+
     const list = document.querySelector('.radius-hosts-list');
     const items = document.querySelectorAll('.settings-item');
 
     items.forEach(item => {
-        const id = item.dataset.host;
+        const id = item.dataset.id;
         const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
         const header = item.querySelector('.settings-item-header');
         enabledCheckbox.addEventListener('change', function (e) {
@@ -97,9 +203,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveBtn = document.getElementById('saveBtn');
 
     saveBtn.addEventListener('click', function (e) {
+        const saveItems = document.querySelectorAll('.settings-item');
         let data = { hosts: [] };
-        items.forEach(item => {
-            const id = item.dataset.host;
+        saveItems.forEach(item => {
+            const id = item.dataset.id;
             const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
             const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
 
