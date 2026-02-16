@@ -106,7 +106,7 @@
         async function poll() {
             if (stopped) return;
             try {
-                const response = await fetch("/call/check", {
+                const response = await fetch("{{ url_for('api.call.check') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -116,7 +116,7 @@
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success) {
-                        window.location.href = '/call/auth';
+                        window.location.href = "{{ url_for('pages.hotspot.call_auth') }}";
                         return;
                     }
                 } else {

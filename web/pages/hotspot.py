@@ -267,19 +267,6 @@ def code_auth():
     abort(500)
 
 
-@hotspot_bp.route('/call/check', methods=['POST'])
-def call_check():
-    phone_number = session.get('phone')
-    logger.debug(f'Session data before code: {_log_masked_session()}')
-    if not phone_number:
-        abort(400)
-    
-    user_fp = session.get('user_fp')
-
-    phone_status = check_phone(user_fp, phone_number)
-    return jsonify({'success': phone_status})
-
-
 @hotspot_bp.route('/call/auth', methods=['POST', 'GET'])
 def call_auth():
     mac = session.get('mac')
