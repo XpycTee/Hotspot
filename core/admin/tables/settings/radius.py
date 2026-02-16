@@ -9,7 +9,8 @@ def get_radius_hosts():
     hosts = {}
     for host, data in config.radius.hosts.items():
         return_data = asdict(data)
-        del return_data['secret']
+        secret = return_data['secret'].decode()
+        return_data['secret'] = secret
         hosts[host] = return_data
     return hosts
 

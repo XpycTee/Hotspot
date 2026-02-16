@@ -59,3 +59,69 @@
 .sender-panel {
     margin-top: 20px;
 }
+
+.settings-item {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.settings-item-disabled {
+    color: #999;
+}
+
+.settings-item-header {
+    padding: 12px;
+    background: #f5f5f5;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-item-title {
+    font-weight: 600;
+}
+
+.settings-item-body {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.25s ease;
+    background: #fff;
+}
+
+.settings-item-body-inner {
+    padding: 15px;
+}
+
+.settings-item.active .settings-item-body {
+    max-height: 300px; /* достаточно большое значение */
+    padding: 15px;
+}
+
+.settings-item-toggle {
+    transition: transform 0.2s ease;
+}
+
+.settings-item.active .settings-item-toggle {
+    transform: rotate(180deg);
+}
+
+.drag-handle {
+    cursor: grab;
+    margin-right: 10px;
+    user-select: none;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.settings-item.dragging {
+    opacity: 0.5;
+}
+
+.settings-item {
+    transition: transform 0.15s ease;
+}

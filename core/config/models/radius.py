@@ -24,14 +24,16 @@ class RemoteHost:
         authport (int): Port used for authentication packets.
         acctport (int): Port used for accounting packets.
         coaport (int): Port used for CoA packets.
+        enabled (bool): Status enabling of host.
     """
-
+    
     address: str
     secret: bytes
     name: str
     authport: int = 1812
     acctport: int = 1813
     coaport: int = 3799
+    enabled: bool = True
 
 
 @dataclass

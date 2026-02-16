@@ -7,16 +7,16 @@
 
         <div class="verificators-list">
             {% for v in verificators %}
-            <div class="verificator-item" data-id="{{ v.id }}">
-                <div class="verificator-header{{ '' if v.enabled else ' verificator-disabled' }}">
+            <div class="settings-item" data-id="{{ v.id }}">
+                <div class="settings-item-header{{ '' if v.enabled else ' settings-item-disabled' }}">
                     <span class="drag-handle" draggable="true">☰</span>
-                    <span class="verificator-title">{{ v.name }}</span>
-                    <span class="verificator-toggle">▼</span>
+                    <span class="settings-item-title">{{ v.name }}</span>
+                    <span class="settings-item-toggle">▼</span>
                 </div>
                 
-                <div class="verificator-body">
-                    <div class="verificator-body-inner">
-                        <div class="verificator-settings">
+                <div class="settings-item-body">
+                    <div class="settings-item-body-inner">
+                        <div class="settings-item-settings">
                             <div class="field">
                                 <label class="settings-label">
                                     Enabled:
@@ -44,96 +44,27 @@
     </section>
 </div>
 
-<style>
-.verificator-item {
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    overflow: hidden;
-}
-
-.verificator-disabled {
-    color: #999;
-}
-
-.verificator-header {
-    padding: 12px;
-    background: #f5f5f5;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.verificator-title {
-    font-weight: 600;
-}
-
-.verificator-body {
-    height: 0;
-    overflow: hidden;
-    transition: height 0.25s ease;
-    background: #fff;
-}
-
-.verificator-body-inner {
-    padding: 15px;
-}
-
-.verificator-item.active .verificator-body {
-    max-height: 300px; /* достаточно большое значение */
-    padding: 15px;
-}
-
-.verificator-toggle {
-    transition: transform 0.2s ease;
-}
-
-.verificator-item.active .verificator-toggle {
-    transform: rotate(180deg);
-}
-
-.drag-handle {
-    cursor: grab;
-    margin-right: 10px;
-    user-select: none;
-}
-
-.drag-handle:active {
-    cursor: grabbing;
-}
-
-.verificator-item.dragging {
-    opacity: 0.5;
-}
-
-.verificator-item {
-    transition: transform 0.15s ease;
-}
-
-</style>
-
 
 <script>
 function getOrder() {
-    const ids = [...document.querySelectorAll('.verificator-item')]
+    const ids = [...document.querySelectorAll('.settings-item')]
         .map(el => el.dataset.id);
     return ids;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     const list = document.querySelector('.verificators-list');
-    const items = document.querySelectorAll('.verificator-item');
+    const items = document.querySelectorAll('.settings-item');
 
     items.forEach(item => {
         const id = item.dataset.id;
         const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-        const header = item.querySelector('.verificator-header');
+        const header = item.querySelector('.settings-item-header');
         enabledCheckbox.addEventListener('change', function (e) {
             if (enabledCheckbox.checked) {
-                header.classList.remove('verificator-disabled');
+                header.classList.remove('settings-item-disabled');
             } else {
-                header.classList.add('verificator-disabled');
+                header.classList.add('settings-item-disabled');
             }
         });
     });
@@ -174,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     showStatus(getTranslate('html.admin.settings.failed'), false);
                 }
             })
-            .catch(error => console.error('Error:', error));;
+            .catch(error => console.error('Error:', error));
     });
     
     // Перетаскивания очереди
@@ -183,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
     list.addEventListener('dragstart', function (e) {
         if (!e.target.classList.contains('drag-handle')) return;
 
-        draggedItem = e.target.closest('.verificator-item');
+        draggedItem = e.target.closest('.settings-item');
         draggedItem.classList.add('dragging');
 
         e.dataTransfer.effectAllowed = 'move';
@@ -211,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function getDragAfterElement(container, y) {
-        const elements = [...container.querySelectorAll('.verificator-item:not(.dragging)')];
+        const elements = [...container.querySelectorAll('.settings-item:not(.dragging)')];
 
         return elements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
@@ -227,8 +158,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Сворачивание разворачивание
     items.forEach(item => {
-        const header = item.querySelector('.verificator-header');
-        const body = item.querySelector('.verificator-body');
+        const header = item.querySelector('.settings-item-header');
+        const body = item.querySelector('.settings-item-body');
 
         header.addEventListener('click', () => {
             const isOpen = body.style.height && body.style.height !== '0px';
