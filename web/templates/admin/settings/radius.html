@@ -29,6 +29,18 @@
                             </div>
                             <div class="field">
                                 <label class="settings-label">
+                                    Name:
+                                    <input class="input input-settings" type="text" name="name_{{ host }}" value="{{ data.name }}">
+                                </label>
+                            </div>
+                            <div class="field">
+                                <label class="settings-label">
+                                    Address:
+                                    <input class="input input-settings" type="text" name="address_{{ host }}" value="{{ data.address }}">
+                                </label>
+                            </div>
+                            <div class="field">
+                                <label class="settings-label">
                                     Secret:
                                     <input class="input input-settings" type="password" name="secret_{{ host }}" value="{{ data.secret }}">
                                 </label>
@@ -70,8 +82,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const items = document.querySelectorAll('.settings-item');
 
     items.forEach(item => {
-        const host = item.dataset.host;
-        const enabledCheckbox = item.querySelector('input[name="enabled_' + host + '"]');
+        const id = item.dataset.host;
+        const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
         const header = item.querySelector('.settings-item-header');
         enabledCheckbox.addEventListener('change', function (e) {
             if (enabledCheckbox.checked) {
@@ -87,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     saveBtn.addEventListener('click', function (e) {
         let data = { hosts: [] };
         items.forEach(item => {
-            const id = item.dataset.id;
+            const id = item.dataset.host;
             const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
             const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
 
@@ -97,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     fields[input.name.replace(`_${id}`, '')] = input.value;
                 });
 
-            data.verificators.push({
+            data.hosts.push({
                 id: id,
                 enabled: enabled,
                 fields: fields
@@ -106,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         console.log(data);
 
-        /*fetch('/admin/settings/radius/update', {
+        fetch('/admin/settings/radius/update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -118,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     showStatus(getTranslate('html.admin.settings.failed'), false);
                 }
             })
-            .catch(error => console.error('Error:', error));*/
+            .catch(error => console.error('Error:', error));
     });
     
     // Сворачивание разворачивание

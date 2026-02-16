@@ -31,14 +31,39 @@ def add_radius_host(address: str, secret: bytes, name: str,
     return {'status': 'OK'}
 
 
-def update_radius_host(host: str, 
+def update_radius_hosts(hosts: dict):
+    with ConfigLoader().update() as config:
+        cfg = config.radius.hosts
+
+        for host, data in hosts.items():
+            orig_host = cfg.pop(host, None)
+            if not orig_host:
+                return {'status': 'FAILED', 'error_message': 'Host not found'}
+            
+            address = data.get('address')
+            new_host = address if address != host else host
+
+            updates = {}
+            updates['address'] = address
+            updates['enabled'] = data.get('enabled')
+            updates['secret'] = data.get('secret')
+            updates['name'] = data.get('name')
+            updates['authport'] = data.get('authport')
+            updates['acctport'] = data.get('acctport')
+            updates['coaport'] = data.get('coaport')
+
+            cfg[new_host] = replace(orig_host, **updates)
+    return {'status': 'OK'}
+
+
+def update_radius_host(host: str, enabled: bool,
         address: str, secret: bytes, name: str,
         authport: int, acctport: int, coaport: int):
 
     with ConfigLoader().update() as config:
-        hosts = config.radius.hosts
+        cfg = config.radius.hosts
 
-        orig_host = hosts.pop(host, None)
+        orig_host = cfg.pop(host, None)
         if not orig_host:
             return {'status': 'FAILED', 'error_message': 'Host not found'}
         
@@ -47,6 +72,8 @@ def update_radius_host(host: str,
         updates = {}
         if address:
             updates['address'] = address
+        if isinstance(enabled, bool):
+            updates['enabled'] = enabled
         if secret:
             updates['secret'] = secret
         if name:
@@ -58,7 +85,7 @@ def update_radius_host(host: str,
         if coaport:
             updates['coaport'] = coaport
 
-        hosts[new_host] = replace(orig_host, **updates)
+        cfg[new_host] = replace(orig_host, **updates)
     
     return {'status': 'OK'}
 
