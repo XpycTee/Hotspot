@@ -1,3 +1,9 @@
+.notify {
+    font-size: 14px;
+    margin: 5px;
+    text-align: center;
+}
+
 .error-notify {
     color: #ff0000;
     font-size: 14px;

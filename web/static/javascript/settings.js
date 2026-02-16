@@ -291,16 +291,20 @@ function deleteUserRow(button) {
     .catch(error => console.error('Error:', error));
 }
 
-const statusEl = document.getElementById('status');
-
 let hideTimer = null;
 
-if (statusEl) {
-    statusEl.style.transition = 'opacity 0.6s ease';
-    statusEl.style.opacity = '0';
-}
+document.addEventListener('DOMContentLoaded', function () {
+    const statusEl = document.getElementById('status');
+    
+    if (statusEl) {
+        statusEl.style.transition = 'opacity 0.6s ease';
+        statusEl.style.opacity = '0';
+    }
+});
 
 function showStatus(msg, ok) {
+    const statusEl = document.getElementById('status');
+    
     if (!statusEl) return;
 
     if (hideTimer) {

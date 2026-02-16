@@ -1,5 +1,3 @@
-import hashlib
-import re
 from flask import Blueprint, Response, request
 
 from core.logging import get_logger
