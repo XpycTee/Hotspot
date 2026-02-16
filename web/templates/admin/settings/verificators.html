@@ -4,10 +4,6 @@
 <div id="verificators" class="content-tab">
     <section class="settings-panel">
         <h2>{{ get_translate('html.admin.settings.verificators.title', session.user_lang) }}</h2>
-        <div class="verificators-actions">
-            <span class="notify" id="status" role="status" aria-live="polite"></span>
-            <button id="saveBtn" class="btn btn-settings btn-save" type="button">Save</button>
-        </div>
 
         <div class="verificators-list">
             {% for v in verificators %}
@@ -41,17 +37,14 @@
             </div>
             {% endfor %}
         </div>
-        
+        <div class="settings-actions">
+            <button id="saveBtn" class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
+            <span class="notify" id="status" role="status" aria-live="polite"></span>
+        </div>
     </section>
 </div>
 
 <style>
-.verificators-actions {
-    margin-bottom: 15px;
-    display: flex;
-    justify-content: flex-end;
-}
-
 .verificator-item {
     border: 1px solid #ddd;
     border-radius: 6px;
