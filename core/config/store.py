@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from dataclasses import asdict
 import threading
 from core.bootstrap.env import REDIS_URL
 from core.config.configurator import Configurator
@@ -22,8 +23,13 @@ class ConfigLoader:
     @contextmanager
     def update(self):
         config = self.load()
+
+        pre_up = asdict(config)
         yield config
-        self.save(config)
+        post_up = asdict(config)
+
+        if pre_up != post_up:
+            self.save(config)
 
     def load(self):
         config = self._r.get('app:config')
