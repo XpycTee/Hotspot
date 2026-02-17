@@ -63,29 +63,47 @@
                                     <input class="input input-settings" type="text" name="coa_{{ host }}" value="{{ data.coaport }}">
                                 </label>
                             </div>
+                            <div class="settings-actions">
+                                <button class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
+                                <button class="btn btn-settings btn-delete" type="button">{{ get_translate('buttons.delete', session.user_lang) }}</button>
+                                <span class="notify" role="status" aria-live="polite"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
             {% endfor %}
-            
         </div>
-        <button id="add-host-btn" class="btn btn-wide btn-add" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
         <div class="settings-actions">
-            <button id="saveBtn" class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
-            <span class="notify" id="status" role="status" aria-live="polite"></span>
+            <button id="add-host-btn" class="btn btn-wide btn-add" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
         </div>
     </section>
 </div>
 
 <script>
-function attachAccordion(item) {
+function attachItemHandlers(item) {
+    const id = item.dataset.id;
     const header = item.querySelector('.settings-item-header');
     const body = item.querySelector('.settings-item-body');
+    const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
 
-    header.addEventListener('click', (e) => {
-        if (e.target.classList.contains('drag-handle')) return;
+    const deleteBtn = item.querySelector('.btn-delete');
+    const saveBtn = item.querySelector('.btn-save');
+
+    header.addEventListener('click', () => {
         toggleAccordion(item);
+    });
+
+    saveBtn.addEventListener('click', () => {
+        updateHosts([item]);
+    });
+
+    deleteBtn.addEventListener('click', () => {
+        deleteHost(item);
+    });
+
+    enabledCheckbox.addEventListener('change', () => {
+        toggleEnabled(item);
     });
 }
 
@@ -109,7 +127,88 @@ function toggleAccordion(item) {
     }
 }
 
+function updateHosts(items) {
+    let data = { hosts: [] };
+
+    items.forEach(item => {
+        const id = item.dataset.id;
+        const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
+        const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
+
+        const fields = {};
+        item.querySelectorAll('.input')
+            .forEach(input => {
+                fields[input.name.replace(`_${id}`, '')] = input.value;
+            });
+
+        data.hosts.push({
+            id: id,
+            enabled: enabled,
+            fields: fields
+        });
+    });
+
+    fetch("{{ url_for('pages.admin.settings.radius.update') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                location.reload();
+            } else {
+                alert(getTranslate('html.admin.settings.failed'));
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function deleteHost(item) {
+    const id = item.dataset.id;
+    if (id.startsWith('new_')) {
+        item.remove();
+        return;
+    }
+    
+    const fields = {};
+    item.querySelectorAll('.input')
+        .forEach(input => {
+            fields[input.name.replace(`_${id}`, '')] = input.value;
+        });
+
+    if (!confirm(getTranslate('confirms.delete', { name: fields.name }))) return;
+
+    let data = { id: item.dataset.id };
+
+    fetch("{{ url_for('pages.admin.settings.radius.delete') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                item.remove()
+            } else {
+                showStatus(getTranslate('html.admin.settings.failed'), false);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function toggleEnabled(item) {
+    const header = item.querySelector('.settings-item-header');
+    const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
+
+    if (enabledCheckbox.checked) {
+        header.classList.remove('settings-item-disabled');
+    } else {
+        header.classList.add('settings-item-disabled');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    const list = document.querySelector('.radius-hosts-list');
+    const items = document.querySelectorAll('.settings-item');
     const addBtn = document.getElementById('add-host-btn');
     let verificatorCounter = 1000; // временный ID до сохранения
 
@@ -171,6 +270,11 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <input class="input input-settings" type="text" name="coa_${newId}" value="3799">
                             </label>
                         </div>
+                        <div class="settings-actions">
+                            <button class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
+                            <button class="btn btn-settings btn-delete" type="button">{{ get_translate('buttons.delete', session.user_lang) }}</button>
+                            <span class="notify" role="status" aria-live="polite"></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -178,92 +282,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.querySelector('.radius-hosts-list').appendChild(item);
 
-        attachAccordion(item);
+        attachItemHandlers(item);
         // сразу раскрываем
         toggleAccordion(item);
     });
-
-
-    const list = document.querySelector('.radius-hosts-list');
-    const items = document.querySelectorAll('.settings-item');
-
-    items.forEach(item => {
-        const id = item.dataset.id;
-        const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-        const header = item.querySelector('.settings-item-header');
-        enabledCheckbox.addEventListener('change', function (e) {
-            if (enabledCheckbox.checked) {
-                header.classList.remove('settings-item-disabled');
-            } else {
-                header.classList.add('settings-item-disabled');
-            }
-        });
-    });
     
-    const saveBtn = document.getElementById('saveBtn');
-
-    saveBtn.addEventListener('click', function (e) {
-        const saveItems = document.querySelectorAll('.settings-item');
-        let data = { hosts: [] };
-        saveItems.forEach(item => {
-            const id = item.dataset.id;
-            const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-            const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
-
-            const fields = {};
-            item.querySelectorAll('.input')
-                .forEach(input => {
-                    fields[input.name.replace(`_${id}`, '')] = input.value;
-                });
-
-            data.hosts.push({
-                id: id,
-                enabled: enabled,
-                fields: fields
-            });
-        });
-
-        console.log(data);
-
-        fetch('/admin/settings/radius/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        }).then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    showStatus(getTranslate('html.admin.settings.saved'), true);
-                } else {
-                    showStatus(getTranslate('html.admin.settings.failed'), false);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    });
-    
-    // Сворачивание разворачивание
     items.forEach(item => {
-        const header = item.querySelector('.settings-item-header');
-        const body = item.querySelector('.settings-item-body');
-
-        header.addEventListener('click', () => {
-            const isOpen = body.style.height && body.style.height !== '0px';
-
-            if (isOpen) {
-                // Закрытие
-                body.style.height = body.scrollHeight + 'px';
-                requestAnimationFrame(() => {
-                    body.style.height = '0px';
-                });
-            } else {
-                // Открытие
-                body.style.height = body.scrollHeight + 'px';
-
-                body.addEventListener('transitionend', function handler() {
-                    body.style.height = 'auto';
-                    body.removeEventListener('transitionend', handler);
-                });
-            }
-        });
+        attachItemHandlers(item);
     });
 });
 </script>

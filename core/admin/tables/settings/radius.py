@@ -15,12 +15,16 @@ def get_radius_hosts():
     return hosts
 
 
-def add_radius_host(address: str, secret: bytes, name: str,
-        authport: int, acctport: int, coaport: int):
+def add_radius_host(
+        address: str, enabled: bool, 
+        secret: bytes, name: str,
+        authport: int, acctport: int, coaport: int
+    ):
 
     with ConfigLoader().update() as config:
         config.radius.hosts[address] = RemoteHost(
             address=address,
+            enabled=enabled,
             secret=secret,
             name=name,
             authport=authport,
@@ -31,35 +35,11 @@ def add_radius_host(address: str, secret: bytes, name: str,
     return {'status': 'OK'}
 
 
-def update_radius_hosts(hosts: dict):
-    with ConfigLoader().update() as config:
-        cfg = config.radius.hosts
-
-        for host, data in hosts.items():
-            orig_host = cfg.pop(host, None)
-            
-            address = data.get('address')
-            new_host = address if address != host else host
-
-            updates = {}
-            updates['address'] = address
-            updates['enabled'] = data.get('enabled')
-            updates['secret'] = data.get('secret')
-            updates['name'] = data.get('name')
-            updates['authport'] = data.get('authport')
-            updates['acctport'] = data.get('acctport')
-            updates['coaport'] = data.get('coaport')
-
-            if orig_host is None:
-                cfg[new_host] = RemoteHost(**updates)
-            else:
-                cfg[new_host] = replace(orig_host, **updates)
-    return {'status': 'OK'}
-
-
-def update_radius_host(host: str, enabled: bool,
+def update_radius_host(
+        host: str, enabled: bool,
         address: str, secret: bytes, name: str,
-        authport: int, acctport: int, coaport: int):
+        authport: int, acctport: int, coaport: int
+    ):
 
     with ConfigLoader().update() as config:
         cfg = config.radius.hosts
