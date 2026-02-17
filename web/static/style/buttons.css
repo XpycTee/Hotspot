@@ -1,5 +1,4 @@
 .btn {
-    width: 100%;
     background-color: #4CAF50;
     color: white;
     padding: 10px 20px;
@@ -70,12 +69,28 @@
     margin-bottom: 20px;
 }
 
+.btn-save {
+   background-color: #4CAF50; /* Зеленый цвет для кнопки сохранеия */
+}
+
+.btn-save:hover {
+   background-color: #45a049; /* Зеленый цвет для кнопки сохранеия */
+}
+
 .btn-delete {
     background-color: #f44336; /* Красный цвет для кнопки удаления */
 }
 
 .btn-delete:hover {
     background-color: #e53935; /* Более тёмный красный при наведении */
+}
+
+.btn-cancel {
+    background-color: crimson;
+}
+
+.btn-cancel:hover {
+    background-color: rgb(176, 16, 48);
 }
 
 .btn-edit {
@@ -88,6 +103,14 @@
 
 .btn-add-phone {
     margin-top: 12px;
+}
+
+.btn-modal-close {
+    background-color: crimson;
+}
+
+.btn-modal-close:hover {
+    background-color: rgb(176, 16, 48);
 }
 
 .btn-controls {

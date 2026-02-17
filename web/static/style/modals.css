@@ -76,14 +76,6 @@
     padding-top: 10px; /* Добавьте отступ, если необходимо */
 }
 
-.btn-modal-close {
-    background-color: crimson;
-}
-
-.btn-modal-close:hover {
-    background-color: rgb(176, 16, 48);
-}
-
 /* Добавляем класс active для отображения модальных окон */
 .modal.active, .modal-overlay.active {
     display: flex;
