@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 from dataclasses import fields, is_dataclass
 from datetime import datetime, date, timedelta
+from enum import Enum
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -39,6 +40,9 @@ def _default(obj: Any):
             'format': 'seconds',
             'value': obj.total_seconds(),
         }
+
+    if isinstance(obj, Enum):
+        return obj.value
 
     raise TypeError(f'Type is not JSON serializable: {type(obj)!r}')
 
@@ -97,4 +101,6 @@ def dataclass_to_dict(obj):
             value = getattr(obj, f.name)
             result[f.name] = dataclass_to_dict(value)
         return result
+    elif isinstance(obj, Enum):
+        return obj.value
     return obj
