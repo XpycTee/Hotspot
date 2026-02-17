@@ -39,7 +39,6 @@ def update():
     if not req:
         abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
-    update = {}
     hosts = req.get('hosts')
     for h in hosts:
         host_id = h.get('id').strip()
