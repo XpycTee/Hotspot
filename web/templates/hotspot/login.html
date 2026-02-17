@@ -11,7 +11,7 @@
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
-    <input class="btn btn-submit" type="submit" value="{{ get_translate('buttons.auth', session.user_lang) }}">
+    <input class="btn btn-wide btn-submit" type="submit" value="{{ get_translate('buttons.auth', session.user_lang) }}">
 
     <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </form>

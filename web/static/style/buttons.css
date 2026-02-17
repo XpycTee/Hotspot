@@ -15,6 +15,10 @@
     background-color: #45a049;
 }
 
+.btn-wide {
+    width: 100%;
+}
+
 .btn-exit {
     position: absolute;
     top: 10px;
