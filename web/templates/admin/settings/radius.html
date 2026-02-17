@@ -68,9 +68,9 @@
                 </div>
             </div>
             {% endfor %}
-        </div>
-        <div class="settings-actions">
-            <button id="add-host-btn" class="btn btn-wide btn-add" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
+            <div class="settings-actions">
+                <button id="add-host-btn" class="btn btn-wide btn-add" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
+            </div>
         </div>
     </section>
 </div>
@@ -100,26 +100,6 @@ function attachItemHandlers(item) {
     enabledCheckbox.addEventListener('change', () => {
         toggleEnabled(item);
     });
-}
-
-function toggleAccordion(item) {
-    const body = item.querySelector('.settings-item-body');
-
-    const isOpen = body.style.height && body.style.height !== '0px';
-
-    if (isOpen) {
-        body.style.height = body.scrollHeight + 'px';
-        requestAnimationFrame(() => {
-            body.style.height = '0px';
-        });
-    } else {
-        body.style.height = body.scrollHeight + 'px';
-
-        body.addEventListener('transitionend', function handler() {
-            body.style.height = 'auto';
-            body.removeEventListener('transitionend', handler);
-        });
-    }
 }
 
 function updateHosts(items) {
@@ -190,24 +170,13 @@ function deleteHost(item) {
         .catch(error => console.error('Error:', error));
 }
 
-function toggleEnabled(item) {
-    const header = item.querySelector('.settings-item-header');
-    const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-
-    if (enabledCheckbox.checked) {
-        header.classList.remove('settings-item-disabled');
-    } else {
-        header.classList.add('settings-item-disabled');
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function () {
     const list = document.querySelector('.radius-hosts-list');
-    const items = document.querySelectorAll('.settings-item');
-    const addBtn = document.getElementById('add-host-btn');
+    const items = list.querySelectorAll('.settings-item');
+    const addItemBtn = list.getElementById('add-host-btn');
     let verificatorCounter = 1000; // временный ID до сохранения
 
-    addBtn.addEventListener('click', () => {
+    addItemBtn.addEventListener('click', () => {
         const newId = 'new_' + verificatorCounter++;
 
         const item = document.createElement('div');
@@ -275,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         `;
 
-        document.querySelector('.radius-hosts-list').appendChild(item);
+        list.appendChild(item);
 
         attachItemHandlers(item);
         // сразу раскрываем
