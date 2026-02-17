@@ -320,3 +320,35 @@ function showStatus(msg, ok) {
         statusEl.style.opacity = '0';
     }, 5000); // 5 seconds
 }
+
+function toggleEnabled(item) {
+    const id = item.dataset.id;
+    const header = item.querySelector('.settings-item-header');
+    const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
+
+    if (enabledCheckbox.checked) {
+        header.classList.remove('settings-item-disabled');
+    } else {
+        header.classList.add('settings-item-disabled');
+    }
+}
+
+function toggleAccordion(item) {
+    const body = item.querySelector('.settings-item-body');
+
+    const isOpen = body.style.height && body.style.height !== '0px';
+
+    if (isOpen) {
+        body.style.height = body.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+            body.style.height = '0px';
+        });
+    } else {
+        body.style.height = body.scrollHeight + 'px';
+
+        body.addEventListener('transitionend', function handler() {
+            body.style.height = 'auto';
+            body.removeEventListener('transitionend', handler);
+        });
+    }
+}

@@ -7,7 +7,7 @@ from core.config.defaults import *
 from core.config.models import AdminConfig, AppConfig, LanguageConfig
 from core.config.models.hotspot import HotspotConfig, HotspotUserConfig
 from core.config.models.radius import RadiusConfig, RadiusPortsConfig, RemoteHost
-from core.config.models.verificators import CallcheckConfig, SenderConfig, VerificationProvider
+from core.config.models.verificators import CallcheckConfig, SenderConfig, VProviderField, VProvidersList, VerificationMethod, VerificationProvider, VProviderType
 
 
 class Configurator:
@@ -156,7 +156,95 @@ class Configurator:
         )
     
     def _verificators(self) -> List[VerificationProvider]:
-        return []
+        cfg: dict = self._settings.get('verificators', {})
+        items = cfg.get('items', [])
+        verificators = []
+        
+        for v in items:
+            fields = v.get('fields')
+            methods = v.get('supported_methods')
+            p = VerificationProvider(
+                type=v.get('type'),
+                name=v.get('name'),
+                enabled=v.get('enabled'),
+                fields=[VProviderField(**f) for f in fields],
+                supported_methods=[VerificationMethod(m) for m in methods]
+            )
+            verificators.append(p)
+
+        if len(verificators) == 0:
+            order = [
+                VProviderType.SMSRU,
+                VProviderType.ASTERISK,
+                VProviderType.MIKROTIK,
+                VProviderType.HUAWEI,
+            ]
+            verificators = [
+                VerificationProvider(
+                    type=VProviderType.SMSRU,
+                    name='sms.ru',
+                    enabled=False,
+                    fields=[
+                        VProviderField(),
+                    ],
+                    supported_methods=[
+                        VerificationMethod.CALL_CONFIRMATION,
+                        VerificationMethod.SMS_CODE,
+                    ],
+                ),
+                VerificationProvider(
+                    type=VProviderType.ASTERISK,
+                    name='Asterisk',
+                    enabled=False,
+                    fields=[
+                        VProviderField(
+                            name="call_phone",
+                            label="Call phone",
+                            type="text",
+                        ),
+                    ],
+                    supported_methods=[
+                        VerificationMethod.CALL_CONFIRMATION,
+                    ],
+                ),
+                VerificationProvider(
+                    type=VProviderType.MIKROTIK,
+                    name='Mikrotik',
+                    enabled=False,
+                    fields=[
+                        VProviderField(
+                            name="url",
+                            label="URL",
+                            type="text",
+                        ),
+                    ],
+                    supported_methods=[
+                        VerificationMethod.SMS_CODE,
+                    ],
+                ),
+                VerificationProvider(
+                    type=VProviderType.HUAWEI,
+                    name='Huawei',
+                    enabled=False,
+                    fields=[
+                        VProviderField(
+                            name="url",
+                            label="URL",
+                            type="text",
+                        ),
+                    ],
+                    supported_methods=[
+                        VerificationMethod.SMS_CODE,
+                    ],
+                ),
+            ]
+        else:
+            order = [VProviderType(t) for t in cfg.get('order')]
+
+        return VProvidersList(
+            items=verificators,
+            order=order
+        )
 
     def create(self) -> AppConfig:
         return AppConfig(

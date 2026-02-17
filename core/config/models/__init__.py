@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from core.config.models.hotspot import HotspotConfig
 from core.config.models.radius import RadiusConfig
-from core.config.models.verificators import CallcheckConfig, SenderConfig, VerificationProvider
+from core.config.models.verificators import CallcheckConfig, SenderConfig, VProvidersList, VerificationProvider
 from core.utils import json
 import os
 from typing import List, Optional
@@ -64,11 +64,12 @@ class AppConfig:
 
     language: LanguageConfig
     hotspot: HotspotConfig
-    sender: Optional[SenderConfig] # Legacy
-    callcheck: Optional[CallcheckConfig] # Legacy
-    verificators: List[VerificationProvider]
+    verificators: VProvidersList
     admin: AdminConfig
     radius: RadiusConfig
 
     #: Global configuration version (DB-backed)
     version: int
+
+    sender: Optional[SenderConfig] = None # Legacy
+    callcheck: Optional[CallcheckConfig] = None # Legacy

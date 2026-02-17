@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, FrozenSet, Mapping, Optional
+from typing import Any, FrozenSet, List, Mapping, Optional
 
 
 @dataclass(frozen=True)
@@ -67,6 +67,13 @@ class VerificationAction(str, Enum):
     CALL_NUMBER = "call_number"    # пользователь должен позвонить
 
 
+class VProviderType(str, Enum):
+    SMSRU = "smsru"
+    ASTERISK = "asterisk"
+    MIKROTIK = "mikrotik"
+    HUAWEI = "huawei"
+
+
 class DeliveryStatus(str, Enum):
     SENT = "sent"
     FAILED = "failed"
@@ -86,15 +93,25 @@ class StartVerificationResult:
     call_phone: str | None = None
     ttl_seconds: int | None = None
 
+@dataclass
+class VProvidersList:
+    items: List[VerificationProvider]
+    order: List[VProviderType]
 
 @dataclass(frozen=True)
 class VerificationProvider:
-    id: str
+    type: VProviderType
     name: str
-    supported_methods: FrozenSet[VerificationMethod]
-    config: Mapping[str, Any]
-    is_enabled: bool
+    enabled: bool
+    fields: List[VProviderField]
+    supported_methods: List[VerificationMethod]
 
+@dataclass(frozen=True)
+class VProviderField:
+    name: str = "api_key"
+    label: str = "API Key"
+    type: str = "password"
+    value: str = ""
 
 @dataclass(frozen=True)
 class RoutingPolicy:

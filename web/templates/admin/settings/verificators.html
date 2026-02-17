@@ -7,7 +7,7 @@
 
         <div class="verificators-list">
             {% for v in verificators %}
-            <div class="settings-item" data-id="{{ v.id }}">
+            <div class="settings-item" data-id="{{ v.type }}">
                 <div class="settings-item-header{{ '' if v.enabled else ' settings-item-disabled' }}">
                     <span class="drag-handle" draggable="true">☰</span>
                     <span class="settings-item-title">{{ v.name }}</span>
@@ -20,14 +20,14 @@
                             <div class="field">
                                 <label class="settings-label">
                                     Enabled:
-                                    <input type="checkbox" name="enabled_{{ v.id }}" {{ 'checked' if v.enabled else '' }}>
+                                    <input type="checkbox" name="enabled_{{ v.type }}" {{ 'checked' if v.enabled else '' }}>
                                 </label>
                             </div>
                             {% for f in v.fields %}
                             <div class="field">
                                 <label class="settings-label">
                                     {{ f.label }}:
-                                    <input class="input input-settings" type="{{ f.type }}" name="{{ f.name }}_{{ v.id }}" value="{{ f.value }}">
+                                    <input class="input input-settings" type="{{ f.type }}" name="{{ f.name }}_{{ v.type }}" value="{{ f.value }}">
                                 </label>
                             </div>
                             {% endfor %}
@@ -44,70 +44,22 @@
     </section>
 </div>
 
-
 <script>
-function getOrder() {
-    const ids = [...document.querySelectorAll('.settings-item')]
-        .map(el => el.dataset.id);
-    return ids;
+function attachItemHandlers(item) {
+    const id = item.dataset.id;
+    const header = item.querySelector('.settings-item-header');
+    const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
+
+    header.addEventListener('click', () => {
+        toggleAccordion(item);
+    });
+
+    enabledCheckbox.addEventListener('change', () => {
+        toggleEnabled(item);
+    });
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const list = document.querySelector('.verificators-list');
-    const items = document.querySelectorAll('.settings-item');
-
-    items.forEach(item => {
-        const id = item.dataset.id;
-        const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-        const header = item.querySelector('.settings-item-header');
-        enabledCheckbox.addEventListener('change', function (e) {
-            if (enabledCheckbox.checked) {
-                header.classList.remove('settings-item-disabled');
-            } else {
-                header.classList.add('settings-item-disabled');
-            }
-        });
-    });
-    
-    const saveBtn = document.getElementById('saveBtn');
-
-    saveBtn.addEventListener('click', function (e) {
-        let data = { order: getOrder(), verificators: [] };
-        items.forEach(item => {
-            const id = item.dataset.id;
-            const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-            const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
-
-            const fields = {};
-            item.querySelectorAll('.input')
-                .forEach(input => {
-                    fields[input.name.replace(`_${id}`, '')] = input.value;
-                });
-
-            data.verificators.push({
-                id: id,
-                enabled: enabled,
-                fields: fields
-            });
-        });
-
-        console.log(data);
-
-        fetch('/admin/settings/verificators/update', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        }).then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    showStatus(getTranslate('html.admin.settings.saved'), true);
-                } else {
-                    showStatus(getTranslate('html.admin.settings.failed'), false);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    });
-    
+function attachDrag(list) {
     // Перетаскивания очереди
     let draggedItem = null;
 
@@ -155,32 +107,64 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
+}
 
-    // Сворачивание разворачивание
+function updateVerificators(items) {
+    let data = { order: getOrder(), verificators: [] };
+    
     items.forEach(item => {
-        const header = item.querySelector('.settings-item-header');
-        const body = item.querySelector('.settings-item-body');
+        const id = item.dataset.id;
+        const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
+        const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
 
-        header.addEventListener('click', () => {
-            const isOpen = body.style.height && body.style.height !== '0px';
+        const fields = {};
+        item.querySelectorAll('.input')
+            .forEach(input => {
+                fields[input.name.replace(`_${id}`, '')] = input.value;
+            });
 
-            if (isOpen) {
-                // Закрытие
-                body.style.height = body.scrollHeight + 'px';
-                requestAnimationFrame(() => {
-                    body.style.height = '0px';
-                });
-            } else {
-                // Открытие
-                body.style.height = body.scrollHeight + 'px';
-
-                body.addEventListener('transitionend', function handler() {
-                    body.style.height = 'auto';
-                    body.removeEventListener('transitionend', handler);
-                });
-            }
+        data.verificators.push({
+            id: id,
+            enabled: enabled,
+            fields: fields
         });
     });
+
+    fetch("{{ url_for('pages.admin.settings.verificators.update') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                location.reload();
+            } else {
+                showStatus(getTranslate('html.admin.settings.failed'), false);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function getOrder() {
+    const ids = [...document.querySelectorAll('.settings-item')]
+        .map(el => el.dataset.id);
+    return ids;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.querySelector('.verificators-list');
+    const items = document.querySelectorAll('.settings-item');
+
+    items.forEach(item => {
+        attachItemHandlers(item);
+    });
+    
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.addEventListener('click', () => {
+        updateVerificators(items);
+    });
+
+    attachDrag(list);
 });
 </script>
 {% endblock %}
