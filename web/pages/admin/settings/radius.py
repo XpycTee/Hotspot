@@ -1,6 +1,6 @@
 from flask import Blueprint, abort, jsonify, render_template, request
 
-from core.admin.tables.settings.radius import add_radius_host, delete_radius_host, get_radius_hosts, update_radius_host, update_radius_hosts
+from core.admin.tables.settings.radius import add_radius_host, delete_radius_host, get_radius_hosts, update_radius_host
 from core.config.defaults import DEFAULT_RADIUS_ACCT_PORT, DEFAULT_RADIUS_AUTH_PORT, DEFAULT_RADIUS_COA_PORT
 from core.utils.language import get_translate
 from web.pages.admin.utils import login_required
@@ -48,14 +48,14 @@ def update():
         address = fields.get('address').strip()
 
         update = {
-                'enabled': enabled,
-                'address': address,
-                'name': fields.get('name').strip(),
-                'secret': fields.get('secret', '').strip().encode(),
-                'authport': fields.get('auth', DEFAULT_RADIUS_AUTH_PORT),
-                'acctport': fields.get('acct', DEFAULT_RADIUS_ACCT_PORT),
-                'coaport': fields.get('coa', DEFAULT_RADIUS_COA_PORT),
-            }
+            'enabled': enabled,
+            'address': address,
+            'name': fields.get('name').strip(),
+            'secret': fields.get('secret', '').strip().encode(),
+            'authport': fields.get('auth', DEFAULT_RADIUS_AUTH_PORT),
+            'acctport': fields.get('acct', DEFAULT_RADIUS_ACCT_PORT),
+            'coaport': fields.get('coa', DEFAULT_RADIUS_COA_PORT),
+        }
         
         if host_id.startswith('new_'):
             response = add_radius_host(**update)
