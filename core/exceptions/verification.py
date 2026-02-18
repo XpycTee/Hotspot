@@ -1,0 +1,2 @@
+class NoAvailableMethodError(Exception):
+    pass

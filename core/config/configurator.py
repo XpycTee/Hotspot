@@ -188,8 +188,8 @@ class Configurator:
                         VProviderField(),
                     ],
                     supported_methods=[
-                        VerificationMethod.CALL_CONFIRMATION,
-                        VerificationMethod.SMS_CODE,
+                        VerificationMethod.CALL,
+                        VerificationMethod.CODE,
                     ],
                 ),
                 VerificationProvider(
@@ -204,7 +204,7 @@ class Configurator:
                         ),
                     ],
                     supported_methods=[
-                        VerificationMethod.CALL_CONFIRMATION,
+                        VerificationMethod.CALL,
                     ],
                 ),
                 VerificationProvider(
@@ -219,7 +219,7 @@ class Configurator:
                         ),
                     ],
                     supported_methods=[
-                        VerificationMethod.SMS_CODE,
+                        VerificationMethod.CODE,
                     ],
                 ),
                 VerificationProvider(
@@ -234,7 +234,7 @@ class Configurator:
                         ),
                     ],
                     supported_methods=[
-                        VerificationMethod.SMS_CODE,
+                        VerificationMethod.CODE,
                     ],
                 ),
             ]

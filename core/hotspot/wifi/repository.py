@@ -50,20 +50,26 @@ def create_or_udpate_wifi_client(mac, phone_number):
         db_client = db_session.scalars(query).first()
 
         if not db_client:
-            try:
-                db_client = WifiClient(mac=mac, expiration=expiration, employee=db_employee, phone=db_phone, user_fp=None)
-                db_session.add(db_client)
-                db_session.commit()
-            except IntegrityError:
-                db_session.rollback()
+            db_client = WifiClient(mac=mac, expiration=expiration, employee=db_employee, phone=db_phone, user_fp=None)
+            db_session.add(db_client)
+            db_session.commit()
         else:
-            try:
-                db_client.expiration = expiration
-                db_client.employee = db_employee
-                db_client.phone = db_phone
-                db_session.commit()
-            except IntegrityError:
-                db_session.rollback()
+            db_client.expiration = expiration
+            db_client.employee = db_employee
+            db_client.phone = db_phone
+            db_session.commit()
+
+
+
+def create_wifi_client(mac, phone_number, user_fp):
+    """Создать запись WiFi клиента по MAC-адресу."""
+    db_phone = get_or_create_clients_number(phone_number)
+    db_employee = get_employee(phone_number)
+    expiration = new_expiration(db_employee is not None)
+    with get_session() as db_session:
+        db_client = WifiClient(mac=mac, expiration=expiration, employee=db_employee, phone=db_phone, user_fp=user_fp)
+        db_session.add(db_client)
+        db_session.commit()
 
 
 def get_locations():

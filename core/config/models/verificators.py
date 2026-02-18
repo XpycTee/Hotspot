@@ -42,56 +42,14 @@ class CallcheckConfig:
 
 
 class VerificationMethod(str, Enum):
-    SMS_CODE = "sms_code"
-    TELEGRAM_CODE = "telegram_code"
-    VOICE_CODE = "voice_code"
-    CALL_CONFIRMATION = "call_confirmation"
-
-
-class RoutingStrategy(str, Enum):
-    FAILOVER = "failover"
-    PARALLEL = "parallel"
-    SINGLE = "single"
-
-
-class VerificationStatus(str, Enum):
-    PENDING = "pending"        # ещё не подтверждено
-    VERIFIED = "verified"      # подтверждено
-    FAILED = "failed"          # окончательный отказ
-    TIMEOUT = "timeout"        # истекло время ожидания
-    ERROR = "error"            # техническая ошибка
-
-
-class VerificationAction(str, Enum):
-    WAIT_CALL = "wait_call"        # провайдер сам звонит
-    CALL_NUMBER = "call_number"    # пользователь должен позвонить
-
+    CODE = "code"
+    CALL = "call"
 
 class VProviderType(str, Enum):
     SMSRU = "smsru"
     ASTERISK = "asterisk"
     MIKROTIK = "mikrotik"
     HUAWEI = "huawei"
-
-
-class DeliveryStatus(str, Enum):
-    SENT = "sent"
-    FAILED = "failed"
-    ERROR = "error"
-
-
-@dataclass
-class SendCodeResult:
-    status: DeliveryStatus
-    error_message: str | None = None
-
-
-@dataclass
-class StartVerificationResult:
-    request_id: str
-    action: VerificationAction
-    call_phone: str | None = None
-    ttl_seconds: int | None = None
 
 @dataclass
 class VProvidersList:
@@ -113,14 +71,3 @@ class VProviderField:
     type: str = "password"
     value: str = ""
 
-@dataclass(frozen=True)
-class RoutingPolicy:
-    method: VerificationMethod
-    strategy: RoutingStrategy
-
-
-@dataclass(frozen=True)
-class RoutingEntry:
-    method: VerificationMethod
-    provider_id: str
-    priority: int
