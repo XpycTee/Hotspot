@@ -257,6 +257,9 @@ def call_check():
     service = Verification(user_fp)
     response = service.call_verification()
 
+    if response.status == VerificationStatus.WAIT_CALL:
+        return jsonify({'success': False})
+
     if response.status == VerificationStatus.FAILED:
         return jsonify({'success': False, 'error_message': response.error_message})
 

@@ -96,11 +96,15 @@ class VerificationRouter:
     def start_confirm(self, phone: str) -> VRouterResponse:
         # TODO
         return VRouterResponse(
-            VRouterStatus.SENDED,
+            status=VRouterStatus.SENDED,
+            provider=VProviderType.DEBUG,
             request_id=1,
             call_phone=2,
         )
 
     def check_confirm(self, request_id: str) -> VRouterResponse:
         # TODO
-        return VRouterResponse(VRouterStatus.VERIFIED)
+        return VRouterResponse(
+            status=VRouterStatus.SENDED,
+            provider=VProviderType.DEBUG,
+        )

@@ -90,6 +90,7 @@ class Verification:
             if router_resp.status == VRouterStatus.SENDED:
                 self._session.status = VSessionStatus.WAIT_CALL
                 self._session.call_id = router_resp.request_id
+                self._session.timeout = (datetime.now() + timedelta(minutes=5))
                 self._save_session()
                 
                 return VerificationResponse(
@@ -113,7 +114,7 @@ class Verification:
         if self._session.code is None:
             self._session.code = str(randint(0, 9999)).zfill(4)
             self._session.attempts = 0
-            self._session.timeout = (datetime.now()+timedelta(minutes=5))
+            self._session.timeout = (datetime.now() + timedelta(minutes=5))
             self._save_session()
 
         logger.debug(f"User's code for {self._session.phone}: {self._session.code}")
@@ -180,6 +181,10 @@ class Verification:
             router = VerificationRouter()
             router_resp = router.check_confirm(self._session.call_id)
 
+            if router_resp.status == VRouterStatus.SENDED:
+                return VerificationResponse(
+                    status=VerificationStatus.WAIT_CALL,
+                )
             if router_resp.status == VRouterStatus.ERROR:
                 logger.error(f"Failed to verify call to {self._session.phone}")
                 return VerificationResponse(

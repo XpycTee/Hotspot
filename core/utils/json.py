@@ -15,9 +15,6 @@ import orjson
 # ---------- SERIALIZATION ----------
 
 def _default(obj: Any): 
-    if is_dataclass(obj):
-        return dataclass_to_dict(obj)  # рекурсивно, но безопасно
-    
     # bytes / bytearray -> base64 with marker
     if isinstance(obj, (bytes, bytearray)):
         return {
@@ -49,10 +46,12 @@ def _default(obj: Any):
 
 def dumps(obj: Any, *, indent: bool = False) -> bytes:
     option = orjson.OPT_INDENT_2 if indent else 0
+    if is_dataclass(obj):
+        obj = dataclass_to_dict(obj)
     return orjson.dumps(obj, default=_default, option=option)
 
 def dumps_str(obj: Any, *, indent: bool = False, encoding: str = "utf-8", errors: str = "strict") -> str:
-    return dumps(obj, indent=indent).decode(encoding, errors)
+    return dumps(obj, indent=indent).decode(encoding=encoding, errors=errors)
 
 
 # ---------- DESERIALIZATION ----------
@@ -104,6 +103,31 @@ def dataclass_to_dict(obj):
             value = getattr(obj, f.name)
             result[f.name] = dataclass_to_dict(value)
         return result
-    elif isinstance(obj, Enum):
+    
+    # bytes / bytearray -> base64 with marker
+    if isinstance(obj, (bytes, bytearray)):
+        return {
+            '__type__': 'bytes',
+            'encoding': 'base64',
+            'value': base64.b64encode(obj).decode('ascii'),
+        }
+
+    # datetime / date -> ISO (orjson умеет, но фиксируем явно)
+    if isinstance(obj, (datetime, date)):
+        return {
+            '__type__': 'datetime',
+            'format': 'iso',
+            'value': obj.isoformat(),
+        }
+
+    if isinstance(obj, timedelta):
+        return {
+            '__type__': 'timedelta',
+            'format': 'seconds',
+            'value': obj.total_seconds(),
+        }
+
+    if isinstance(obj, Enum):
         return obj.value
+    
     return obj

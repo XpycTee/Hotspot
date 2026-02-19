@@ -108,7 +108,7 @@
         async function poll() {
             if (stopped) return;
             try {
-                const response = await fetch("{{ url_for('api.call.check') }}", {
+                const response = await fetch("{{ url_for('pages.hotspot.call_check') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
