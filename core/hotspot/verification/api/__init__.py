@@ -31,6 +31,7 @@ class ConfirmResult:
     status: ConfirmStatus
 
     # Options
+    request_id: str | None = None
     call_phone: str | None = None
     error_message: str | None = None
 

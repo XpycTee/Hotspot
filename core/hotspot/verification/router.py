@@ -3,9 +3,9 @@ from enum import Enum, auto
 from typing import List
 from core.config import get_config
 from core.config.models.verificators import VProviderType, VerificationMethod, VerificationProvider
-from core.hotspot.verification.api import CodeDeliveryProvider, DeliveryStatus
+from core.hotspot.verification.api import ConfirmStatus, DeliveryStatus
 from core.hotspot.verification.api.asterisk import AsteriskConfirm
-from core.hotspot.verification.api.debug import DebugCodeDelivery
+from core.hotspot.verification.api.debug import DebugCallConfirmation, DebugCodeDelivery
 from core.hotspot.verification.api.huawei import HuaweiSMSSender
 from core.hotspot.verification.api.mikrotik import MikrotikSMSSender
 from core.hotspot.verification.api.smsru import SMSRU
@@ -59,8 +59,6 @@ class VerificationRouter:
         for cfg in self._code_order:
             if cfg.type == VProviderType.SMSRU:
                 sender = SMSRU(cfg.fields[0].value)
-            elif cfg.type == VProviderType.ASTERISK:
-                sender = AsteriskConfirm(cfg.fields[0].value)
             elif cfg.type == VProviderType.MIKROTIK:
                 sender = MikrotikSMSSender(cfg.fields[0].value)
             elif cfg.type == VProviderType.HUAWEI:
@@ -93,18 +91,68 @@ class VerificationRouter:
                 return failed
 
 
-    def start_confirm(self, phone: str) -> VRouterResponse:
-        # TODO
-        return VRouterResponse(
-            status=VRouterStatus.SENDED,
-            provider=VProviderType.DEBUG,
-            request_id=1,
-            call_phone=2,
-        )
+    def start_confirm(self, phone: str) -> VRouterResponse | List[VRouterResponse]:
+        failed = []
+        for cfg in self._call_order:
+            if cfg.type == VProviderType.SMSRU:
+                callcheck = SMSRU(cfg.fields[0].value)
+            elif cfg.type == VProviderType.ASTERISK:
+                callcheck = AsteriskConfirm(cfg.fields[0].value)
+            elif cfg.type == VProviderType.DEBUG:
+                callcheck = DebugCallConfirmation()
 
-    def check_confirm(self, request_id: str) -> VRouterResponse:
+            resp = callcheck.start_verification(phone)
+            if resp.status == ConfirmStatus.PENDING:
+                return VRouterResponse(
+                    status=VRouterStatus.SENDED,
+                    provider=cfg.type,
+                    request_id=resp.request_id,
+                    call_phone=resp.call_phone,
+                )
+            else: # TODO
+                failed.append(
+                    VRouterResponse(
+                        status=VRouterStatus.ERROR,
+                        provider=cfg.type,
+                        error_message='Error: TODO',
+                    )
+                )
+            if cfg == self._code_order[-1]:
+                return failed
+
+
+    def check_confirm(self, request_id: str, provider: VProviderType) -> VRouterResponse:
+        callcheck = DebugCallConfirmation()
+        for cfg in self._call_order:
+            if cfg.type == provider:
+                if provider == VProviderType.SMSRU:
+                    callcheck = SMSRU(cfg.fields[0].value)
+                    break
+                elif provider == VProviderType.ASTERISK:
+                    callcheck = AsteriskConfirm(cfg.fields[0].value)
+                    break
+
+        resp = callcheck.check_verification(request_id)
+        if resp.status == ConfirmStatus.VERIFIED:
+            return VRouterResponse(
+                status=VRouterStatus.VERIFIED,
+                provider=cfg.type,
+            )
+        
+        if resp.status == ConfirmStatus.PENDING:
+            return VRouterResponse(
+                status=VRouterStatus.SENDED,
+                provider=cfg.type,
+            )
+        if resp.status == ConfirmStatus.TIEMOUT:
+            return VRouterResponse(
+                status=VRouterStatus.FAILED,
+                provider=cfg.type,
+                error_message='Timeout'
+            )
         # TODO
         return VRouterResponse(
-            status=VRouterStatus.SENDED,
-            provider=VProviderType.DEBUG,
+            status=VRouterStatus.ERROR,
+            provider=cfg.type,
+            error_message='Error TODO'
         )

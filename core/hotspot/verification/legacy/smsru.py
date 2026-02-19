@@ -1,7 +1,7 @@
 from smsru_api import Client
 
 from core.config.response_code import ERROR, NOT_AUTH, NOT_FOUND, OK, TIMEOUT
-from core.hotspot.verification.api import BaseCallcheck, BaseSender
+from core.hotspot.verification.legacy import BaseCallcheck, BaseSender
 from core.logging import get_logger
 from core.redis import cache
 from core.utils.language import get_translate

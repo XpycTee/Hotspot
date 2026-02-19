@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from core.config.models.verificators import VerificationMethod
-from core.hotspot.verification.api import CallConfirmationProvider, CodeDeliveryProvider, DeliveryStatus, SendCodeResult
+from core.hotspot.verification.api import CallConfirmationProvider, CodeDeliveryProvider, ConfirmResult, ConfirmStatus, DeliveryStatus, SendCodeResult
 from core.logging import get_logger
 
 
@@ -39,15 +39,24 @@ class DebugCallConfirmation(CallConfirmationProvider):
         session = DebugCallSession(request_id=request_id, phone=phone)
         self._sessions[request_id] = session
         logger.info(f"[{self.name}] start_verification called: phone={phone}, request_id={request_id}")
-        return request_id
+        return ConfirmResult(
+            status=ConfirmStatus.PENDING,
+            request_id=request_id,
+            call_phone="Debug",
+        )
 
     def check_verification(self, request_id: str) -> bool:
         session = self._sessions.get(request_id)
         if not session:
             logger.warning(f"[{self.name}] check_verification: unknown request_id={request_id}")
-            return False
+            return ConfirmResult(
+                status=ConfirmStatus.ERROR,
+            )
 
         # Для дебага просто помечаем как verified после проверки
         session.verified = True
         logger.info(f"[{self.name}] check_verification: request_id={request_id}, verified={session.verified}")
-        return session.verified
+
+        return ConfirmResult(
+            status=ConfirmStatus.VERIFIED,
+        )

@@ -1,6 +1,6 @@
 
 from core.config.response_code import NOT_AUTH, OK, TIMEOUT
-from core.hotspot.verification.api import BaseCallcheck
+from core.hotspot.verification.legacy import BaseCallcheck
 from core.logging import get_logger
 from core.redis import cache
 

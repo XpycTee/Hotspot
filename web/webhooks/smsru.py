@@ -16,7 +16,7 @@ def index():
     received_hash = post.get('hash')
 
     config = get_config()
-    api_key = config.sender.api_key
+    api_key = config.verificators.items[0].fields[0].value
 
     for key, value in post.items():
         if key.startswith('data'):

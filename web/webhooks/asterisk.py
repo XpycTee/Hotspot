@@ -16,7 +16,8 @@ def index():
     
     phone = request.args.get('phone')
 
-    phone_data = cache.get(f'callcheck:asterisk:{phone}')
+    request_id = cache.get(f'callcheck:asterisk:phone:{phone}')
+    phone_data = cache.get(f'callcheck:asterisk:id:{request_id}')
     if phone_data is None:
         logger.error('Callcheck not found')
         return Response('Callcheck not found', status=404)
@@ -24,6 +25,6 @@ def index():
     check_status = phone_data.get('status')
     if not check_status:
         phone_data['status'] = True
-        cache.set(f'callcheck:asterisk:{phone}', phone_data, 300)
+        cache.set(f'callcheck:asterisk:id:{request_id}', phone_data, 300)
 
     return Response('OK', status=200)

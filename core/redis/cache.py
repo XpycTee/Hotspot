@@ -1,6 +1,7 @@
 from dataclasses import is_dataclass
 
 from typing import Any, Callable
+from uuid import UUID
 
 from redis import Redis
 
@@ -14,6 +15,7 @@ class RedisCache:
         (lambda v: isinstance(v, int),   "int",   str, int),
         (lambda v: isinstance(v, float), "float", str, float),
         (lambda v: isinstance(v, str),   "str",   str, str),
+        (lambda v: isinstance(v, UUID),  "uuid",  str, UUID),
         (lambda v: isinstance(v, dict),  "json",  json.dumps_str, json.loads),
         (lambda v: isinstance(v, list),  "json",  json.dumps_str, json.loads),
         (lambda v: is_dataclass(v),      "json",  json.dumps_str, json.loads),
@@ -68,7 +70,7 @@ class RedisCache:
             if check(value):
                 data = serializer(value)
                 return f"@{name}:{data}"
-
+            
         raise TypeError(f"Unsupported type: {type(value)}")
 
     def _decode(self, raw: bytes | str):

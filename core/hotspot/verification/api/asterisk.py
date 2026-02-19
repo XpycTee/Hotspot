@@ -1,12 +1,13 @@
-from core.config.models.verificators import StartVerificationResult, VerificationAction, VerificationStatus
-from core.hotspot.verification.api import CallConfirmationProvider
+from uuid import uuid4
+from core.hotspot.verification.api import CallConfirmationProvider, ConfirmResult, ConfirmStatus
 from core.logging import get_logger
 from core.redis import cache
 
 
 logger = get_logger('core.hotspot.verification.api.asterisk')
 
-class AsteriskCallcheck(CallConfirmationProvider):
+
+class AsteriskConfirm(CallConfirmationProvider):
     """
     AsteriskCallcheck implementation for phone verification using an Asterisk PBX system.
 
@@ -39,28 +40,37 @@ class AsteriskCallcheck(CallConfirmationProvider):
         self._call_phone = call_phone
 
     def start_verification(self, phone: str):
+        request_id = uuid4()
         phone_data = {
+            'request_id': request_id,
             'status': False,
+            'phone': phone,
         }
-        cache.set(f'callcheck:asterisk:{phone}', phone_data, 300)
+        cache.set(f'callcheck:asterisk:id:{request_id}', phone_data, 300)
+        cache.set(f'callcheck:asterisk:phone:{phone}', request_id, 300)
         logger.info('Phone was added successfully')
-        return StartVerificationResult(
-            request_id=phone, 
-            action=VerificationAction.CALL_NUMBER,
+        return ConfirmResult(
+            status=ConfirmStatus.PENDING,
+            request_id=request_id,
             call_phone=self._call_phone,
-            ttl_seconds=300,
         )
 
     def check_verification(self, request_id: str):
-        phone_data = cache.get(f'callcheck:asterisk:{request_id}')
+        phone_data = cache.get(f'callcheck:asterisk:id:{request_id}')
         if phone_data is None:
             logger.error('Callcheck tiomeout')
-            return VerificationStatus.TIMEOUT
+            return ConfirmResult(
+                status=ConfirmStatus.TIEMOUT,
+            )
         
         check_status = phone_data.get('status')
         if not check_status:
             logger.error("Phone wasn't auth")
-            return VerificationStatus.PENDING
+            return ConfirmResult(
+                status=ConfirmStatus.PENDING,
+            )
         else:
             logger.info('Phone was auth successfully')
-            return VerificationStatus.VERIFIED
+            return ConfirmResult(
+                status=ConfirmStatus.VERIFIED,
+            )

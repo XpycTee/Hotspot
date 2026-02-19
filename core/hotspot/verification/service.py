@@ -49,8 +49,11 @@ class VerificationSession:
     phone: str | None = None
     
     # Options
+    provider: str | None = None
+
     # Call
     call_id: str | None = None
+    
     # Code
     code: str | None = None
     attempts: int = 0
@@ -69,7 +72,7 @@ class Verification:
             self._session = VerificationSession(**chached_session)
 
     def _save_session(self):
-        cache.set(f'verify:session:{self._session.session_id}', self._session, 300)
+        cache.set(f'verify:session:{self._session.session_id}', self._session, 600)
 
     def _clear_session(self):
         cache.delete(f'verify:session:{self._session.session_id}')
@@ -90,6 +93,7 @@ class Verification:
             if router_resp.status == VRouterStatus.SENDED:
                 self._session.status = VSessionStatus.WAIT_CALL
                 self._session.call_id = router_resp.request_id
+                self._session.provider = router_resp.provider
                 self._session.timeout = (datetime.now() + timedelta(minutes=5))
                 self._save_session()
                 
@@ -172,14 +176,19 @@ class Verification:
 
     def call_verification(self) -> VerificationResponse:
         if self._session.status == VSessionStatus.WAIT_CALL.value:
-            if self._session.timeout > datetime.now():
+            now_time = datetime.now()
+            if  now_time > self._session.timeout:
+                self._clear_session()
                 return VerificationResponse(
                     status=VerificationStatus.FAILED,
                     error_message=get_translate('errors.auth.timeout'),
                 )
-            
+
             router = VerificationRouter()
-            router_resp = router.check_confirm(self._session.call_id)
+            router_resp = router.check_confirm(
+                self._session.call_id,
+                self._session.provider,
+            )
 
             if router_resp.status == VRouterStatus.SENDED:
                 return VerificationResponse(
@@ -191,12 +200,17 @@ class Verification:
                     status=VerificationStatus.ERROR,
                     error_message=router_resp.error_message,
                 )
+            if router_resp.status == VRouterStatus.FAILED:
+                return VerificationResponse(
+                    status=VerificationStatus.FAILED,
+                    error_message=router_resp.error_message,
+                )
             if router_resp.status == VRouterStatus.VERIFIED:
                 self._clear_session()
                 return VerificationResponse(
                     status=VerificationStatus.VERIFIED,
                 )
-            
+
         return VerificationResponse(
             status=VerificationStatus.FAILED,
             error_message=get_translate('errors.auth.bad_status'),

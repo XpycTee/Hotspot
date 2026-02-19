@@ -271,11 +271,12 @@ def call_check():
 def call_auth():
     mac = session.get('mac')
     phone = session.get('phone')
-    if not mac or not phone:
+    user_fp = session.get('user_fp')
+    if not mac or not phone or not user_fp:
         abort(400)
 
     auth_service = Authorization()
-    auth_response = auth_service.authorization(mac, phone)
+    auth_response = auth_service.authorization(mac, phone, user_fp)
     if auth_response.status == AuthStatus.BLOCKED:
         abort(403)
     if auth_response.status == AuthStatus.AUTHORIZED:

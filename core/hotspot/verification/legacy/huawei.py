@@ -4,7 +4,7 @@ from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
-from core.hotspot.verification.api import BaseSender
+from core.hotspot.verification.legacy import BaseSender
 from core.logging import get_logger
 from core.utils.language import get_translate
 

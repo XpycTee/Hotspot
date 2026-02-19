@@ -5,7 +5,7 @@ from urllib import request
 from urllib import error
 from urllib.parse import urlparse
 
-from core.hotspot.verification.api import BaseSender
+from core.hotspot.verification.legacy import BaseSender
 from core.logging import get_logger
 from core.utils.language import get_translate
 
