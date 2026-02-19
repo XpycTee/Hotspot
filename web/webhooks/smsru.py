@@ -50,6 +50,8 @@ def index():
                 'unix_timestamp': float(lines[3]),
             }
             check_id = lines[1]
-            cache.set(f'callcheck:smsru:confirm:{check_id}', data, 120)
+            cached_data = cache.get(f'callcheck:smsru:id:{check_id}')
+            cached_data['confirm'] = data
+            cache.set(f'callcheck:smsru:id:{check_id}', cached_data, 120)
 
     return Response("100", status=200)
