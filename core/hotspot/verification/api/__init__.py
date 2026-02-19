@@ -1,13 +1,38 @@
+from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Protocol
 
-from core.config.models.verificators import SendCodeResult, StartVerificationResult, VerificationMethod, VerificationStatus
 from core.logging import get_logger
 
 
 logger = get_logger('core.hotspot.verification.api')
 
 
-from typing import Protocol
+class DeliveryStatus(Enum):
+    SENT = auto()
+    FAILED = auto()
+    ERROR = auto()
+
+
+class ConfirmStatus(Enum):
+    PENDING = auto()
+    VERIFIED = auto()
+    TIEMOUT = auto()
+    ERROR = auto()
+
+@dataclass
+class SendCodeResult:
+    status: DeliveryStatus
+    error_message: str | None = None
+
+
+@dataclass
+class ConfirmResult:
+    status: ConfirmStatus
+
+    # Options
+    call_phone: str | None = None
+    error_message: str | None = None
 
 
 class CodeDeliveryProvider(Protocol):
@@ -34,7 +59,7 @@ class CodeDeliveryProvider(Protocol):
     tolerate network-level retries safely.
     """
 
-    def send_code(self, phone: str, code: str, method: "VerificationMethod") -> "SendCodeResult":
+    def send_code(self, phone: str, code: str) -> "SendCodeResult":
         """
         Sends a one-time verification code to the specified phone number.
 
@@ -47,10 +72,6 @@ class CodeDeliveryProvider(Protocol):
             Verification code to be delivered.
             The provider MUST treat this value as opaque and must not
             modify, generate, or validate it.
-
-        method : VerificationMethod
-            Desired delivery channel (e.g., SMS, VOICE, FLASH_CALL).
-            The provider may reject unsupported methods explicitly.
 
         Returns
         -------
@@ -111,7 +132,7 @@ class CallConfirmationProvider(Protocol):
     whenever possible.
     """
 
-    def start_verification(self, phone: str) -> "StartVerificationResult":
+    def start_verification(self, phone: str) -> "ConfirmResult":
         """
         Initiates a call-based verification session.
 
@@ -122,7 +143,7 @@ class CallConfirmationProvider(Protocol):
 
         Returns
         -------
-        StartVerificationResult
+        ConfirmResult
             Structured result containing:
             - request_id (unique verification session identifier)
             - action required from the client (e.g., WAIT_CALL, CALL_NUMBER)
@@ -141,7 +162,7 @@ class CallConfirmationProvider(Protocol):
           calls to `check_verification`.
         """
 
-    def check_verification(self, request_id: str) -> "VerificationStatus":
+    def check_verification(self, request_id: str) -> "ConfirmResult":
         """
         Checks the current state of a previously started verification session.
 
@@ -152,13 +173,11 @@ class CallConfirmationProvider(Protocol):
 
         Returns
         -------
-        VerificationStatus
+        ConfirmResult
             One of:
             - PENDING   → verification still in progress
             - VERIFIED  → verification successfully completed
-            - FAILED    → verification definitively rejected
-            - EXPIRED   → verification window expired
-            - ERROR     → technical failure occurred
+            - TIMEOUT   → verification window expired
 
         Contract
         --------

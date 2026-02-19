@@ -2,11 +2,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from random import randint
-from uuid import uuid4
 from core.config.models.verificators import VerificationMethod
 from core.exceptions.verification import NoAvailableMethodError
-from core.hotspot.verification.router import VerificationRouter
-from core.hotspot.wifi.repository import create_or_udpate_wifi_client
+from core.hotspot.verification.router import VRouterStatus, VerificationRouter
 from core.logging import get_logger
 from core.redis import cache
 from core.utils.language import get_translate
@@ -81,23 +79,24 @@ class Verification:
         self._save_session()
 
         router = VerificationRouter()
-        methods = router.available_methods()
+        methods = router.available_methods
         if not methods:
             raise NoAvailableMethodError()
         
         if VerificationMethod.CALL in methods:
             code_avail = (VerificationMethod.CODE in methods)
 
-            start_res = router.start_confirm(phone=self._session.phone)
-            self._session.status = VSessionStatus.WAIT_CALL
-            self._session.call_id = start_res.request_id
-            self._save_session()
-            
-            return VerificationResponse(
-                status=VerificationStatus.WAIT_CALL,
-                call_phone=start_res.call_phone,
-                code_avail=code_avail,
-            )
+            router_resp = router.start_confirm(phone=self._session.phone)
+            if router_resp.status == VRouterStatus.SENDED:
+                self._session.status = VSessionStatus.WAIT_CALL
+                self._session.call_id = router_resp.request_id
+                self._save_session()
+                
+                return VerificationResponse(
+                    status=VerificationStatus.WAIT_CALL,
+                    call_phone=router_resp.call_phone,
+                    code_avail=code_avail,
+                )
 
         if VerificationMethod.CODE in methods:
             return VerificationResponse(
@@ -120,24 +119,25 @@ class Verification:
         logger.debug(f"User's code for {self._session.phone}: {self._session.code}")
 
         router = VerificationRouter()
-        router_error = router.send_code(self._session.phone, self._session.code)
+        router_resp = router.send_code(self._session.phone, self._session.code)
 
-        if router_error: # TODO
+        if router_resp.status == VRouterStatus.ERROR:
             logger.error(f"Failed to send code to {self._session.phone}")
             return VerificationResponse(
                 status=VerificationStatus.ERROR,
-                error_message=router_error,
+                error_message=router_resp.error_message,
             )
         
-        self._session.status = VSessionStatus.WAIT_CODE
-        self._save_session()
+        if router_resp.status == VRouterStatus.SENDED:
+            self._session.status = VSessionStatus.WAIT_CODE
+            self._save_session()
 
-        return VerificationResponse(
-            status=VerificationStatus.WAIT_CODE,
-        )
+            return VerificationResponse(
+                status=VerificationStatus.WAIT_CODE,
+            )
     
     def code_verification(self, code: str) -> VerificationResponse:
-        if self._session.status == VerificationStatus.WAIT_CODE:
+        if self._session.status == VerificationStatus.WAIT_CODE.value:
             if self._session.code == code:
                 self._clear_session()
                 return VerificationResponse(
@@ -170,7 +170,7 @@ class Verification:
         )
 
     def call_verification(self) -> VerificationResponse:
-        if self._session.status == VSessionStatus.WAIT_CALL:
+        if self._session.status == VSessionStatus.WAIT_CALL.value:
             if self._session.timeout > datetime.now():
                 return VerificationResponse(
                     status=VerificationStatus.FAILED,
@@ -178,15 +178,15 @@ class Verification:
                 )
             
             router = VerificationRouter()
-            router_error = router.check_confirm(self._session.call_id)
+            router_resp = router.check_confirm(self._session.call_id)
 
-            if router_error: # TODO
-                logger.error(f"Failed to send code to {self._session.phone}")
+            if router_resp.status == VRouterStatus.ERROR:
+                logger.error(f"Failed to verify call to {self._session.phone}")
                 return VerificationResponse(
                     status=VerificationStatus.ERROR,
-                    error_message=router_error,
+                    error_message=router_resp.error_message,
                 )
-            else:
+            if router_resp.status == VRouterStatus.VERIFIED:
                 self._clear_session()
                 return VerificationResponse(
                     status=VerificationStatus.VERIFIED,

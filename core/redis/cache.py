@@ -1,21 +1,24 @@
-import json
+from dataclasses import is_dataclass
+
+from typing import Any, Callable
 
 from redis import Redis
 
 from core.bootstrap.env import REDIS_URL
-
-
-TYPE_SERIALIZERS = {
-    int:    ("int", str, int),
-    bool:   ("bool", lambda v: "1" if v else "0", lambda v: v == "1"),
-    float:  ("float", str, float),
-    str:    ("str", str, str),
-    dict:   ("json", json.dumps, json.loads),
-    list:   ("json", json.dumps, json.loads),
-}
+from core.utils import json
 
 
 class RedisCache:
+    SERIALIZER_RULES = [
+        (lambda v: isinstance(v, bool),  "bool",  lambda v: "1" if v else "0", lambda v: v == "1"),
+        (lambda v: isinstance(v, int),   "int",   str, int),
+        (lambda v: isinstance(v, float), "float", str, float),
+        (lambda v: isinstance(v, str),   "str",   str, str),
+        (lambda v: isinstance(v, dict),  "json",  json.dumps_str, json.loads),
+        (lambda v: isinstance(v, list),  "json",  json.dumps_str, json.loads),
+        (lambda v: is_dataclass(v),      "json",  json.dumps_str, json.loads),
+    ]
+    
     def __init__(self):
         self.r = Redis.from_url(REDIS_URL, decode_responses=True)
 
@@ -57,10 +60,15 @@ class RedisCache:
             return v
         """, 1, key))
 
-    def _encode(self, value):
-        for py_type, (name, serializer, _) in TYPE_SERIALIZERS.items():
-            if type(value) == py_type:
-                return f"@{name}:{serializer(value)}"
+    def register_serializer(self, check: Callable[[Any], bool], name: str, serializer, deserializer):
+        self.SERIALIZER_RULES.append((check, name, serializer, deserializer))
+
+    def _encode(self, value: Any) -> str:
+        for check, name, serializer, _ in self.SERIALIZER_RULES:
+            if check(value):
+                data = serializer(value)
+                return f"@{name}:{data}"
+
         raise TypeError(f"Unsupported type: {type(value)}")
 
     def _decode(self, raw: bytes | str):
@@ -75,7 +83,7 @@ class RedisCache:
 
         type_name, value = raw[1:].split(":", 1)
 
-        for _, (name, _, deserializer) in TYPE_SERIALIZERS.items():
+        for _, name, _, deserializer in self.SERIALIZER_RULES:
             if name == type_name:
                 return deserializer(value)
 

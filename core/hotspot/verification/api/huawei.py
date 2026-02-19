@@ -4,15 +4,14 @@ from huawei_lte_api.Client import Client
 from huawei_lte_api.Connection import Connection
 from huawei_lte_api.enums.client import ResponseEnum
 
-from core.config.models.verificators import DeliveryStatus, SendCodeResult
-from core.hotspot.verification.api import BaseSender
+from core.hotspot.verification.api import CodeDeliveryProvider, DeliveryStatus, SendCodeResult
 from core.logging import get_logger
 from core.utils.language import get_translate
 
 
 logger = get_logger('core.hotspot.verification.api.huawei')
 
-class HuaweiSMSSender(BaseSender):
+class HuaweiSMSSender(CodeDeliveryProvider):
     """
     HuaweiSMSSender class for sending SMS using Huawei SMS gateway.
 

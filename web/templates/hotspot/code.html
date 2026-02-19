@@ -15,10 +15,10 @@
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
-    <input class="btn btn-submit" type="submit" value="{{ get_translate('buttons.confirm_code', session.user_lang) }}">
+    <input class="btn btn-wide btn-submit" type="submit" value="{{ get_translate('buttons.confirm_code', session.user_lang) }}">
 
     <p id="resendMessage">{{ get_translate('html.code.resend_message', session.user_lang) }} <span id="timer">60</span> {{ get_translate('html.code.seconds', session.user_lang) }}</p>
-    <a class="text-center mt-2 link-line" href="{{ url_for('api.code.resend') }}" id="resendLink" style="display:none;">{{ get_translate('html.code.resend_link', session.user_lang) }}</a>
+    <a class="text-center mt-2 link-line" href="{{ url_for('pages.hotspot.resend') }}" id="resendLink" style="display:none;">{{ get_translate('html.code.resend_link', session.user_lang) }}</a>
 
     <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </form>

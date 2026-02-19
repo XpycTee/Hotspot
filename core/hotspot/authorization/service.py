@@ -73,7 +73,6 @@ class Authorization:
             )
         return AuthResponse(
             status=AuthStatus.FAILED,
-            error_message="User not found",
         )
 
     def phone_authorization(self, mac: str, phone: str, hardware_fp: str) -> AuthResponse:

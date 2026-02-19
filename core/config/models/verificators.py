@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, FrozenSet, List, Mapping, Optional
+from typing import List, Optional
 
 
 @dataclass(frozen=True)
@@ -50,6 +50,7 @@ class VProviderType(str, Enum):
     ASTERISK = "asterisk"
     MIKROTIK = "mikrotik"
     HUAWEI = "huawei"
+    DEBUG = "debug"
 
 @dataclass
 class VProvidersList:

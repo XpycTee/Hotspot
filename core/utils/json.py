@@ -51,6 +51,9 @@ def dumps(obj: Any, *, indent: bool = False) -> bytes:
     option = orjson.OPT_INDENT_2 if indent else 0
     return orjson.dumps(obj, default=_default, option=option)
 
+def dumps_str(obj: Any, *, indent: bool = False, encoding: str = "utf-8", errors: str = "strict") -> str:
+    return dumps(obj, indent=indent).decode(encoding, errors)
+
 
 # ---------- DESERIALIZATION ----------
 

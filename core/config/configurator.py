@@ -178,6 +178,8 @@ class Configurator:
                 VProviderType.ASTERISK,
                 VProviderType.MIKROTIK,
                 VProviderType.HUAWEI,
+                # Always last
+                VProviderType.DEBUG,
             ]
             verificators = [
                 VerificationProvider(
@@ -233,6 +235,15 @@ class Configurator:
                             type="text",
                         ),
                     ],
+                    supported_methods=[
+                        VerificationMethod.CODE,
+                    ],
+                ),
+                VerificationProvider(
+                    type=VProviderType.DEBUG,
+                    name='Debug',
+                    enabled=True,
+                    fields=[],
                     supported_methods=[
                         VerificationMethod.CODE,
                     ],

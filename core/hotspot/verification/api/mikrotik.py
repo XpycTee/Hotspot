@@ -5,8 +5,7 @@ from urllib import request
 from urllib import error
 from urllib.parse import urlparse
 
-from core.config.models.verificators import DeliveryStatus, SendCodeResult
-from core.hotspot.verification.api import CodeDeliveryProvider
+from core.hotspot.verification.api import CodeDeliveryProvider, DeliveryStatus, SendCodeResult
 from core.logging import get_logger
 from core.utils.language import get_translate
 
