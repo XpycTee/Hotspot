@@ -1,7 +1,6 @@
 from flask import Blueprint, abort, jsonify, render_template, request
 
 from core.admin.tables.settings.verificators import get_verificators, update_verificator
-from core.config import get_config
 from core.utils.language import get_translate
 from web.pages.admin.utils import login_required
 

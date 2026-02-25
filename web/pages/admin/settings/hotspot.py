@@ -80,4 +80,3 @@ def index():
     )
     
     return template
-
