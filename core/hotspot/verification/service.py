@@ -6,7 +6,7 @@ from core.config.models.verificators import VerificationMethod
 from core.exceptions.verification import NoAvailableMethodError
 from core.hotspot.verification.router import VRouterStatus, VerificationRouter
 from core.logging import get_logger
-from core.redis import cache
+from core.redis.cache import RedisCache
 from core.utils.language import get_translate
 
 logger = get_logger('core.hotspot.verification.service')
@@ -62,7 +62,8 @@ class VerificationSession:
 
 class Verification:
     def __init__(self, session_id: str):
-        chached_session = cache.get(f'verify:session:{session_id}')
+        self._cache = RedisCache()
+        chached_session = self._cache.get(f'verify:session:{session_id}')
         if chached_session is None:
             self._session = VerificationSession(
                 session_id=session_id,
@@ -72,10 +73,10 @@ class Verification:
             self._session = VerificationSession(**chached_session)
 
     def _save_session(self):
-        cache.set(f'verify:session:{self._session.session_id}', self._session, 600)
+        self._cache.set(f'verify:session:{self._session.session_id}', self._session, 600)
 
     def _clear_session(self):
-        cache.delete(f'verify:session:{self._session.session_id}')
+        self._cache.delete(f'verify:session:{self._session.session_id}')
 
     def start_verification(self, phone: str) -> VerificationResponse:
         self._session.phone = phone

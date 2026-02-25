@@ -21,8 +21,12 @@ class RedisCache:
         (lambda v: is_dataclass(v),      "json",  json.dumps_str, json.loads),
     ]
     
-    def __init__(self):
-        self.r = Redis.from_url(REDIS_URL, decode_responses=True)
+    def __init__(self, url=None):
+        self._url = url if url is not None else REDIS_URL
+        self.r = Redis.from_url(self._url, decode_responses=True)
+
+    def close(self):
+        self.r.close()
 
     def set(self, key: str, value, timeout=None):
         """

@@ -2,7 +2,7 @@ import hashlib
 from flask import Blueprint, Response, request
 
 from core.config import get_config
-from core.redis import cache
+from core.redis import get_cache
 
 
 smsru_bp = Blueprint('smsru', __name__, url_prefix='/smsru')
@@ -50,8 +50,9 @@ def index():
                 'unix_timestamp': float(lines[3]),
             }
             check_id = lines[1]
-            cached_data = cache.get(f'callcheck:smsru:id:{check_id}')
-            cached_data['confirm'] = data
-            cache.set(f'callcheck:smsru:id:{check_id}', cached_data, 120)
+            with get_cache() as cache:
+                cached_data = cache.get(f'callcheck:smsru:id:{check_id}')
+                cached_data['confirm'] = data
+                cache.set(f'callcheck:smsru:id:{check_id}', cached_data, 120)
 
     return Response("100", status=200)

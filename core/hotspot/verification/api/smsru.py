@@ -1,9 +1,8 @@
-from enum import Enum
 from smsru_api import Client
 
 from core.hotspot.verification.api import CallConfirmationProvider, CodeDeliveryProvider, ConfirmResult, ConfirmStatus, DeliveryStatus, SendCodeResult
 from core.logging import get_logger
-from core.redis import cache
+from core.redis import get_cache
 from core.utils.language import get_translate
 
 
@@ -93,7 +92,8 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
                 'check_status': 400,
             },
         }
-        cache.set(f'callcheck:smsru:id:{check_id}', cache_data, 600)
+        with get_cache() as cache:
+            cache.set(f'callcheck:smsru:id:{check_id}', cache_data, 600)
         
         return ConfirmResult(
             status=ConfirmStatus.PENDING,
@@ -102,7 +102,8 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
         )
 
     def check_verification(self, request_id):
-        phone_data: dict = cache.get(f'callcheck:smsru:id:{request_id}')
+        with get_cache() as cache:
+            phone_data: dict = cache.get(f'callcheck:smsru:id:{request_id}')
         confirm_data: dict = phone_data.get('confirm')
         check_status = confirm_data.get('check_status')
         return ConfirmResult(
