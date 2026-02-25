@@ -141,9 +141,9 @@
           "hours": "часов",
           "min": "минут"
         },
-        "sender": {
-          "title": "Sender",
-          "type": "Тип",
+        "verificators": {
+          "title": "Провайдеры",
+          "enabled": "Включено",
           "url": "URL",
           "api_key": "API Ключ"
         },
@@ -183,7 +183,8 @@
     "yes": "Да",
     "no": "Нет",
     "add_phone": "+ номер",
-    "change_password": "Изменить пароль"
+    "change_password": "Изменить пароль",
+    "continue": "Продолжить"
   },
   "placeholders": {
     "login": "Логин",

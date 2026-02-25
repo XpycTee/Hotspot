@@ -112,6 +112,8 @@
             "employees": "Add new employee",
             "blacklist": "Block"
           },
+          "lastname_palceholder": "Last name",
+          "name_palceholder": "First name",
           "phones_label": "Phones"
         }
       },
@@ -145,6 +147,12 @@
           "url": "URL",
           "api_key": "API Key"
         },
+        "verificators": {
+          "title": "Providers",
+          "enabled": "Enabled",
+          "url": "URL",
+          "api_key": "API Key"
+        },
         "users": {
           "title": "Users",
           "group": "Group",
@@ -171,6 +179,9 @@
     "block": "Block",
     "filters_open": "Filters ▾",
     "filters_close": "Filters ▴",
+    "auth": "Authorization",
+    "send_code": "Send SMS with code",
+    "call": "Call",
     "send_sms": "Send SMS with code",
     "onfirm_code": "Confirm code",
     "panel": "Panel",
@@ -179,7 +190,8 @@
     "yes": "Yes",
     "no": "No",
     "add_phone": "+ phone",
-    "change_password": "Change password"
+    "change_password": "Change password",
+    "continue": "Continue"
   },
   "placeholders": {
     "login": "Login",
@@ -193,6 +205,9 @@
     "lastname": "Last name",
     "firstname": "First name",
     "phone": "Phone"
+  },
+  "confirms": {
+    "delete": "Are you sure you want to delete: {name}?"
   },
   "sms_code": "{code} is your WiFi code"
 }
