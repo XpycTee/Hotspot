@@ -61,20 +61,6 @@ def index():
     return redirect(url_for('pages.hotspot.login'), 302)
 
 
-@hotspot_bp.route('/test_login', methods=['GET'])
-def test_login():
-    if not current_app.debug:
-        abort(404)
-    required_keys = ['link-login-only', 'link-orig', 'mac', 'hardware_fp']
-    has_requirements = all(key in set(request.values.keys()) for key in required_keys)
-    if not has_requirements:
-        abort(400)
-    else:
-        [session.update({k: v}) for k, v in request.values.items()]
-        logger.debug(f'Session data in test: {_log_masked_session()}')
-    return login()
-
-
 @hotspot_bp.route('/test', methods=['GET'])
 def test():
     if not current_app.debug:
@@ -82,13 +68,13 @@ def test():
 
     characters = string.ascii_letters + string.digits
     mac = "02:00:00:%02x:%02x:%02x" % (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-    hardware_fp = "".join(secrets.choice(characters) for i in range(8))
+    hardware_fp = "".join(secrets.choice(characters) for _ in range(12))
 
     gen_request = {
-        'mac': mac,
-        'link-orig': 'http://test.lan:81/orig',
-        'link-login-only': 'http://test.lan:81/test',
-        'hardware_fp': hardware_fp,
+        'mac': request.values.get('mac', mac),
+        'link-orig': request.values.get('link-orig', 'http://test.lan:81/orig'),
+        'link-login-only': request.values.get('link-login-only', 'http://test.lan:81/test'),
+        'hardware_fp': request.values.get('hardware_fp', hardware_fp),
     }
 
     [session.update({k: v}) for k, v in gen_request.items()]
