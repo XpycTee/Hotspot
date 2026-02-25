@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session
+from flask import Blueprint, redirect, session, url_for
 
 from web.pages.admin.utils import login_required
 from web.pages.admin.settings.radius import radius_bp
@@ -22,9 +22,5 @@ for bp in bluepints:
 @settings_bp.route('', methods=['POST', 'GET'])
 @login_required(group='full')
 def index():
-    error = session.pop('error', None)
-
-    return render_template(
-        'admin/settings.html', 
-        error=error,
-    )
+    session.pop('error', None)
+    return redirect(url_for('pages.admin.settings.hotspot.index'))

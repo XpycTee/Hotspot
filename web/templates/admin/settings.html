@@ -35,51 +35,16 @@
         </a>
     </div>
     <ul class="nav-tabs">
-        <li><a id="hotspot" href="{{ url_for('pages.admin.settings.hotspot.index') }}">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
-        <li><a id="radius" href="{{ url_for('pages.admin.settings.radius.index') }}">{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</a></li>
-        <li><a id="verificators" href="{{ url_for('pages.admin.settings.verificators.index') }}">{{ get_translate('html.admin.settings.verificators.title', session.user_lang) }}</a></li>
-        <li><a id="users" href="{{ url_for('pages.admin.settings.users.index') }}">{{ get_translate('html.admin.settings.users.title', session.user_lang) }}</a></li>
+        <li><a id="hotspot" class="{{ 'active' if request.endpoint == 'pages.admin.settings.hotspot.index' else '' }}" href="{{ url_for('pages.admin.settings.hotspot.index') }}">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
+        <li><a id="radius" class="{{ 'active' if request.endpoint == 'pages.admin.settings.radius.index' else '' }}" href="{{ url_for('pages.admin.settings.radius.index') }}">{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</a></li>
+        <li><a id="verificators" class="{{ 'active' if request.endpoint == 'pages.admin.settings.verificators.index' else '' }}" href="{{ url_for('pages.admin.settings.verificators.index') }}">{{ get_translate('html.admin.settings.verificators.title', session.user_lang) }}</a></li>
+        <li><a id="users" class="{{ 'active' if request.endpoint == 'pages.admin.settings.users.index' else '' }}" href="{{ url_for('pages.admin.settings.users.index') }}">{{ get_translate('html.admin.settings.users.title', session.user_lang) }}</a></li>
     </ul>
     <div class="table-container">
         {% block settings_content %}{% endblock %}
     </div>
 
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const tabs = document.querySelectorAll('.nav-tabs a');
-        let activeTab = 'hotspot'
-
-        // Check localStorage for saved tab
-        const savedTab = localStorage.getItem('activeSettingsTab');
-        if (savedTab) {
-            const tab = document.getElementById(savedTab);
-            tab.classList.add('active');
-            activeTab = savedTab;
-        } else {
-            tabs[0].classList.add('active');
-        }
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function (e) {
-                const target = this.getAttribute('id');
-                // Remove active class from all tabs
-                tabs.forEach(link => link.classList.remove('active'));
-                // Add active class to the clicked tab
-                this.classList.add('active');
-                // Save the active tab to localStorage
-                localStorage.setItem('activeSettingsTab', target);
-
-                activeTab = target;
-            });
-        });
-
-        if (window.location.pathname != `{{ url_for('pages.admin.settings.index') }}/${activeTab}`) {
-            console.log(window.location.pathname + '!=' + `{{ url_for('pages.admin.settings.index') }}/${activeTab}`);
-            window.location.href = `{{ url_for('pages.admin.settings.index') }}/${activeTab}`;
-        }
-    });
-</script>
 {% endblock %}
 
 {% block footer %}
