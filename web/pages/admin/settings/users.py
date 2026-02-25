@@ -1,112 +1,140 @@
-from flask import Blueprint, jsonify, render_template, request, session
+from flask import Blueprint, abort, jsonify, request, session
 
-from core.admin.auth.security import check_password
 from core.admin.repository import create_user, delete_user, update_user
 from core.admin.tables.settings.users import get_users
-from core.utils import json
+from core.utils.language import get_translate
+from web.pages.admin.settings.common import render_settings_page
 from web.pages.admin.utils import login_required
+from web.structures import ViewFieldType, ViewItem, ViewItemField
 
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
+ITEM_ACTIONS = ['save', 'delete']
+DEFAULT_ENABLED = True
+
+
+def _group_state(group: str | None) -> dict[str, bool]:
+    return {
+        'read': group == 'read',
+        'write': group == 'write',
+        'full': group == 'full',
+    }
+
+
+def _build_user_item(data: dict) -> ViewItem:
+    return ViewItem(
+        name=data.get('username'),
+        enabled=DEFAULT_ENABLED,
+        fields=[
+            ViewItemField(
+                label='Group',
+                type=ViewFieldType.SELECT,
+                name='group',
+                required=True,
+                value=_group_state(data.get('group')),
+            ),
+            ViewItemField(
+                label='Password',
+                type=ViewFieldType.PASSWORD,
+                name='password',
+                required=False,
+            ),
+            ViewItemField(
+                label='Confirm Password',
+                type=ViewFieldType.PASSWORD_CONFIRM,
+                name='password_confirm',
+                required=False,
+            ),
+        ],
+        actions=ITEM_ACTIONS,
+    )
+
+
+def _build_empty_user_item() -> ViewItem:
+    return ViewItem(
+        name='New User',
+        enabled=DEFAULT_ENABLED,
+        fields=[
+            ViewItemField(
+                label='Username',
+                type=ViewFieldType.USERNAME,
+                name='username',
+                required=True,
+            ),
+            ViewItemField(
+                label='Group',
+                type=ViewFieldType.SELECT,
+                name='group',
+                required=True,
+                value={'read': True, 'write': False, 'full': False},
+            ),
+            ViewItemField(
+                label='Password',
+                type=ViewFieldType.PASSWORD,
+                name='password',
+                required=False,
+            ),
+            ViewItemField(
+                label='Confirm Password',
+                type=ViewFieldType.PASSWORD_CONFIRM,
+                name='password_confirm',
+                required=False,
+            ),
+        ],
+        actions=ITEM_ACTIONS,
+    )
 
 
 @users_bp.route('', methods=['GET'])
 @login_required(group='full')
 def index():
-    users = get_users()
-
-    template = render_template(
+    return render_settings_page(
         'admin/settings/users.html',
-        users=users,
+        source=get_users(),
+        item_builder=_build_user_item,
+        empty_item=_build_empty_user_item(),
     )
-    
-    return template
-
-
-@users_bp.route('/get', methods=['GET'])
-@login_required(group='full')
-def get():
-    users = get_users()
-
-    template = jsonify({'success': True, 'data': users})
-    
-    return template
-
-
-@users_bp.route('/add', methods=['POST'])
-@login_required(group='full')
-def add():
-    data: dict = request.json
-
-    username = data.get('username').strip()
-    password = data.get('password').strip()
-    password_confirm = data.get('password_confirm').strip()
-
-    if password != password_confirm:
-        jsonify({'success': False, 'error': {'description': 'Passwords do not match'}})
-
-    group = data.get('group')
-        
-    response = create_user(username, password, group)
-    status = response.get('status')
-    if status == 'OK':
-        return jsonify({'success': True})
-    return jsonify({'success': False, 'error': {'description': status}})
 
 
 @users_bp.route('/update', methods=['POST'])
 @login_required(group='full')
 def update():
-    data: dict = request.json
+    req: dict = request.json
+    if not req:
+        abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
+    username = req.get('id')
     active_username = session.get('username')
-    username = data.get('username')
+    password = req['fields'].get('password', None)
+    password_confirm = req['fields'].get('password_confirm', None)
 
     if username == active_username:
-        return jsonify({'success': False, 'error': {'description': "You can't update your group"}})
+        return jsonify({'success': False, 'error': {'description': "You can't update your self"}})
     
-    group = data.get('group', None)
-
-    response = update_user(username, group=group)
-    status = response.get('status')
-    if status == 'OK':
-        return jsonify({'success': True})
-    return jsonify({'success': False, 'error': {'description': status}})
-
-
-@users_bp.route('/change_password', methods=['POST'])
-@login_required(group='full')
-def change_password():
-    data: dict = request.json
-
-    username = data.get('username')
-
-    active_username = session.get('username')
-    confirm_action_password = data.get('confirm').strip()
-
-    if not check_password(active_username, confirm_action_password):
-        jsonify({'success': False, 'error': {'description': 'Wrong password'}})
-
-    password = data.get('password').strip()
-    password_confirm = data.get('password_confirm').strip()
-
     if password != password_confirm:
         jsonify({'success': False, 'error': {'description': 'Passwords do not match'}})
 
-    response = update_user(username, password=password)
+    group = req['fields'].get('group', None)
+
+    if username.startswith('new_'):
+        username = req['fields'].get('username')
+        response = create_user(username, password=password, group=group)
+    else:
+        response = update_user(username, password=password, group=group)
     status = response.get('status')
     if status == 'OK':
         return jsonify({'success': True})
     return jsonify({'success': False, 'error': {'description': status}})
-
 
 @users_bp.route('/delete', methods=['POST'])
 @login_required(group='full')
 def delete():
-    data: dict = request.json
+    req: dict = request.json
+    if not req:
+        abort(400, description=get_translate('errors.admin.tables.missing_request_data'))
 
     active_username = session.get('username')
-    username = data.get('username')
+    username = req.get('id')
 
     if username == active_username:
         return jsonify({'success': False, 'error': {'description': "You can't delete your self"}})

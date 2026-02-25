@@ -1,0 +1,191 @@
+<div class="list">
+    <div class="list-body">
+        {% for key, item in data.items() %}
+        <div class="item" data-id="{{ key }}">
+            {% include "structures/item.html" %}
+        </div>
+        {% endfor %}
+    </div>
+    {% if actions %}
+    <div class="actions list-actions">
+        {% if 'add' in actions %}
+        <button class="btn btn-wide btn-add" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+<script>
+async function beforeDeleteItem(item) {
+    const id = item.dataset.id;
+    if (id.startsWith('new_')) {
+        item.remove();
+        return;
+    }
+
+    const result = await deleteItem({ id: id });
+    if (result && result.success) {
+        item.remove();
+    } else {
+        alert(result.error.description);
+    }
+}
+
+async function beforeSaveItems(listBody) {
+    let data = { items: [] };
+
+    const items = listBody.querySelectorAll('.item');
+    items.forEach(item => {
+        const id = item.dataset.id;
+        const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
+        const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
+
+        const fields = {};
+        item.querySelectorAll(`input[name$="_${id}"], select[name$="_${id}"], textarea[name$="_${id}"]`)
+            .forEach(control => {
+                const fieldName = control.name.replace(`_${id}`, '');
+                if (fieldName === 'enabled') {
+                    return;
+                }
+
+                if (control.type === 'checkbox') {
+                    fields[fieldName] = control.checked;
+                    return;
+                }
+
+                if (control.type === 'radio') {
+                    if (control.checked) {
+                        fields[fieldName] = control.value;
+                    }
+                    return;
+                }
+
+                fields[fieldName] = control.value;
+            });
+
+        data.items.push({
+            id: id,
+            enabled: enabled,
+            fields: fields
+        });
+    });
+    
+    const result = await saveItems(data);
+    if (result && result.success) {
+        location.reload();
+    } else {
+        alert(result.error.description);
+    }
+}
+
+async function beforeSaveItem(item) {
+    const id = item.dataset.id;
+    const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
+    const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
+
+    const fields = {};
+    item.querySelectorAll(`input[name$="_${id}"], select[name$="_${id}"], textarea[name$="_${id}"]`)
+        .forEach(control => {
+            const fieldName = control.name.replace(`_${id}`, '');
+            if (fieldName === 'enabled') {
+                return;
+            }
+
+            if (control.type === 'checkbox') {
+                fields[fieldName] = control.checked;
+                return;
+            }
+
+            if (control.type === 'radio') {
+                if (control.checked) {
+                    fields[fieldName] = control.value;
+                }
+                return;
+            }
+
+            fields[fieldName] = control.value;
+        });
+
+    let data = {
+        id: id,
+        enabled: enabled,
+        fields: fields
+    }
+    
+    const result = await saveItem(data);
+    if (result && result.success) {
+        location.reload();
+    } else {
+        alert(result.error.description);
+    }
+}
+
+function toggleAccordion(body) {
+    const isOpen = body.style.height && body.style.height !== '0px';
+
+    if (isOpen) {
+        body.style.height = body.scrollHeight + 'px';
+        requestAnimationFrame(() => {
+            body.style.height = '0px';
+        });
+    } else {
+        body.style.height = body.scrollHeight + 'px';
+
+        body.addEventListener('transitionend', function handler() {
+            body.style.height = 'auto';
+            body.removeEventListener('transitionend', handler);
+        });
+    }
+}
+
+function bindItemEvents(item) {
+    const header = item.querySelector('.item-header');
+    const body = item.querySelector('.item-body');
+    const deleteBtn = item.querySelector('.btn-delete');
+    const saveBtn = item.querySelector('.btn-save');
+
+    saveBtn.addEventListener('click', async () => {
+        await beforeSaveItem(item);
+    });
+
+    deleteBtn.addEventListener('click', async () => {
+        await beforeDeleteItem(item);
+    });
+
+    header.addEventListener('click', () => {
+        toggleAccordion(body);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.querySelector('.list');
+    const listBody = list.querySelector('.list-body');
+    const items = listBody.querySelectorAll('.item');
+    const actions = list.querySelector('.list-actions');
+    const addItemBtn = actions.querySelector('.btn-add');
+    let verificatorCounter = 1000; // временный ID до сохранения
+
+    addItemBtn.addEventListener('click', () => {
+        const newId = 'new_' + verificatorCounter++;
+
+        const item = document.createElement('div');
+        item.className = 'item';
+        item.dataset.id = newId;
+
+        item.innerHTML = `
+        {% with key='${newId}', item=empty_item %}
+            {% include "structures/item.html" %}
+        {% endwith %}`;
+
+        listBody.appendChild(item);
+        const body = item.querySelector('.item-body');
+
+        bindItemEvents(item);
+        // сразу раскрываем
+        toggleAccordion(body);
+    });
+
+    items.forEach(item => {
+        bindItemEvents(item);
+    });
+});
+</script>

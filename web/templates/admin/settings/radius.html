@@ -5,255 +5,36 @@
     <section class="settings-panel">
         <h2>{{ get_translate('html.admin.settings.radius.title', session.user_lang) }}</h2>
 
-        <div class="radius-hosts-list">
-            {% for host, data in hosts.items() %}
-            <div class="settings-item" data-id="{{ host }}">
-                <div class="settings-item-header{{ '' if data.enabled else ' settings-item-disabled' }}">
-                    <span class="settings-item-title">{{ data.name }}</span>
-                    <span class="settings-item-toggle">▼</span>
-                </div>
-                
-                <div class="settings-item-body">
-                    <div class="settings-item-body-inner">
-                        <div class="settings-item-settings">
-                            <div class="field">
-                                <label class="settings-label">
-                                    Enabled:
-                                    <input type="checkbox" name="enabled_{{ host }}" {{ 'checked' if data.enabled else '' }}>
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label class="settings-label">
-                                    Name:
-                                    <input class="input input-settings" type="text" name="name_{{ host }}" value="{{ data.name }}">
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label class="settings-label">
-                                    Address:
-                                    <input class="input input-settings" type="text" name="address_{{ host }}" value="{{ data.address }}">
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label class="settings-label">
-                                    Secret:
-                                    <input class="input input-settings" type="password" name="secret_{{ host }}" value="{{ data.secret }}">
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label class="settings-label">
-                                    Auth port:
-                                    <input class="input input-settings" type="text" name="auth_{{ host }}" value="{{ data.authport }}">
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label class="settings-label">
-                                    Acct port:
-                                    <input class="input input-settings" type="text" name="acct_{{ host }}" value="{{ data.acctport }}">
-                                </label>
-                            </div>
-                            <div class="field">
-                                <label class="settings-label">
-                                    CoA port:
-                                    <input class="input input-settings" type="text" name="coa_{{ host }}" value="{{ data.coaport }}">
-                                </label>
-                            </div>
-                            <div class="settings-actions">
-                                <button class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
-                                <button class="btn btn-settings btn-delete" type="button">{{ get_translate('buttons.delete', session.user_lang) }}</button>
-                                <span class="notify" role="status" aria-live="polite"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-            <div class="settings-actions">
-                <button id="add-host-btn" class="btn btn-wide btn-add" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
-            </div>
-        </div>
+        {% include "structures/list.html" %}
     </section>
 </div>
 
 <script>
-function attachItemHandlers(item) {
-    const id = item.dataset.id;
-    const header = item.querySelector('.settings-item-header');
-    const body = item.querySelector('.settings-item-body');
-    const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-
-    const deleteBtn = item.querySelector('.btn-delete');
-    const saveBtn = item.querySelector('.btn-save');
-
-    header.addEventListener('click', () => {
-        toggleAccordion(item);
-    });
-
-    saveBtn.addEventListener('click', () => {
-        updateHosts([item]);
-    });
-
-    deleteBtn.addEventListener('click', () => {
-        deleteHost(item);
-    });
-
-    enabledCheckbox.addEventListener('change', () => {
-        toggleEnabled(item);
-    });
-}
-
-function updateHosts(items) {
-    let data = { hosts: [] };
-
-    items.forEach(item => {
-        const id = item.dataset.id;
-        const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
-        const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
-
-        const fields = {};
-        item.querySelectorAll('.input')
-            .forEach(input => {
-                fields[input.name.replace(`_${id}`, '')] = input.value;
-            });
-
-        data.hosts.push({
-            id: id,
-            enabled: enabled,
-            fields: fields
-        });
-    });
-
-    fetch("{{ url_for('pages.admin.settings.radius.update') }}", {
+function saveItems(data) {
+    return fetch("{{ url_for('pages.admin.settings.radius.update') }}", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     }).then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                location.reload();
-            } else {
-                alert(getTranslate('html.admin.settings.failed'));
-            }
-        })
         .catch(error => console.error('Error:', error));
 }
 
-function deleteHost(item) {
-    const id = item.dataset.id;
-    if (id.startsWith('new_')) {
-        item.remove();
-        return;
-    }
-    
-    const fields = {};
-    item.querySelectorAll('.input')
-        .forEach(input => {
-            fields[input.name.replace(`_${id}`, '')] = input.value;
-        });
-
-    if (!confirm(getTranslate('confirms.delete', { name: fields.name }))) return;
-
-    let data = { id: item.dataset.id };
-
-    fetch("{{ url_for('pages.admin.settings.radius.delete') }}", {
+function saveItem(data) {
+    return fetch("{{ url_for('pages.admin.settings.radius.update') }}", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     }).then(response => response.json())
-        .then(result => {
-            if (result.success) {
-                item.remove()
-            } else {
-                showStatus(getTranslate('html.admin.settings.failed'), false);
-            }
-        })
         .catch(error => console.error('Error:', error));
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const list = document.querySelector('.radius-hosts-list');
-    const items = list.querySelectorAll('.settings-item');
-    const addItemBtn = list.getElementById('add-host-btn');
-    let verificatorCounter = 1000; // временный ID до сохранения
-
-    addItemBtn.addEventListener('click', () => {
-        const newId = 'new_' + verificatorCounter++;
-
-        const item = document.createElement('div');
-        item.className = 'settings-item';
-        item.dataset.id = newId;
-
-        item.innerHTML = `
-            <div class="settings-item-header">
-                <span class="settings-item-title">{{ get_translate('html.admin.settings.radius.add_title', session.user_lang) }}</span>
-                <span class="settings-item-toggle">▼</span>
-            </div>
-
-            <div class="settings-item-body">
-                <div class="settings-item-body-inner">
-                    <div class="settings-item-settings">
-                        <div class="field">
-                            <label class="settings-label">
-                                Enabled:
-                                <input type="checkbox" name="enabled_${newId}" checked>
-                            </label>
-                        </div>
-                        <div class="field">
-                            <label class="settings-label">
-                                Name:
-                                <input class="input input-settings" type="text" name="name_${newId}" value="">
-                            </label>
-                        </div>
-                        <div class="field">
-                            <label class="settings-label">
-                                Address:
-                                <input class="input input-settings" type="text" name="address_${newId}" value="">
-                            </label>
-                        </div>
-                        <div class="field">
-                            <label class="settings-label">
-                                Secret:
-                                <input class="input input-settings" type="password" name="secret_${newId}" value="">
-                            </label>
-                        </div>
-                        <div class="field">
-                            <label class="settings-label">
-                                Auth port:
-                                <input class="input input-settings" type="text" name="auth_${newId}" value="1812">
-                            </label>
-                        </div>
-                        <div class="field">
-                            <label class="settings-label">
-                                Acct port:
-                                <input class="input input-settings" type="text" name="acct_${newId}" value="1813">
-                            </label>
-                        </div>
-                        <div class="field">
-                            <label class="settings-label">
-                                CoA port:
-                                <input class="input input-settings" type="text" name="coa_${newId}" value="3799">
-                            </label>
-                        </div>
-                        <div class="settings-actions">
-                            <button class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
-                            <button class="btn btn-settings btn-delete" type="button">{{ get_translate('buttons.delete', session.user_lang) }}</button>
-                            <span class="notify" role="status" aria-live="polite"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        list.appendChild(item);
-
-        attachItemHandlers(item);
-        // сразу раскрываем
-        toggleAccordion(item);
-    });
-    
-    items.forEach(item => {
-        attachItemHandlers(item);
-    });
-});
+function deleteItem(data) {
+    return fetch("{{ url_for('pages.admin.settings.radius.delete') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => response.json())
+        .catch(error => console.error('Error:', error));
+}
 </script>
 {% endblock %}

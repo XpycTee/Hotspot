@@ -1,0 +1,41 @@
+<div class="item-header{{ '' if item.enabled else ' item-disabled' }}">
+    <span class="item-title">{{ item.name }}</span>
+    <span class="item-toggle">▼</span>
+</div>
+
+<div class="item-body">
+    <div class="item-body-inner">
+
+        {% for field in item.fields %}
+        <div class="field">
+            <label class="field-label">
+                {{ field.label }}:
+                {% if field.type in ['checkbox', 'radio'] %}
+                <input type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}"{{ ' checked' if field.value else '' }}{{ ' required' if field.required else '' }}>
+                {% elif field.type == 'select' %}
+                <select class="input modal-input" name="{{ field.name }}_{{ key }}"{{ ' required' if field.required else '' }}>
+                    {% for opt, opt_value in field.value.items() %}
+                    <option value="{{ opt }}"{{ ' selected' if opt_value else '' }}>{{ opt }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input class="input input-settings" type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}" value="{{ field.value if field.value else '' }}"{{ ' required' if field.required else '' }}>
+                {% endif %}
+            </label>
+        </div>
+        {% endfor %}
+
+        {% if item.actions %}
+        <div class="actions item-actions">
+            {% if 'save' in item.actions %}
+            <button class="btn btn-settings btn-save" type="button">{{ get_translate('buttons.save', session.user_lang) }}</button>
+            {% endif %}
+            {% if 'delete' in item.actions %}
+            <button class="btn btn-settings btn-delete" type="button">{{ get_translate('buttons.delete', session.user_lang) }}</button>
+            {% endif %}
+            <span class="notify" role="status" aria-live="polite"></span>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
