@@ -90,10 +90,11 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
             'start': phone_data,
             'confirm': {
                 'check_status': 400,
-            },
+            }
         }
         with get_cache() as cache:
             cache.set(f'callcheck:smsru:id:{check_id}', cache_data, 600)
+            cache.set(f'callcheck:smsru:counter:{check_id}', 0, 600)
         
         return ConfirmResult(
             status=ConfirmStatus.PENDING,
@@ -102,12 +103,28 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
         )
 
     def check_verification(self, request_id):
+        id_key = f'callcheck:smsru:id:{request_id}'
+        counter_key = f'callcheck:smsru:counter:{request_id}'
+
         with get_cache() as cache:
-            phone_data: dict = cache.get(f'callcheck:smsru:id:{request_id}')
+            phone_data: dict | None = cache.get(id_key)
+            if phone_data is None:
+                logger.error('Callcheck timeout')
+                return ConfirmResult(
+                    status=ConfirmStatus.TIEMOUT,
+                )
+
+            check_counter = cache.incr(counter_key)
+
+            if check_counter % 3 == 0:
+                return self.check_polling(request_id)
+
         confirm_data: dict = phone_data.get('confirm')
         check_status = confirm_data.get('check_status')
+
+        ret_status = SMSRU_STATUS[check_status]
         return ConfirmResult(
-            status=SMSRU_STATUS[check_status],
+            status=ret_status,
         )
 
     def check_polling(self, request_id: str) -> ConfirmResult:
