@@ -1,40 +1,61 @@
 {% extends 'admin/panel.html' %}
 
 {% block panel_content %}
-<div id="employees" class="content-tab table-container">
-    <div class="filters-panel">
-        <div class="filters-row">
-            <input type="text" id="employees_search" class="filter-input table-search" value="{{ request.args.get('search', '') }}" placeholder="{{ get_translate('placeholders.search', session.user_lang) }}">
-        </div>
-        <span class="filter-label found-count"></span>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>{{ get_translate('html.admin.panel.tables.employees.id', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.employees.lastname', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.employees.name', session.user_lang) }}</th>
-                <th class="column-phones">{{ get_translate('html.admin.panel.tables.employees.phones', session.user_lang) }}</th>
-                <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
-            </tr>
-        </thead>
-        <tbody id="employees_body">
-            <tr class="add_row_button">
-                <td colspan="5"><button class="btn btn-wide btn-add" onclick="addRowModal(this, 'employees')">{{ get_translate('buttons.add', session.user_lang) }}</button></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="pagination">
-        <button class="btn btn-prev" onclick="changePage('employees', -1)">{{ get_translate('buttons.prev', session.user_lang) }}</button>
-        <div class="page_numbers"></div>
-        <button class="btn btn-next" onclick="changePage('employees', 1)">{{ get_translate('buttons.next', session.user_lang) }}</button>
-        <span class="page_info"></span>
-    </div>
+<div id="employees" class="content-tab">
+    {% include "structures/list.html" %}
 </div>
 
 <script>
-window.__PANEL_TABLE__ = 'employees';
+function toEmployeePayload(data) {
+    const fields = data.fields || {};
+    const phones = Array.isArray(fields.phone) ? fields.phone : [fields.phone];
+    const payload = {
+        lastname: (fields.lastname || '').trim(),
+        name: (fields.name || '').trim(),
+        phone: phones.map(phone => (phone || '').trim()).filter(Boolean),
+    };
+
+    if (!data.id.startsWith('new_')) {
+        payload.id = Number(data.id);
+    }
+
+    return payload;
+}
+
+function saveItems(data) {
+    const items = data.items || [];
+    return Promise.all(items.map(item => saveItem(item))).then(results => {
+        const failedResult = results.find(result => !result || !result.success);
+        return failedResult || { success: true };
+    });
+}
+
+function saveItem(data) {
+    return fetch("{{ url_for('pages.admin.tables.save_data', table_name='employees') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toEmployeePayload(data))
+    }).then(response => response.json())
+      .catch(error => {
+          console.error('Error:', error);
+          return { success: false, error: { description: 'Network error' } };
+      });
+}
+
+function deleteItem(data) {
+    if (data.id.startsWith('new_')) {
+        return Promise.resolve({ success: true });
+    }
+
+    return fetch("{{ url_for('pages.admin.tables.delete_data', table_name='employees') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: Number(data.id) })
+    }).then(response => response.json())
+      .catch(error => {
+          console.error('Error:', error);
+          return { success: false, error: { description: 'Network error' } };
+      });
+}
 </script>
 {% endblock %}
