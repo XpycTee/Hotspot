@@ -14,9 +14,20 @@ from core.admin.tables.settings.users import get_users
 from core.admin.tables.wifi_clients import get_wifi_clients
 from core.bootstrap.env import ADMIN_PASSWORD, ADMIN_USERNAME
 from core.config import get_config, init_config
+from core.database.models import Model
+from core.database.session import get_session
 
-from core.redis import cache
+from core.redis import get_cache
 from core.utils.language import get_translate
+
+
+def _clear_db():
+    with get_session() as db_session:
+        for table in reversed(Model.metadata.sorted_tables):
+            if table.name == 'system_config':
+                continue
+            db_session.execute(table.delete())
+        db_session.commit()
 
 
 
@@ -24,9 +35,13 @@ class TestCoreAdminAuth(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_config('web')
+        database.create_all()
+        _clear_db()
+        create_user(ADMIN_USERNAME, ADMIN_PASSWORD, 'full')
 
     def tearDown(self):
-        cache.clear()
+        with get_cache() as cache:
+            cache.clear()
 
     def test_handle_failed_login(self):
         session_id = 'test_handle_failed_login'
@@ -81,13 +96,15 @@ class TestCoreAdminAuth(unittest.TestCase):
         self.assertIsNone(result)
 
         yesterday = (datetime.datetime.now() + datetime.timedelta(days=1)).timestamp()
-        cache.set(f'admin:login:lockout:Good', yesterday)
+        with get_cache() as cache:
+            cache.set(f'admin:login:lockout:Good', yesterday)
 
         result = check_lockout('Good')
         self.assertTrue(result)
 
         start_epoche = datetime.datetime(1970, 1, 1).timestamp()
-        cache.set(f'admin:login:lockout:Expired', start_epoche)
+        with get_cache() as cache:
+            cache.set(f'admin:login:lockout:Expired', start_epoche)
 
         result = check_lockout('Expired')
         self.assertFalse(result)
@@ -102,26 +119,32 @@ class TestCoreAdminAuth(unittest.TestCase):
         result = increment_attempts('Null')
         self.assertEqual(result, 1)
 
-        cache.set_raw('admin:login:attempts:Big', 10)
+        with get_cache() as cache:
+            cache.set_raw('admin:login:attempts:Big', 10)
         result = increment_attempts('Big')
         self.assertEqual(result, 11)
 
     def test_reset_attempts(self):
-        cache.set('admin:login:attempts:Reset', 10)
-        cache.set('admin:login:lockout:Reset', True)
+        with get_cache() as cache:
+            cache.set('admin:login:attempts:Reset', 10)
+            cache.set('admin:login:lockout:Reset', True)
 
         reset_attempts('Reset')
         
-        result = cache.get('admin:login:attempts:Reset')
-        self.assertIsNone(result)
-        result = cache.get('admin:login:lockout:Reset')
-        self.assertIsNone(result)
+        with get_cache() as cache:
+            result = cache.get('admin:login:attempts:Reset')
+            self.assertIsNone(result)
+            result = cache.get('admin:login:lockout:Reset')
+            self.assertIsNone(result)
 
 
 class TestCoreAdminTables(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         database.create_all()
+
+    def setUp(self):
+        _clear_db()
 
     def test_get_wifi_clients(self):
         expected = {'wifi_clients': [], 'total_rows': 0}
@@ -140,9 +163,9 @@ class TestCoreAdminTables(unittest.TestCase):
 
 
 class TestCoreAdminUsers(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         database.create_all()
+        _clear_db()
         create_user(ADMIN_USERNAME, ADMIN_PASSWORD, 'full')
 
     def test_get_users(self):
@@ -189,6 +212,7 @@ class TestCoreAdminUsers(unittest.TestCase):
         self.assertEqual(result, expected_notfound)
 
     def test_delete_user(self):
+        _ = create_user('test', 'test', 'read')
         expected = {
             'status': 'OK', 
             'user': {

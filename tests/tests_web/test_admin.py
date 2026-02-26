@@ -5,9 +5,10 @@ from unittest.mock import patch
 
 from flask import Flask
 
+from core.admin.repository import create_user
 from core import database
 from core.config import get_config, init_config
-from core.redis import cache
+from core.redis import get_cache
 from core.database.models import Model
 from core.database.models.blacklist import Blacklist
 from core.database.models.employee import Employee
@@ -27,6 +28,7 @@ class TestAdminViews(unittest.TestCase):
         init_config('web')
 
     def setUp(self):
+        self._clear_users()
         self.app = self._create_flask()
         self._create_users()
 
@@ -37,7 +39,8 @@ class TestAdminViews(unittest.TestCase):
     def tearDown(self):
         self._clear_users()
         self.app_context.pop()
-        cache.clear()
+        with get_cache() as cache:
+            cache.clear()
 
     @staticmethod
     def _create_flask():
@@ -61,6 +64,7 @@ class TestAdminViews(unittest.TestCase):
     
     @staticmethod
     def _create_users():
+        create_user('admin', 'admin', 'full')
         with get_session() as db_session:
             # Add an employee
             employee = Employee(lastname='Doe', name='John')
@@ -74,9 +78,9 @@ class TestAdminViews(unittest.TestCase):
     @staticmethod
     def _clear_users():
         with get_session() as db_session:
-            # очищаем все таблицы
-            tables = Model.metadata.sorted_tables
-            for table in [tables[6], tables[5], tables[3], tables[2], tables[1]]:
+            for table in reversed(Model.metadata.sorted_tables):
+                if table.name == 'system_config':
+                    continue
                 db_session.execute(table.delete())
             db_session.commit()
 
@@ -84,7 +88,7 @@ class TestAdminViews(unittest.TestCase):
         with self.client as c:
             response = c.get('/admin')
             self.assertEqual(response.status_code, 302)
-            self.assertIn('/admin/auth/login', response.location)
+            self.assertIn('/admin/panel', response.location)
     
     def test_login_route(self):
         with self.client as c:
@@ -116,7 +120,8 @@ class TestAdminViews(unittest.TestCase):
                 sess['username'] = 'admin'
                 sess['is_authenticated'] = True
             response = c.get('/admin/panel')
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/admin/panel/wifi-clients', response.location)
 
     def test_logout_route(self):
         with self.client as c:

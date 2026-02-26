@@ -1,28 +1,28 @@
-import datetime
-import os
-import sys
 import unittest
+import os
 from unittest.mock import patch
 
 from flask import Flask
-from sqlalchemy import select
 
 from core import database
 from core.config import get_config, init_config
-from core.redis import cache
 from core.database.models import Model
-from core.database.models.blacklist import Blacklist
-from core.database.models.clients_number import ClientsNumber
-from core.database.models.employee import Employee
-from core.database.models.employee_phone import EmployeePhone
-from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
+from core.hotspot.authorization.service import AuthResponse, AuthStatus
+from core.hotspot.verification.service import VerificationResponse, VerificationStatus
+from core.redis import get_cache
 from core.utils.language import get_translate
 from web.pages import pages_bp
 
 
-ROOD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
-sys.path.insert(0, ROOD_DIR)
+
+def _clear_db():
+    with get_session() as db_session:
+        for table in reversed(Model.metadata.sorted_tables):
+            if table.name == 'system_config':
+                continue
+            db_session.execute(table.delete())
+        db_session.commit()
 
 
 class TestHotspotViews(unittest.TestCase):
@@ -32,509 +32,123 @@ class TestHotspotViews(unittest.TestCase):
         init_config('web')
 
     def setUp(self):
-        self.app = self._create_flask()
-        self._create_users()
+        _clear_db()
+        self.app = Flask(__name__)
+        self.app.debug = True
+        self.app.register_blueprint(pages_bp)
+        self.app.config['SECRET_KEY'] = 'secret'
+        self.app.root_path = os.path.join(os.path.dirname(__file__), '..', '..', 'web')
 
-        self.client = self.app.test_client()
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-
-    def tearDown(self):
-        self._clear_users()
-        self.app_context.pop()
-        cache.clear()
-
-    @staticmethod
-    def _create_flask():
-        app = Flask(__name__)
-        app.debug = True
-        app.register_blueprint(pages_bp)
-        app.root_path = os.path.join(ROOD_DIR, 'web')
-        app.config['SECRET_KEY'] = 'secret'
-        config = get_config()
-        app.config['LANGUAGE_DEFAULT'] = config.language.name
-        app.config['LANGUAGE_CONTENT'] = config.language.content
-
-        @app.context_processor
+        @self.app.context_processor
         def inject_get_translate():
             return dict(get_translate=get_translate)
-        @app.context_processor
+
+        @self.app.context_processor
         def inject_get_config():
             return dict(get_config=get_config)
-        
-        return app
 
-    @staticmethod
-    def _create_users():
-        with get_session() as db_session:
-            # Non Authed Employee
-            non_authed_emp = Employee(
-                lastname = "NonAuthed", 
-                name = "Employee"
-            )
-            db_session.add(non_authed_emp)
-            db_session.commit()
-            non_authed_emp_phone = EmployeePhone(
-                phone_number='79999999991', 
-                employee_id=non_authed_emp.id
-            )
-            db_session.add(non_authed_emp_phone)
+        self.client = self.app.test_client()
+        self.ctx = self.app.app_context()
+        self.ctx.push()
 
-            # Expired Employee
-            expired_emp = Employee(
-                lastname = "Expired", 
-                name = "Employee"
-            )
-            db_session.add(expired_emp)
-            db_session.commit()
-            expired_emp_phone = EmployeePhone(
-                phone_number='79999999992', 
-                employee_id=expired_emp.id
-            )
-            db_session.add(expired_emp_phone)
-            expired_emp_client = ClientsNumber(
-                phone_number='79999999992', 
-                last_seen=datetime.datetime.now()
-            )
-            db_session.add(expired_emp_client)
-            db_session.commit()
-            expired_emp_wifi_client = WifiClient(
-                mac="12:34:56:78:9A:BD", 
-                expiration=datetime.datetime(1970, 1, 1), 
-                employee=expired_emp, 
-                phone=expired_emp_client
-            )
-            db_session.add(expired_emp_wifi_client)
-            db_session.commit()
+    def tearDown(self):
+        with get_cache() as cache:
+            cache.clear()
+        _clear_db()
+        self.ctx.pop()
 
-            # Authed Employee
-            authed_emp = Employee(
-                lastname = "Authed", name = "Employee"
-            )
-            db_session.add(authed_emp)
-            db_session.commit()
-            authed_emp_phone = EmployeePhone(
-                phone_number='79999999999', 
-                employee_id=authed_emp.id
-            )
-            db_session.add(authed_emp_phone)
-            authed_emp_client = ClientsNumber(
-                phone_number='79999999999', 
-                last_seen=datetime.datetime.now()
-            )
-            db_session.add(authed_emp_client)
-            db_session.commit()
-            authed_wifi_client = WifiClient(
-                mac="12:34:56:78:9A:BC", 
-                expiration=datetime.datetime.now() + datetime.timedelta(days=30), 
-                employee=authed_emp, 
-                phone=authed_emp_client, 
-                user_fp="e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002"
-            )
-            db_session.add(authed_wifi_client)
-            db_session.commit()
-            
-            # Expired Guest
-            expired_guest_client = ClientsNumber(
-                phone_number='70000000010', 
-                last_seen=datetime.datetime.now()
-            )
-            db_session.add(expired_guest_client)
-            db_session.commit()
-            expired_guest_wifi_client = WifiClient(
-                mac="00:00:00:00:00:10", 
-                expiration=datetime.datetime(1970, 1, 1), 
-                employee=None, 
-                phone=expired_guest_client
-            )
-            db_session.add(expired_guest_wifi_client)
-            db_session.commit()
+    @patch('web.pages.hotspot.Authorization.mac_authorization')
+    def test_login_failed_renders_page(self, mock_mac_auth):
+        mock_mac_auth.return_value = AuthResponse(status=AuthStatus.FAILED, error_message='failed')
 
-            # Authed Guest
-            authed_guest_client = ClientsNumber(
-                phone_number='70000000011', 
-                last_seen=datetime.datetime.now()
-            )
-            db_session.add(authed_guest_client)
-            db_session.commit()
-            authed_guest_wifi_client = WifiClient(
-                mac="00:00:00:00:00:11", 
-                expiration=datetime.datetime.now() + datetime.timedelta(days=1), 
-                employee=None, 
-                phone=authed_guest_client, 
-                user_fp="ab185fb8f0baa93fc0d6852d019045d92dbc71aebec472c7461f7163892f5e92"
-            )
-            db_session.add(authed_guest_wifi_client)
-            db_session.commit()
+        response = self.client.post('/login', data={
+            'link-login-only': 'link',
+            'link-orig': 'orig',
+            'mac': '00:00:00:00:00:01',
+            'hardware_fp': 'abc123',
+        })
+        self.assertEqual(response.status_code, 200)
 
-            new_blocked_phone = Blacklist(phone_number='79999999123')
-            db_session.add(new_blocked_phone)
+    @patch('web.pages.hotspot.Authorization.mac_authorization')
+    def test_login_authorized_redirects_sendin(self, mock_mac_auth):
+        mock_mac_auth.return_value = AuthResponse(
+            status=AuthStatus.AUTHORIZED,
+            phone='79990000000',
+            user_fp='fp',
+        )
 
-            new_guest_client = ClientsNumber(
-                phone_number='79999999321', 
-                last_seen=datetime.datetime.now()
-            )
-            db_session.add(new_guest_client)
+        response = self.client.post('/login', data={
+            'link-login-only': 'link',
+            'link-orig': 'orig',
+            'mac': '00:00:00:00:00:01',
+            'hardware_fp': 'abc123',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/sendin', response.location)
 
-            db_session.commit()
+    @patch('web.pages.hotspot.Authorization.phone_authorization')
+    def test_preauth_blocked(self, mock_phone_auth):
+        mock_phone_auth.return_value = AuthResponse(status=AuthStatus.BLOCKED)
 
-    @staticmethod
-    def _clear_users():
-        with get_session() as db_session:
-            # очищаем все таблицы
-            tables = Model.metadata.sorted_tables
-            for table in [tables[6], tables[5], tables[3], tables[2], tables[1]]:
-                db_session.execute(table.delete())
-            db_session.commit()
-
-    def test_login_route(self):
-        test_init_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:00'
-        }
-        with self.client as c:
-            response = c.post('/login', data=test_init_data)
-            self.assertEqual(response.status_code, 200)
-
-    def test_login_route_session(self):
-        test_init_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:00'
-        }
-        
         with self.client as c:
             with c.session_transaction() as sess:
-                sess.update(test_init_data)
-            response = c.post('/login')
-            self.assertEqual(response.status_code, 200)
+                sess['mac'] = '00:00:00:00:00:01'
+                sess['hardware_fp'] = 'fp-hw'
 
-    def test_code_route(self):
-        test_init_data = {'phone': '71234567890'}
-        test_sess_data = {'mac': '00:00:00:00:00:00'}
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-                    
-            response = c.post('/code', data=test_init_data)
-            self.assertEqual(response.status_code, 200)
-    
-    def test_code_route_blocked(self):
-        test_blocked_init_data = {'phone': '79999999123'}
-        test_sess_data = {'mac': '00:00:00:00:00:00'}
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-            response = c.post('/code', data=test_blocked_init_data)
+            response = c.post('/preauth', data={'phone': '79990000000'})
             self.assertEqual(response.status_code, 403)
 
-    def test_code_route_mac_authed(self):
-        test_init_data = {'phone': '79999999999'}
-        test_sess_data = {'mac': '12:34:56:78:9A:BC'}
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-            response = c.post('/code', data=test_init_data)
-            self.assertEqual(response.status_code, 302)
+    @patch('web.pages.hotspot.Verification.start_verification')
+    @patch('web.pages.hotspot.Authorization.phone_authorization')
+    def test_preauth_starts_code_flow(self, mock_phone_auth, mock_start_verification):
+        mock_phone_auth.return_value = AuthResponse(status=AuthStatus.FAILED, user_fp='user-fp')
+        mock_start_verification.return_value = VerificationResponse(status=VerificationStatus.SENDING_CODE)
 
-    def test_code_route_fp_authed(self):
-        test_init_data = {'phone': '79999999999'}
-        test_sess_data = {'mac': '00:00:00:00:00:FF', 'hardware_fp': '0123456789abcdef'}
         with self.client as c:
             with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-            response = c.post('/code', data=test_init_data)
-            self.assertEqual(response.status_code, 302)
+                sess['mac'] = '00:00:00:00:00:01'
+                sess['hardware_fp'] = 'fp-hw'
 
-    def test_code_route_session(self):
-        test_sess_data = {'mac': '00:00:00:00:00:00', 'phone': '71234567890'}
+            response = c.post('/preauth', data={'phone': '79990000000'})
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/code/send', response.location)
+
+    @patch('web.pages.hotspot.Verification.send_code')
+    def test_code_send_wait_code(self, mock_send_code):
+        mock_send_code.return_value = VerificationResponse(status=VerificationStatus.WAIT_CODE)
+
         with self.client as c:
             with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-            response = c.post('/code')
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.post('/code/send')
             self.assertEqual(response.status_code, 200)
 
-    def test_resend_route(self):
-        session_id = 'test_resend_route'
-
-        test_sess_data = {'_id': session_id, 'phone': '79999999999'}
-        cache.set(f'sms:code:{session_id}', '1234')
+    @patch('web.pages.hotspot.Verification.code_verification')
+    def test_code_auth_denied_redirects_login(self, mock_code_verification):
+        mock_code_verification.return_value = VerificationResponse(
+            status=VerificationStatus.DENIED,
+            error_message='bad code',
+        )
 
         with self.client as c:
             with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-            response = c.post('/resend')
-            self.assertEqual(response.status_code, 200)
-    
-    def test_resend_route_sended(self):
-        user_fp = 'qweasdzxc'
-        test_sess_data = {'_id': 'test_resend_route_sended', 'phone': '79999999999', 'user_fp': user_fp}
+                sess['verify_session_id'] = 'verify-session'
+                sess['phone'] = '79990000000'
+                sess['user_fp'] = 'user-fp'
 
-        cache.set(f'sms:sended:{user_fp}', True)
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-            response = c.post('/resend')
-            self.assertEqual(response.status_code, 400)
-
-    @patch('web.pages.hotspot.authenticate_by_code', return_value={"status": "OK"})
-    def test_auth_route(self, _):
-        test_init_data = {'code': '1234'}
-        test_sess_data = {'mac': '00:00:00:00:00:00', 'phone': '71234567890'}
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess.update(test_sess_data)
-            response = c.post('/auth', data=test_init_data)
+            response = c.post('/code/auth', data={'code': '0000'})
             self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
+            self.assertIn('/login', response.location)
 
-    def test_auth_route_bad_code(self):
-        user_fp = 'qweasdzxc'
-        test_init_data = {'code': '1234'}
-        test_sess_data = {'_id': 'test_auth_route_bad_code', 'mac': '00:00:00:00:00:00', 'phone': '71234567890', 'user_fp': user_fp}
-        cache.set(f'sms:code:{user_fp}', 5678)
-        cache.set_raw(f'sms:attempts:{user_fp}', 0)
-        expected_responses = [
-            (307, '/code'),
-            (307, '/code'),
-            (302, '/login')
-        ]
-
+    @patch('web.pages.hotspot.Authorization.authorized', return_value=False)
+    def test_sendin_unauthorized(self, _):
         with self.client as c:
             with c.session_transaction() as sess:
-                sess.update(test_sess_data)
+                sess['phone'] = '79990000000'
+                sess['link-login-only'] = 'http://test/login'
+                sess['link-orig'] = 'http://test/orig'
+                sess['user_fp'] = 'user-fp'
 
-            for expected_status, expected_location in expected_responses:
-                response = c.post('/auth', data=test_init_data)
-                self.assertEqual(response.status_code, expected_status)
-                self.assertIn(expected_location, response.location)
-
-    def test_sendin_route_guest_chap(self):
-        test_init_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'phone': '79999999321'
-        }
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess.update(test_init_data)
             response = c.get('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-    def test_fp_repeating(self):
-        test_init_data = {
-            'mac': '00:00:00:00:00:FF',
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'phone': '79999999999',
-            'hardware_fp': '0123456789abcdef'
-        }
-        with self.client as c:
-            with c.session_transaction() as sess:
-                sess.update(test_init_data)
-            response = c.post('/code', data=test_init_data)
-            self.assertEqual(response.status_code, 302)
-
-            response = c.post('/sendin', data=test_init_data)
-            self.assertEqual(response.status_code, 200)
-            
-            with c.session_transaction() as sess:
-                sess.update(test_init_data)
-            response = c.post('/code', data=test_init_data)
-            self.assertEqual(response.status_code, 302)
-
-            user_fp = "e627ce00cc456a84bf2a2071bad08db1ba48fcb8bd6865a0346c6f9ea94c7002"
-            with get_session() as db_session:
-                query = select(WifiClient).where(WifiClient.user_fp==user_fp)
-                db_client = db_session.scalars(query).first()
-
-            assert None != db_client
-
-    @patch('web.pages.hotspot.authenticate_by_code', return_value={"status": "OK"})
-    def test_scenario_guest_code(self, _):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:00',
-            'hardware_fp': '0123456789abcdef'
-        }
-        test_code_data = {'phone': '71234567890'}
-        test_auth_data = {'code': '1234'}
-
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/code', data=test_code_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/auth', data=test_auth_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-    def test_scenario_guest_epxiration(self):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:11',
-            'hardware_fp': '0123456789abcdef'
-        }
-        
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-    def test_scenario_guest_mac_phone(self):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:10',
-            'hardware_fp': '0123456789abcdef'
-        }
-        test_code_data = {'phone': '70000000010'}
-        
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/code', data=test_code_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-    def test_scenario_guest_fp_phone(self):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:XX',
-            'hardware_fp': '0123456789abcdef'
-        }
-        test_code_data = {'phone': '70000000011'}
-        
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/code', data=test_code_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-            
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-    
-    @patch('web.pages.hotspot.authenticate_by_code', return_value={"status": "OK"})
-    def test_scenario_emp_code(self, _):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:00',
-            'hardware_fp': '0123456789abcdef'
-        }
-        test_code_data = {'phone': '79999999991'}
-        test_auth_data = {'code': '1234'}
-
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/code', data=test_code_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/auth', data=test_auth_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-    def test_scenario_emp_epxiration(self):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '12:34:56:78:9A:BC',
-            'hardware_fp': '0123456789abcdef'
-        }
-        
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-    def test_scenario_emp_mac_phone(self):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '12:34:56:78:9A:BD',
-            'hardware_fp': '0123456789abcdef'
-        }
-        test_code_data = {'phone': '79999999992'}
-        
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/code', data=test_code_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-    def test_scenario_emp_fp_phone(self):
-        test_login_data = {
-            'chap-id': '1', 
-            'chap-challenge': 'challenge', 
-            'link-login-only': 'link', 
-            'link-orig': 'orig', 
-            'mac': '00:00:00:00:00:XX',
-            'hardware_fp': '0123456789abcdef'
-        }
-        test_code_data = {'phone': '79999999999'}
-        
-        with self.client as c:
-            response = c.post('/login', data=test_login_data)
-            self.assertEqual(response.status_code, 200)
-
-            response = c.post('/code', data=test_code_data)
-            self.assertEqual(response.status_code, 302)
-            self.assertIn('/sendin', response.location)
-            
-            response = c.post('/sendin')
-            self.assertEqual(response.status_code, 200)
-
-
-if __name__ == '__main__':
-    unittest.main()
+            self.assertEqual(response.status_code, 401)

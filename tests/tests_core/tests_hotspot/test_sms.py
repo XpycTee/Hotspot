@@ -1,103 +1,59 @@
+import datetime
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from core.config import init_config
-from core.hotspot.sms.code import clear_code, code_sended, generate_code, get_code, increment_attempts, send_code, set_sended, verify_code
+from core.hotspot.verification.router import VRouterStatus, VRouterResponse
+from core.hotspot.verification.service import Verification, VerificationStatus, VSessionStatus
 
 
-class TestCoreHotpsotSMSCode(unittest.TestCase):
+class TestCoreHotspotVerification(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_config('web')
 
-    @patch('core.hotspot.sms.code.cache')
-    def test_generate_code(self, mock_cache):
-        mock_cache.set = unittest.mock.MagicMock()
-        mock_cache.set_raw = unittest.mock.MagicMock()
+    def test_code_verification_retry_and_denied(self):
+        service = Verification('verify-retry')
+        service._session.status = VSessionStatus.WAIT_CODE
+        service._session.code = '1111'
+        service._session.attempts = 0
+        service._session.timeout = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        service._save_session()
 
-        code = generate_code('abc123')
+        self.assertEqual(service.code_verification('0000').status, VerificationStatus.RETRY)
+        self.assertEqual(service.code_verification('0000').status, VerificationStatus.RETRY)
+        self.assertEqual(service.code_verification('0000').status, VerificationStatus.DENIED)
 
-        self.assertEqual(len(code), 4)
+    def test_code_verification_verified(self):
+        service = Verification('verify-ok')
+        service._session.status = VSessionStatus.WAIT_CODE
+        service._session.code = '1234'
+        service._session.attempts = 0
+        service._session.timeout = datetime.datetime.now() + datetime.timedelta(minutes=5)
+        service._save_session()
 
-        mock_cache.set.assert_any_call('sms:code:abc123', code, 300)
-        mock_cache.set_raw.assert_any_call('sms:attempts:abc123', 0, 300)
-        mock_cache.set.assert_any_call('sms:sended:abc123', False, 60)
+        result = service.code_verification('1234')
+        self.assertEqual(result.status, VerificationStatus.VERIFIED)
 
-    @patch('core.hotspot.sms.code.cache')
-    def test_get_code(self, mock_cache):
-        mock_cache.get.return_value = '1234'
+    def test_code_verification_expired(self):
+        service = Verification('verify-expired')
+        service._session.status = VSessionStatus.WAIT_CODE
+        service._session.code = '1234'
+        service._session.timeout = datetime.datetime.now() - datetime.timedelta(seconds=1)
+        service._save_session()
 
-        result = get_code('sid1')
-        self.assertEqual(result, '1234')
-        mock_cache.get.assert_called_once_with('sms:code:sid1')
+        result = service.code_verification('1234')
+        self.assertEqual(result.status, VerificationStatus.FAILED)
 
-    @patch('core.hotspot.sms.code.cache')
-    def test_set_sended(self, mock_cache):
-        set_sended('sid2')
-        mock_cache.set.assert_called_once_with('sms:sended:sid2', True, 60)
+    @patch('core.hotspot.verification.service.VerificationRouter')
+    def test_send_code_wait_code(self, mock_router_cls):
+        mock_router = MagicMock()
+        mock_router.send_code.return_value = VRouterResponse(status=VRouterStatus.SENDED)
+        mock_router_cls.return_value = mock_router
 
-    @patch('core.hotspot.sms.code.cache')
-    def test_increment_attempts(self, mock_cache):
-        mock_cache.incr.return_value = 1
+        service = Verification('send-code')
+        service._session.phone = '79990000000'
+        service._session.status = VSessionStatus.START
 
-        result = increment_attempts('sid3')
-
-        mock_cache.incr.assert_called_once_with('sms:attempts:sid3')
-        self.assertEqual(result, 1)
-
-    @patch('core.hotspot.sms.code.cache')
-    def test_verify_code(self, mock_cache):
-        mock_cache.get.return_value = '1111'
-
-        self.assertTrue(verify_code('s1', '1111'))
-        self.assertFalse(verify_code('s1', '2222'))
-
-    @patch('core.hotspot.sms.code.cache')
-    def test_code_sended(self, mock_cache):
-        mock_cache.get.return_value = True
-
-        self.assertTrue(code_sended('s2'))
-        mock_cache.get.assert_called_once_with('sms:sended:s2')
-
-    @patch('core.hotspot.sms.code.cache')
-    def test_clear_code(self, mock_cache):
-        clear_code('s3')
-
-        mock_cache.delete.assert_any_call('sms:code:s3')
-        mock_cache.delete.assert_any_call('sms:attempts:s3')
-        mock_cache.delete.assert_any_call('sms:sended:s3')
-
-    @patch('core.hotspot.sms.code.get_sender')
-    @patch('core.hotspot.sms.code.cache')
-    def test_send_code_already_sended(self, mock_cache, mock_get_sender):
-        mock_cache.get.return_value = True  # code_sended = True
-
-        result = send_code('sid', '79990000000')
-        self.assertEqual(result['status'], 'ALREDY_SENDED')
-
-    @patch('core.hotspot.sms.code.get_sender')
-    @patch('core.hotspot.sms.code.cache')
-    @patch('core.hotspot.sms.code.get_translate', return_value='SMS: 1234')
-    def test_send_code_sends_correctly(self, mock_translate, mock_cache, mock_get_sender):
-        mock_cache.get.side_effect = [False, None]  # not sent, no cached code
-
-        mock_sender = mock_get_sender.return_value
-        mock_sender.send_sms.return_value = None  # no error
-
-        result = send_code('sid55', '79990000000')
-
-        self.assertEqual(result['status'], 'OK')
-        mock_sender.send_sms.assert_called_once()
-
-    @patch('core.hotspot.sms.code.get_sender')
-    @patch('core.hotspot.sms.code.cache')
-    @patch('core.hotspot.sms.code.get_translate', return_value='SMS: 1234')
-    def test_send_code_sender_error(self, mock_translate, mock_cache, mock_get_sender):
-        mock_cache.get.side_effect = [False, None]
-
-        mock_sender = mock_get_sender.return_value
-        mock_sender.send_sms.return_value = 'ERROR'
-
-        result = send_code('sid66', '79990000000')
-
-        self.assertEqual(result['status'], 'SENDER_ERROR')
+        result = service.send_code()
+        self.assertEqual(result.status, VerificationStatus.WAIT_CODE)

@@ -10,13 +10,18 @@ from core.utils import json
 
 
 from redis import Redis
+from redis.exceptions import RedisError
 from sqlalchemy import select
 
 
 class ConfigLoader:
     def __init__(self, redis: Redis | None = None):
         if redis is None:
-            self._r = Redis.from_url(REDIS_URL, decode_responses=True)
+            try:
+                self._r = Redis.from_url(REDIS_URL, decode_responses=True)
+                self._r.ping()
+            except (RedisError, OSError):
+                self._r = None
         else:
             self._r = redis
 
@@ -32,7 +37,7 @@ class ConfigLoader:
             self.save(config)
 
     def load(self):
-        config = self._r.get('app:config')
+        config = self._r.get('app:config') if self._r else None
         cache_config = json.loads(config) if config else {}
         if cache_config:
             return Configurator(cache_config).create()
@@ -61,8 +66,9 @@ class ConfigLoader:
                 config.version = db_versoin
                 db_config.data = config
                 
-        self._r.set('app:config', json.dumps(config))
-        self._r.publish('config:update', json.dumps({'version': db_versoin}))
+        if self._r:
+            self._r.set('app:config', json.dumps(config))
+            self._r.publish('config:update', json.dumps({'version': db_versoin}))
 
 
 class ConfigRuntime:

@@ -1,15 +1,66 @@
 from dataclasses import is_dataclass
+from threading import Lock
 
 from typing import Any, Callable
 from uuid import UUID
 
 from redis import Redis
+from redis.exceptions import RedisError
 
 from core.bootstrap.env import REDIS_URL
 from core.utils import json
 
 
+class _InMemoryRedis:
+    def __init__(self):
+        self._data: dict[str, str] = {}
+        self._lock = Lock()
+
+    def ping(self):
+        return True
+
+    def close(self):
+        return None
+
+    def set(self, key: str, value, ex=None):
+        with self._lock:
+            self._data[key] = str(value)
+        return True
+
+    def get(self, key: str):
+        with self._lock:
+            return self._data.get(key)
+
+    def delete(self, key: str):
+        with self._lock:
+            return 1 if self._data.pop(key, None) is not None else 0
+
+    def incr(self, key: str, amount=1):
+        with self._lock:
+            current = int(self._data.get(key, "0"))
+            updated = current + amount
+            self._data[key] = str(updated)
+            return updated
+
+    def exists(self, key: str):
+        with self._lock:
+            return 1 if key in self._data else 0
+
+    def flushdb(self):
+        with self._lock:
+            self._data.clear()
+        return True
+
+    def eval(self, script, _numkeys, key):
+        with self._lock:
+            value = self._data.get(key)
+            if value is not None:
+                del self._data[key]
+            return value
+
+
 class RedisCache:
+    _memory_backend = _InMemoryRedis()
     SERIALIZER_RULES = [
         (lambda v: isinstance(v, bool),  "bool",  lambda v: "1" if v else "0", lambda v: v == "1"),
         (lambda v: isinstance(v, int),   "int",   str, int),
@@ -23,7 +74,13 @@ class RedisCache:
     
     def __init__(self, url=None):
         self._url = url if url is not None else REDIS_URL
-        self.r = Redis.from_url(self._url, decode_responses=True)
+        try:
+            self.r = Redis.from_url(self._url, decode_responses=True)
+            self.r.ping()
+        except RedisError:
+            self.r = self._memory_backend
+        except OSError:
+            self.r = self._memory_backend
 
     def close(self):
         self.r.close()

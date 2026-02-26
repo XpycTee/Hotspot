@@ -4,8 +4,8 @@ from core.redis.cache import RedisCache
 
 @contextmanager
 def get_cache():
-    cache = RedisCache()
+    conn = RedisCache()
 
-    yield cache
+    yield conn
 
-    cache.close()
+    conn.close()
