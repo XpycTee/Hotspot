@@ -9,6 +9,7 @@
 <script src="{{ url_for('static', filename='javascript/localization.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/phoneinput.js') }}"></script>
 <script src="{{ url_for('static', filename='javascript/modals.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript/filters.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='style/buttons.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/forms.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/tables.css') }}">
@@ -32,63 +33,19 @@
             {{ get_translate('buttons.logout', session.user_lang) }}
         </a>
     </div>
+
     <ul class="nav-tabs">
-        <li><a href="#wifi_clients">{{ get_translate('html.admin.panel.tables.wifi_clients.title', session.user_lang) }}</a></li>
-        <li><a href="#employees">{{ get_translate('html.admin.panel.tables.employees.title', session.user_lang) }}</a></li>
-        <li><a href="#blacklist">{{ get_translate('html.admin.panel.tables.blacklist.title', session.user_lang) }}</a></li>
+        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.wifi_clients' else '' }}" href="{{ url_for('pages.admin.panel.wifi_clients') }}">{{ get_translate('html.admin.panel.tables.wifi_clients.title', session.user_lang) }}</a></li>
+        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.employees' else '' }}" href="{{ url_for('pages.admin.panel.employees') }}">{{ get_translate('html.admin.panel.tables.employees.title', session.user_lang) }}</a></li>
+        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.blacklist' else '' }}" href="{{ url_for('pages.admin.panel.blacklist') }}">{{ get_translate('html.admin.panel.tables.blacklist.title', session.user_lang) }}</a></li>
     </ul>
+
     <div class="table-container">
-        {% include "admin/tabels/wifi_clients.html" %}
-        {% include "admin/tabels/employees.html" %}
-        {% include "admin/tabels/blacklist.html" %}
+        {% block panel_content %}{% endblock %}
     </div>
-
 </div>
+
 <script src="{{ url_for('static', filename='javascript/tables.js') }}"></script>
-<script src="{{ url_for('static', filename='javascript/filters.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const tabs = document.querySelectorAll('.nav-tabs a');
-        const contentTabs = document.querySelectorAll('.content-tab');
-
-        // Hide all content tabs initially
-        contentTabs.forEach(content => content.style.display = 'none');
-
-        // Check localStorage for saved tab
-        const savedTab = localStorage.getItem('activePanelTab');
-        if (savedTab) {
-            document.querySelector(savedTab).style.display = 'block';
-            document.querySelector(`.nav-tabs a[href="${savedTab}"]`).classList.add('active');
-            loadTableData(savedTab.slice(1));
-        } else {
-            // Default to first tab if no saved tab
-            contentTabs[0].style.display = 'block';
-            tabs[0].classList.add('active');
-            loadTableData('wifi_clients');
-        }
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = this.getAttribute('href');
-                loadTableData(target.slice(1));
-
-                // Hide all content tabs
-                contentTabs.forEach(content => content.style.display = 'none');
-                // Show the selected tab content
-                document.querySelector(target).style.display = 'block';
-
-                // Remove active class from all tabs
-                tabs.forEach(link => link.classList.remove('active'));
-                // Add active class to the clicked tab
-                this.classList.add('active');
-
-                // Save the active tab to localStorage
-                localStorage.setItem('activePanelTab', target);
-            });
-        });
-    });
-</script>
 {% endblock %}
 
 {% block footer %}

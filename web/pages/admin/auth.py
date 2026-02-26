@@ -4,7 +4,6 @@ from flask import Blueprint, abort, current_app, redirect, render_template, requ
 from core.config import get_config
 import web.logger as logger
 from core.admin.auth.login import login_by_password
-from web.pages.admin import session
 
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -58,7 +57,7 @@ def check():
 
         logger.info(f'User {username} logged in from {client_ip}')
         logger.debug(f'session data {_log_masked_session()}')
-        return redirect(url_for('pages.admin.panel'), 302)
+        return redirect(url_for('pages.admin.panel.index'), 302)
 
     if status == 'LOCKOUT':
         error_message = response.get('error_message')

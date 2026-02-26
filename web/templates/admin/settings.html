@@ -24,7 +24,7 @@
 {% block content %}
 <div class="admin-dashboard">
     <div class="admin-actions">
-        <a href="{{ url_for('pages.admin.panel') }}"
+        <a href="{{ url_for('pages.admin.panel.index') }}"
            class="btn-action btn-go">
             {{ get_translate('buttons.panel', session.user_lang) }}
         </a>

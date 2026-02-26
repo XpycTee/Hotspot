@@ -1,10 +1,14 @@
-<div id="employees" class="content-tab table-container" style="display: none;">
+{% extends 'admin/panel.html' %}
+
+{% block panel_content %}
+<div id="employees" class="content-tab table-container">
     <div class="filters-panel">
         <div class="filters-row">
-            <input type="text" id="employees_search" class="filter-input table-search" placeholder="{{ get_translate('placeholders.search', session.user_lang) }}">
+            <input type="text" id="employees_search" class="filter-input table-search" value="{{ request.args.get('search', '') }}" placeholder="{{ get_translate('placeholders.search', session.user_lang) }}">
         </div>
         <span class="filter-label found-count"></span>
     </div>
+
     <table>
         <thead>
             <tr>
@@ -21,12 +25,16 @@
             </tr>
         </tbody>
     </table>
+
     <div class="pagination">
         <button class="btn btn-prev" onclick="changePage('employees', -1)">{{ get_translate('buttons.prev', session.user_lang) }}</button>
-        <div class="page_numbers">
-            <!--button class="btn btn-number" onclick="changePageTo('employee', X)">X</button-->
-        </div>
+        <div class="page_numbers"></div>
         <button class="btn btn-next" onclick="changePage('employees', 1)">{{ get_translate('buttons.next', session.user_lang) }}</button>
         <span class="page_info"></span>
     </div>
 </div>
+
+<script>
+window.__PANEL_TABLE__ = 'employees';
+</script>
+{% endblock %}

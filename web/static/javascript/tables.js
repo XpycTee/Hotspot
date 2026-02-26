@@ -8,24 +8,121 @@ const activeFilters = {
     location: null,
 };
 
-// Инициализация таблиц
-document.addEventListener('DOMContentLoaded', function () {
-    const tables = ['wifi_clients', 'employees', 'blacklist'];
+function hasTable(tableId) {
+    return Boolean(document.getElementById(tableId));
+}
 
-    tables.forEach(tableId => {
-        tableData[tableId] = { currentPage: 1, searchQuery: '' };
-        setupSearch(tableId);
-    });
-    setupFilters();
+function getCurrentPagePath() {
+    return window.location.pathname;
+}
+
+function updatePageQuery(tableId) {
+    const state = tableData[tableId];
+    if (!state) {
+        return;
+    }
+
+    const params = new URLSearchParams();
+    if (state.currentPage > 1) {
+        params.set('page', String(state.currentPage));
+    }
+    if (state.searchQuery) {
+        params.set('search', state.searchQuery);
+    }
+
+    if (tableId === 'wifi_clients') {
+        if (activeFilters.online && activeFilters.online !== 'all') {
+            params.set('online', activeFilters.online);
+        }
+        if (activeFilters.employee && activeFilters.employee !== 'all') {
+            params.set('employee', activeFilters.employee);
+        }
+        if (activeFilters.date_from) {
+            params.set('date_from', activeFilters.date_from);
+        }
+        if (activeFilters.date_to) {
+            params.set('date_to', activeFilters.date_to);
+        }
+        if (activeFilters.location) {
+            params.set('location', activeFilters.location);
+        }
+    }
+
+    const query = params.toString();
+    const nextUrl = query ? `${getCurrentPagePath()}?${query}` : getCurrentPagePath();
+    window.history.replaceState({}, '', nextUrl);
+}
+
+function hydrateStateFromUrl(tableId) {
+    const params = new URLSearchParams(window.location.search);
+    const pageRaw = parseInt(params.get('page') || '1', 10);
+    tableData[tableId].currentPage = Number.isNaN(pageRaw) ? 1 : Math.max(pageRaw, 1);
+    tableData[tableId].searchQuery = params.get('search') || '';
+
+    const searchInput = document.getElementById(`${tableId}_search`);
+    if (searchInput) {
+        searchInput.value = tableData[tableId].searchQuery;
+    }
+
+    if (tableId === 'wifi_clients') {
+        activeFilters.online = params.get('online') || 'all';
+        activeFilters.employee = params.get('employee') || 'all';
+        activeFilters.date_from = params.get('date_from') || null;
+        activeFilters.date_to = params.get('date_to') || null;
+        activeFilters.location = params.get('location') || null;
+
+        const dateStart = document.getElementById('wifi_clients_daterange_start');
+        const dateStop = document.getElementById('wifi_clients_daterange_stop');
+        const location = document.getElementById('wifi_clients_last_location');
+
+        if (dateStart) {
+            dateStart.value = activeFilters.date_from || '';
+        }
+        if (dateStop) {
+            dateStop.value = activeFilters.date_to || '';
+        }
+        if (location) {
+            location.value = activeFilters.location || 'all';
+        }
+    }
+}
+
+function initPanelTable(tableId) {
+    if (!tableId || !hasTable(tableId)) {
+        return;
+    }
+
+    tableData[tableId] = { currentPage: 1, searchQuery: '' };
+    hydrateStateFromUrl(tableId);
+    setupSearch(tableId);
+
+    if (tableId === 'wifi_clients') {
+        setupFilters();
+    }
+
+    loadTableData(tableId);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.__PANEL_TABLE__) {
+        initPanelTable(window.__PANEL_TABLE__);
+    }
 });
 
 function changePageTo(tableId, pageNumber) {
+    if (!tableData[tableId]) {
+        return;
+    }
     tableData[tableId].currentPage = pageNumber;
+    updatePageQuery(tableId);
     loadTableData(tableId);
 }
 
 function loadWifiData() {
     const tableId = 'wifi_clients';
+    if (!tableData[tableId] || !hasTable(tableId)) {
+        return;
+    }
     const { currentPage, searchQuery } = tableData[tableId];
     let url = '/admin/tables/wifi_clients';
     let url_query = [`page=${currentPage}`, `rows_per_page=${rowsPerPage}`];
@@ -59,6 +156,7 @@ function loadWifiData() {
     if (url_query.length > 0) {
         url += `?${url_query.join('&')}`
     }
+    updatePageQuery(tableId);
 
     fetch(url)
         .then(response => response.json())
@@ -76,6 +174,10 @@ function loadWifiData() {
 
 // Функция для загрузки данных с сервера
 function loadTableData(tableId) {
+    if (!tableData[tableId] || !hasTable(tableId)) {
+        return;
+    }
+
     if (tableId === 'wifi_clients'){
         loadWifiData();
     } else {
@@ -92,6 +194,7 @@ function loadTableData(tableId) {
         if (url_query.length > 0) {
             url += `?${url_query.join('&')}`
         }
+        updatePageQuery(tableId);
 
         fetch(url)
             .then(response => response.json())
@@ -110,13 +213,22 @@ function loadTableData(tableId) {
 
 function updateFoundCounter(tableId, totalRows) {
     const pageBody = document.getElementById(tableId);
+    if (!pageBody) {
+        return;
+    }
     const foundCounterSpan = pageBody.querySelector('.found-count');
+    if (!foundCounterSpan) {
+        return;
+    }
     foundCounterSpan.innerHTML = getTranslate('html.admin.panel.tables.found_counter', { count: totalRows });
 }
 
 // Функция для обновления таблицы
 function updateTable(tableId, rows) {
     const tableBody = document.getElementById(`${tableId}_body`);
+    if (!tableBody) {
+        return;
+    }
     const addRowButton = tableBody.querySelector('.add_row_button'); // Сохраняем строку с кнопкой добавления
 
     tableBody.innerHTML = ''; // Очищаем таблицу
@@ -182,6 +294,9 @@ function generateRowHTML(tableId, row) {
 // Функция для обновления пагинации
 function updatePagination(tableId, currentPage, totalPages) {
     const pagination = document.querySelector(`#${tableId} .pagination`);
+    if (!pagination) {
+        return;
+    }
 
     const paginationContainer = pagination.querySelector('.page_numbers');
     const prevButton = pagination.querySelector('.btn-prev');
@@ -251,21 +366,29 @@ function updatePagination(tableId, currentPage, totalPages) {
 
 // Функция для изменения страницы
 function changePage(tableId, direction) {
+    if (!tableData[tableId]) {
+        return;
+    }
     const { currentPage } = tableData[tableId];
     const newPage = currentPage + direction;
 
     if (newPage < 1) return;
 
     tableData[tableId].currentPage = newPage;
+    updatePageQuery(tableId);
     loadTableData(tableId);
 }
 
 // Функция для поиска
 function setupSearch(tableId) {
     const searchInput = document.getElementById(`${tableId}_search`);
+    if (!searchInput) {
+        return;
+    }
     searchInput.addEventListener('input', () => {
         tableData[tableId].searchQuery = searchInput.value;
         tableData[tableId].currentPage = 1; // Сброс на первую страницу
+        updatePageQuery(tableId);
         loadTableData(tableId);
     });
 }
@@ -533,7 +656,9 @@ function blockRow(button) {
     .then(result => {
         if (result.success) {
             loadTableData('wifi_clients'); // Обновляем таблицу
-            loadTableData('blacklist'); // Обновляем таблицу
+            if (hasTable('blacklist')) {
+                loadTableData('blacklist'); // Обновляем таблицу
+            }
         } else {
             const modal = document.querySelector("#errorModal");
             triggerModal(modal, getTranslate('errors.admin.modals.block'), getTranslate('errors.admin.modals.header') + result.error.description);
@@ -713,6 +838,10 @@ function convertInputsToCells(inputs, data, type, row, button, new_id) {
 }
 
 function setupFilters() {
+    if (!hasTable('wifi_clients')) {
+        return;
+    }
+
     // Трехпозиционные переключатели Online / Employee
     document.querySelectorAll('.select-toggle').forEach(toggle => {
         const target = toggle.dataset.target;
@@ -730,7 +859,7 @@ function setupFilters() {
     if (locationSelect) {
         locationSelect.addEventListener('change', () => {
             activeFilters.location =
-                locationSelect.value === 'None' ? null : locationSelect.value;
+                locationSelect.value === 'all' ? null : locationSelect.value;
             reloadWifiTable();
         });
     }
@@ -740,19 +869,11 @@ function setupFilters() {
     const dateInputStop = document.getElementById('wifi_clients_daterange_stop');
     if (dateInputStart && dateInputStop) {
         dateInputStart.addEventListener('change', () => {
-            if (dateInputStart) {
-                activeFilters.date_from = dateInputStart.value;
-            } else {
-                activeFilters.date_to = null;
-            }
+            activeFilters.date_from = dateInputStart.value || null;
             reloadWifiTable();
         });
         dateInputStop.addEventListener('change', () => {
-            if (dateInputStop) {
-                activeFilters.date_to = dateInputStop.value;
-            } else {
-                activeFilters.date_to = null;
-            }
+            activeFilters.date_to = dateInputStop.value || null;
             reloadWifiTable();
         });
     }
@@ -760,6 +881,10 @@ function setupFilters() {
 
 // Перезагрузка всех таблиц
 function reloadWifiTable() {
+    if (!tableData['wifi_clients']) {
+        return;
+    }
     tableData['wifi_clients'].currentPage = 1;
+    updatePageQuery('wifi_clients');
     loadWifiData();
 }
