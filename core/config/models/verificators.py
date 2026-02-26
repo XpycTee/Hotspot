@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
@@ -71,4 +73,3 @@ class VProviderField:
     label: str = "API Key"
     type: str = "password"
     value: str = ""
-
