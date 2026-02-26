@@ -27,8 +27,8 @@
                             <div class="field">
                                 <label class="settings-label">
                                     {{ f.label }}:
-                                    {% if v.type == 'asterisk' and f.name == 'api_key' %}
                                     <div class="field-inline">
+                                        {% if v.type == 'asterisk' and f.name == 'api_key' %}
                                         <input class="input input-settings" type="{{ f.type }}" name="{{ f.name }}_{{ v.type }}" value="{{ f.value }}">
                                         <button
                                             type="button"
@@ -66,10 +66,10 @@
                                         >
                                             {{ get_translate('buttons.generate', session.user_lang) }}
                                         </button>
+                                        {% else %}
+                                        <input class="input input-settings" type="{{ f.type }}" name="{{ f.name }}_{{ v.type }}" value="{{ f.value }}">
+                                        {% endif %}
                                     </div>
-                                    {% else %}
-                                    <input class="input input-settings" type="{{ f.type }}" name="{{ f.name }}_{{ v.type }}" value="{{ f.value }}">
-                                    {% endif %}
                                 </label>
                             </div>
                             {% endfor %}

@@ -207,6 +207,34 @@ function toggleAccordion(body) {
     }
 }
 
+function iconEye() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-5.5 0-9.5 5.5-9.5 7s4 7 9.5 7 9.5-5.5 9.5-7-4-7-9.5-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/></svg>';
+}
+
+function iconEyeOff() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4.3 4.3 3 21 19.7 19.7 21l-3-3A11.2 11.2 0 0 1 12 19c-5.5 0-9.5-5.5-9.5-7 0-1 .9-2.4 2.3-3.8L3 4.3zm5 5 7.7 7.7A4 4 0 0 1 8 9.3zM12 5c5.5 0 9.5 5.5 9.5 7 0 .8-.6 2-1.6 3.2l-2.2-2.2c.2-.3.3-.7.3-1a4 4 0 0 0-4-4c-.3 0-.7.1-1 .2L10.8 6A9.7 9.7 0 0 1 12 5z"/></svg>';
+}
+
+function bindPasswordToggle(item) {
+    const buttons = item.querySelectorAll('.btn-toggle-password');
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetName = button.dataset.targetInput;
+            const targetInput = item.querySelector(`input[name="${targetName}"]`);
+            if (!targetInput) return;
+
+            const showLabel = button.dataset.showLabel;
+            const hideLabel = button.dataset.hideLabel;
+            const isHidden = targetInput.type === 'password';
+
+            targetInput.type = isHidden ? 'text' : 'password';
+            button.innerHTML = isHidden ? iconEyeOff() : iconEye();
+            button.title = isHidden ? hideLabel : showLabel;
+            button.setAttribute('aria-label', isHidden ? hideLabel : showLabel);
+        });
+    });
+}
+
 function bindItemEvents(item) {
     const header = item.querySelector('.item-header');
     const body = item.querySelector('.item-body');
@@ -232,6 +260,8 @@ function bindItemEvents(item) {
     item.querySelectorAll('.field').forEach(field => {
         bindFieldListField(item, field);
     });
+
+    bindPasswordToggle(item);
 }
 
 document.addEventListener('DOMContentLoaded', function () {

@@ -21,20 +21,42 @@
                 {% endfor %}
             </ul>
             <button class="btn btn-add-phone btn-add-list-field" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
+            {% elif field.type == 'checkbox' %}
+            <label class="field-label">
+                {{ field.label }}:
+                <input type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}"{{ ' checked' if field.value else '' }}{{ ' required' if field.required else '' }}>
+            </label>
             {% else %}
             <label class="field-label">
                 {{ field.label }}:
-                {% if field.type in ['checkbox', 'radio'] %}
-                <input type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}"{{ ' checked' if field.value else '' }}{{ ' required' if field.required else '' }}>
-                {% elif field.type == 'select' %}
-                <select class="input modal-input" name="{{ field.name }}_{{ key }}"{{ ' required' if field.required else '' }}>
-                    {% for opt, opt_value in field.value.items() %}
-                    <option value="{{ opt }}"{{ ' selected' if opt_value else '' }}>{{ opt }}</option>
-                    {% endfor %}
-                </select>
-                {% else %}
-                <input class="input input-settings" type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}" value="{{ field.value if field.value else '' }}"{{ ' required' if field.required else '' }}>
-                {% endif %}
+                <div class="field-inline">
+                    {% if field.type == 'radio' %}
+                    <input type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}"{{ ' checked' if field.value else '' }}{{ ' required' if field.required else '' }}>
+                    {% elif field.type == 'select' %}
+                    <select class="input" name="{{ field.name }}_{{ key }}"{{ ' required' if field.required else '' }}>
+                        {% for opt, opt_value in field.value.items() %}
+                        <option value="{{ opt }}"{{ ' selected' if opt_value else '' }}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                    {% elif field.type.value in ['password', 'passowrd'] %}
+                    <input class="input input-settings" type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}" value="{{ field.value if field.value else '' }}"{{ ' required' if field.required else '' }}>
+                    <button
+                        type="button"
+                        class="btn btn-settings btn-edit btn-icon btn-toggle-password"
+                        data-target-input="{{ field.name }}_{{ key }}"
+                        data-show-label="{{ get_translate('buttons.show', session.user_lang) }}"
+                        data-hide-label="{{ get_translate('buttons.hide', session.user_lang) }}"
+                        title="{{ get_translate('buttons.show', session.user_lang) }}"
+                        aria-label="{{ get_translate('buttons.show', session.user_lang) }}"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 5c-5.5 0-9.5 5.5-9.5 7s4 7 9.5 7 9.5-5.5 9.5-7-4-7-9.5-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+                        </svg>
+                    </button>
+                    {% else %}
+                    <input class="input input-settings" type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}" value="{{ field.value if field.value else '' }}"{{ ' required' if field.required else '' }}>
+                    {% endif %}
+                </div>
             </label>
             {% endif %}
         </div>
