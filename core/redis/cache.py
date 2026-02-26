@@ -155,8 +155,8 @@ class RedisCache:
             return default
         return val
 
-    def delete(self, key: str):
-        self.r.delete(key)
+    def delete(self, *key: str):
+        self.r.delete(*key)
 
     def incr(self, key: str, amount=1):
         return self.r.incr(key, amount)
