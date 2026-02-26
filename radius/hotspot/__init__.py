@@ -1,8 +1,8 @@
 from core.config import get_config
+from core.hotspot.authorization.service import AuthStatus, Authorization
 from core.hotspot.user.employees import check_employee
 from core.hotspot.user.statistic import update_statistic
 from core.hotspot.user.token import get_token
-from core.hotspot.wifi.auth import authenticate_by_mac
 from core.logging import get_logger
 from core.utils.phone import normalize_phone
 from radius.hotspot.packet import BasePacket, HotspotAcctPacket, HotspotAuthPacket
@@ -41,17 +41,16 @@ class HotspotRADIUS(BaseServer):
 
             if username == mac:
                 if packet.verify_password(mac):
-                    client = authenticate_by_mac(mac)
-                    status = client.get('status')
-                    if status == 'OK':
-                        is_employee = client.get('is_employee')
+                    auth_service = Authorization()
+                    client = auth_service.mac_authorization(mac, None)
+                    if client.status == AuthStatus.AUTHORIZED:
+                        is_employee = client.is_employee
                         reply = self.reply_accept(packet, is_employee)
                         reply_message = 'Auth by mac'
                     else:
-                        reply_message = f'Auth failed with status: {status}'
-                        reply = self.reply_reject(packet, reply_message)
+                        reply = self.reply_reject(packet, client.error_message)
                 else:
-                    reply_message =  'Auth failed bad token'
+                    reply_message =  'Bad token'
                     reply = self.reply_reject(packet ,reply_message)
             else:
                 phone_number = normalize_phone(username)
@@ -62,7 +61,7 @@ class HotspotRADIUS(BaseServer):
                     reply = self.reply_accept(packet, is_employee)
                     reply_message = 'Auth by token'
                 else:
-                    reply_message = 'Auth failed bad token'
+                    reply_message = 'Bad token'
                     reply = self.reply_reject(packet, reply_message)
         else:
             reply_message = 'Bad Message-Authentificator'

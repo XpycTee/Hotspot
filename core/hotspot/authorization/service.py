@@ -44,11 +44,10 @@ class Authorization:
         wifi_client = find_by_mac(mac)
         if wifi_client:
             if now_time > wifi_client.get('expiration'):
-                msg = f"{mac} is exired"
-                logger.info(msg)
+                logger.info(f"{mac} is exired")
                 return AuthResponse(
                     status=AuthStatus.FAILED,
-                    error_message=msg,
+                    error_message="User is exired",
                 )
 
             phone = wifi_client.get('phone')
@@ -63,6 +62,7 @@ class Authorization:
                 logger.info(f"{mac} is blocked")
                 return AuthResponse(
                     status=AuthStatus.BLOCKED,
+                    error_message="User is blocked",
                 )
 
             user_fp = hash_fingerprint(phone, hardware_fp)
@@ -76,6 +76,7 @@ class Authorization:
             )
         return AuthResponse(
             status=AuthStatus.FAILED,
+            error_message="User not found",
         )
 
     def phone_authorization(self, mac: str, phone: str, hardware_fp: str) -> AuthResponse:
