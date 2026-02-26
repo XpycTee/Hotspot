@@ -46,6 +46,14 @@ def _log_masked_session():
     return result
 
 
+def _get_verify_session_id() -> str:
+    verify_session_id = session.get('verify_session_id')
+    if not verify_session_id:
+        verify_session_id = secrets.token_urlsafe(24)
+        session['verify_session_id'] = verify_session_id
+    return verify_session_id
+
+
 @hotspot_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['link-login-only', 'link-orig', 'mac']
@@ -56,7 +64,7 @@ def index():
         if 'link-orig' not in session.keys():
             abort(400)
         else:
-            redirect(session.get('link-orig'), 302)
+            return redirect(session.get('link-orig'), 302)
 
     return redirect(url_for('pages.hotspot.login'), 302)
 
@@ -140,7 +148,7 @@ def preauth():
         return redirect(url_for('pages.hotspot.sendin'), 302)
     
     if auth_response.status == AuthStatus.FAILED:
-        verify_service = Verification(session['user_fp'])
+        verify_service = Verification(_get_verify_session_id())
 
         verify_response = verify_service.start_verification(norm_phone)
         if verify_response.status == VerificationStatus.WAIT_CALL:
@@ -160,11 +168,14 @@ def code_send():
     error = session.pop('error', None)
     logger.debug(f'Session data before code: {_log_masked_session()}')
 
-    user_fp = session.get('user_fp')
-    service = Verification(user_fp)
+    verify_session_id = session.get('verify_session_id')
+    if not verify_session_id:
+        abort(400)
+
+    service = Verification(verify_session_id)
     response = service.send_code()
 
-    if response.status == VerificationStatus.FAILED:
+    if response.status in (VerificationStatus.FAILED, VerificationStatus.ERROR):
         return render_template(
             'hotspot/code.html', 
             error=response.error_message,
@@ -183,12 +194,14 @@ def resend():
     if not phone_number:
         abort(400)
 
-    user_fp = session.get('user_fp')
+    verify_session_id = session.get('verify_session_id')
+    if not verify_session_id:
+        abort(400)
 
-    service = Verification(user_fp)
+    service = Verification(verify_session_id)
     response = service.send_code()
 
-    if response.status == VerificationStatus.FAILED:
+    if response.status in (VerificationStatus.FAILED, VerificationStatus.ERROR):
         return jsonify({'success': False, 'error_message': response.error_message})
 
     if response.status == VerificationStatus.WAIT_CODE:
@@ -200,13 +213,17 @@ def resend():
 @hotspot_bp.route('/code/auth', methods=['POST'])
 def code_auth():
     user_fp = session.get('user_fp')
+    verify_session_id = session.get('verify_session_id')
     form_code = request.form.get('code')
 
     if form_code is None:
         session['error'] = get_translate('errors.auth.missing_code')
         return redirect(url_for('pages.hotspot.code_send'), 302)
 
-    verify_service = Verification(user_fp)
+    if not verify_session_id:
+        abort(400)
+
+    verify_service = Verification(verify_session_id)
     verify_response = verify_service.code_verification(form_code)
 
     if verify_response.status == VerificationStatus.FAILED:
@@ -220,9 +237,11 @@ def code_auth():
     if verify_response.status == VerificationStatus.DENIED:
         session['error'] = verify_response.error_message
         session.pop('phone', None)
+        session.pop('verify_session_id', None)
         return redirect(url_for('pages.hotspot.login'), 302)
     
     if verify_response.status == VerificationStatus.VERIFIED:
+        session.pop('verify_session_id', None)
         mac = session.get('mac')
         phone = session.get('phone')
 
@@ -238,9 +257,11 @@ def code_auth():
 
 @hotspot_bp.route('/call/check', methods=['POST'])
 def call_check():   
-    user_fp = session.get('user_fp')
-    
-    service = Verification(user_fp)
+    verify_session_id = session.get('verify_session_id')
+    if not verify_session_id:
+        abort(400)
+
+    service = Verification(verify_session_id)
     response = service.call_verification()
 
     if response.status == VerificationStatus.WAIT_CALL:
@@ -249,7 +270,11 @@ def call_check():
     if response.status == VerificationStatus.FAILED:
         return jsonify({'success': False, 'error_message': response.error_message})
 
+    if response.status == VerificationStatus.ERROR:
+        return jsonify({'success': False, 'error_message': response.error_message})
+
     if response.status == VerificationStatus.VERIFIED:
+        session.pop('verify_session_id', None)
         return jsonify({'success': True})
 
 
@@ -285,9 +310,9 @@ def sendin():
     user_fp = session.get('user_fp')
     session.clear()
 
-    service = Authorization()
+    auth_service = Authorization()
 
-    if not service.authorized(user_fp):
+    if not auth_service.authorized(user_fp):
         abort(401)
 
     if chap_id and chap_challenge:

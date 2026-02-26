@@ -20,7 +20,7 @@ class AuthStatus(Enum):
 class AuthResponse:
     status: AuthStatus
 
-    # Optionss
+    # Options
     mac: str | None = None
     phone: str | None = None
     user_fp: str | None = None
@@ -30,6 +30,9 @@ class AuthResponse:
 
 class Authorization:
     def authorized(self, user_fp):
+        if not user_fp:
+            return False
+
         now_time = datetime.now()
         wifi_client = find_by_fp(user_fp)
         if wifi_client and now_time < wifi_client.get('expiration'):

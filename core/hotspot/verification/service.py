@@ -45,7 +45,7 @@ class VerificationResponse:
 @dataclass
 class VerificationSession:
     session_id: str
-    status: VerificationStatus
+    status: VSessionStatus
     phone: str | None = None
     
     # Options
@@ -70,6 +70,17 @@ class Verification:
                 status=VSessionStatus.START,
             )
         else:
+            cached_status = chached_session.get('status')
+            try:
+                if isinstance(cached_status, int):
+                    chached_session['status'] = VSessionStatus(cached_status)
+                elif isinstance(cached_status, str):
+                    if cached_status.isdigit():
+                        chached_session['status'] = VSessionStatus(int(cached_status))
+                    else:
+                        chached_session['status'] = VSessionStatus[cached_status]
+            except (ValueError, KeyError):
+                chached_session['status'] = VSessionStatus.START
             self._session = VerificationSession(**chached_session)
 
     def _save_session(self):
@@ -108,8 +119,19 @@ class Verification:
             return VerificationResponse(
                 status=VerificationStatus.SENDING_CODE,
             )
+
+        return VerificationResponse(
+            status=VerificationStatus.ERROR,
+            error_message=get_translate('errors.auth.bad_status'),
+        )
         
     def send_code(self) -> VerificationResponse:
+        if not self._session.phone:
+            return VerificationResponse(
+                status=VerificationStatus.FAILED,
+                error_message=get_translate('errors.auth.bad_status'),
+            )
+
         if self._session.status == VSessionStatus.WAIT_CODE:
             return VerificationResponse(
                 status=VerificationStatus.FAILED,
@@ -127,7 +149,7 @@ class Verification:
         router = VerificationRouter()
         router_resp = router.send_code(self._session.phone, self._session.code)
 
-        if router_resp.status == VRouterStatus.ERROR:
+        if router_resp.status in (VRouterStatus.ERROR, VRouterStatus.FAILED):
             logger.error(f"Failed to send code to {self._session.phone}")
             return VerificationResponse(
                 status=VerificationStatus.ERROR,
@@ -141,44 +163,51 @@ class Verification:
             return VerificationResponse(
                 status=VerificationStatus.WAIT_CODE,
             )
+
+        return VerificationResponse(
+            status=VerificationStatus.ERROR,
+            error_message=get_translate('errors.auth.bad_status'),
+        )
     
     def code_verification(self, code: str) -> VerificationResponse:
-        if self._session.status == VerificationStatus.WAIT_CODE.value:
-            if self._session.code == code:
-                self._clear_session()
-                return VerificationResponse(
-                    status=VerificationStatus.VERIFIED,
-                )
-            elif self._session.timeout > datetime.now():
-                return VerificationResponse(
-                    status=VerificationStatus.FAILED,
-                    error_message=get_translate('errors.auth.expired_code'),
-                )
+        if self._session.status != VSessionStatus.WAIT_CODE:
+            return VerificationResponse(
+                status=VerificationStatus.FAILED,
+                error_message=get_translate('errors.auth.bad_status'),
+            )
 
-            self._session.attempts += 1
-            self._save_session()
-
-            if self._session.attempts < 3:
-                return VerificationResponse(
-                    status=VerificationStatus.RETRY,
-                    error_message=get_translate('errors.auth.bad_code_try'),
-                )
-
+        if self._session.timeout and datetime.now() > self._session.timeout:
             self._clear_session()
             return VerificationResponse(
-                status=VerificationStatus.DENIED,
-                error_message=get_translate('errors.auth.bad_code_all'),
+                status=VerificationStatus.FAILED,
+                error_message=get_translate('errors.auth.expired_code'),
             )
-        
+
+        if self._session.code == code:
+            self._clear_session()
+            return VerificationResponse(
+                status=VerificationStatus.VERIFIED,
+            )
+
+        self._session.attempts += 1
+        self._save_session()
+
+        if self._session.attempts < 3:
+            return VerificationResponse(
+                status=VerificationStatus.RETRY,
+                error_message=get_translate('errors.auth.bad_code_try'),
+            )
+
+        self._clear_session()
         return VerificationResponse(
-            status=VerificationStatus.FAILED,
-            error_message=get_translate('errors.auth.bad_status'),
+            status=VerificationStatus.DENIED,
+            error_message=get_translate('errors.auth.bad_code_all'),
         )
 
     def call_verification(self) -> VerificationResponse:
-        if self._session.status == VSessionStatus.WAIT_CALL.value:
+        if self._session.status == VSessionStatus.WAIT_CALL:
             now_time = datetime.now()
-            if  now_time > self._session.timeout:
+            if self._session.timeout and now_time > self._session.timeout:
                 self._clear_session()
                 return VerificationResponse(
                     status=VerificationStatus.FAILED,

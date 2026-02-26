@@ -7,10 +7,8 @@ from core.database.session import get_session
 
 
 def hash_fingerprint(phone_number, hardware_fp):
-    user_fp = None
-    if hardware_fp:
-        user_fp = sha256(f"{hardware_fp}:{phone_number}".encode()).hexdigest()
-    return user_fp
+    fingerprint_source = hardware_fp or "no-hardware-fp"
+    return sha256(f"{fingerprint_source}:{phone_number}".encode()).hexdigest()
 
 
 def update_fingerprint(mac, user_fp):

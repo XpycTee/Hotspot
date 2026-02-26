@@ -73,7 +73,7 @@
                 countdown(); // Restart the countdown
                 errorNotify.style.display = 'none'; // Hide error message if any
             } else {
-                errorNotify.textContent = result.error.description;
+                errorNotify.textContent = result.error_message || 'Failed to resend code';
                 errorNotify.style.display = 'block';
             }
         })
