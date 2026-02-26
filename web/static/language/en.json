@@ -74,6 +74,10 @@
       "seconds": "seconds",
       "resend_link": "Resend code"
     },
+    "callcheck": {
+      "label_code": "Tap the call button to authorize",
+      "validity_message": "The call verification is valid for 5 minutes"
+    },
     "admin": {
       "login": {
         "title": "Authorization",
