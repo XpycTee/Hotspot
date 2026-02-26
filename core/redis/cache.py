@@ -106,8 +106,8 @@ class RedisCache:
     _memory_backend = _InMemoryRedis()
     SERIALIZER_RULES = [
         (lambda v: isinstance(v, bool),  "bool",  lambda v: "1" if v else "0", lambda v: v == "1"),
-        (lambda v: isinstance(v, int),   "int",   str, int),
-        (lambda v: isinstance(v, float), "float", str, float),
+        (lambda v: isinstance(v, int),   "int",   int, int),
+        (lambda v: isinstance(v, float), "float", float, float),
         (lambda v: isinstance(v, str),   "str",   str, str),
         (lambda v: isinstance(v, UUID),  "uuid",  str, UUID),
         (lambda v: isinstance(v, dict),  "json",  json.dumps_str, json.loads),
@@ -119,6 +119,8 @@ class RedisCache:
         self._url = url if url is not None else REDIS_URL
         self._serializers = list(self.SERIALIZER_RULES)
         self._logger = get_logger("core.redis.cache")
+        # Types stored without custom "@type:" prefix; Redis returns them as strings.
+        self._ignore_types = {"int", "float", "str"}
         try:
             self.r = Redis.from_url(self._url, decode_responses=True)
             self.r.ping()
@@ -183,6 +185,8 @@ class RedisCache:
     def _encode(self, value: Any) -> str:
         for check, name, serializer, _ in self._serializers:
             if check(value):
+                if name in self._ignore_types:
+                    return serializer(value)
                 data = serializer(value)
                 return f"@{name}:{data}"
             
@@ -191,6 +195,9 @@ class RedisCache:
     def _decode(self, raw: bytes | str):
         if raw is None:
             return None
+
+        if not isinstance(raw, (bytes, str)):
+            return raw
 
         if isinstance(raw, bytes):
             raw = raw.decode("utf-8")

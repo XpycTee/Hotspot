@@ -120,7 +120,7 @@ class TestCoreAdminAuth(unittest.TestCase):
         self.assertEqual(result, 1)
 
         with get_cache() as cache:
-            cache.set_raw('admin:login:attempts:Big', 10)
+            cache.set('admin:login:attempts:Big', 10)
         result = increment_attempts('Big')
         self.assertEqual(result, 11)
 
