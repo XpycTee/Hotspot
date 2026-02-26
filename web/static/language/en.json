@@ -78,6 +78,11 @@
       "label_code": "Tap the call button to authorize",
       "validity_message": "The call verification is valid for 5 minutes"
     },
+    "sendin": {
+      "title": "Authorization completed",
+      "done": "Authorization successful, connecting you to the network",
+      "retry_hint": "If nothing happens, try connecting to WiFi again"
+    },
     "admin": {
       "login": {
         "title": "Authorization",
