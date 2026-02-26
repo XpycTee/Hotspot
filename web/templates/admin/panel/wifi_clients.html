@@ -9,13 +9,13 @@
         </div>
         <div class="filters-body" hidden>
             <div class="filters-row">
-                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.expire', session.user_lang) }}:</label>
+                <label class="filter-label">{{ get_translate('html.admin.panel.wifi_clients.expire', session.user_lang) }}:</label>
                 <input type="date" id="wifi_clients_daterange_start" class="filter-input" value="{{ request.args.get('date_from', '') }}">
                 <input type="date" id="wifi_clients_daterange_stop" class="filter-input" value="{{ request.args.get('date_to', '') }}">
             </div>
 
             <div class="filters-row">
-                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee', session.user_lang) }}:</label>
+                <label class="filter-label">{{ get_translate('html.admin.panel.wifi_clients.is_employee', session.user_lang) }}:</label>
                 <div id="wifi_clients_employee" class="select-toggle" data-target="employee" data-state="{{ employee_state }}">
                     <div class="select-option" data-value="all">{{ get_translate('buttons.all', session.user_lang) }}</div>
                     <div class="select-option" data-value="yes">{{ get_translate('buttons.yes', session.user_lang) }}</div>
@@ -23,7 +23,7 @@
                     <div class="select-slider"></div>
                 </div>
 
-                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.online', session.user_lang) }}:</label>
+                <label class="filter-label">{{ get_translate('html.admin.panel.wifi_clients.online', session.user_lang) }}:</label>
                 <div id="wifi_clients_online" class="select-toggle" data-target="online" data-state="{{ online_state }}">
                     <div class="select-option" data-value="all">{{ get_translate('buttons.all', session.user_lang) }}</div>
                     <div class="select-option" data-value="yes">{{ get_translate('buttons.yes', session.user_lang) }}</div>
@@ -33,7 +33,7 @@
             </div>
 
             <div class="filters-row">
-                <label class="filter-label">{{ get_translate('html.admin.panel.tables.wifi_clients.last_location', session.user_lang) }}:</label>
+                <label class="filter-label">{{ get_translate('html.admin.panel.wifi_clients.last_location', session.user_lang) }}:</label>
                 {% set selected_location = request.args.get('location', 'all') %}
                 <select id="wifi_clients_last_location" class="filter-select">
                     <option value="all" {{ 'selected' if selected_location == 'all' else '' }}>{{ get_translate('buttons.all', session.user_lang) }}</option>
@@ -49,14 +49,14 @@
     <table>
         <thead>
             <tr>
-                <th>{{ get_translate('html.admin.panel.tables.wifi_clients.mac', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.wifi_clients.expire', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.wifi_clients.is_employee', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.wifi_clients.phone', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.wifi_clients.online', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_location', session.user_lang) }}</th>
-                <th>{{ get_translate('html.admin.panel.tables.wifi_clients.last_ipv4_address', session.user_lang) }}</th>
-                <th class="column-controls">{{ get_translate('html.admin.panel.tables.controls', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.wifi_clients.mac', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.wifi_clients.expire', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.wifi_clients.is_employee', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.wifi_clients.phone', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.wifi_clients.online', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.wifi_clients.last_location', session.user_lang) }}</th>
+                <th>{{ get_translate('html.admin.panel.wifi_clients.last_ipv4_address', session.user_lang) }}</th>
+                <th class="column-controls">{{ get_translate('html.admin.panel.controls', session.user_lang) }}</th>
             </tr>
         </thead>
         <tbody id="wifi_clients_body"></tbody>

@@ -2,7 +2,11 @@
 
 {% block panel_content %}
 <div id="blacklist" class="content-tab">
-    {% include "structures/list.html" %}
+    <section class="settings-panel">
+        <h2>{{ get_translate('html.admin.panel.blacklist.title', session.user_lang) }}</h2>
+
+        {% include "structures/list.html" %}
+    </section>
 </div>
 
 <script>

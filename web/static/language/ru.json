@@ -81,31 +81,29 @@
       },
       "panel": {
         "title": "Админ панель",
-        "tables": {
-          "controls": "Управление",
-          "page_counter": "Страница {current_page} из {total_pages}",
-          "found_counter": "Найдено: {count}",
-          "wifi_clients": {
-            "title": "WiFi Клиенты",
-            "mac": "Мак адрес",
-            "expire": "Срок доступа",
-            "is_employee": "Сотрудник",
-            "phone": "Номер телефона",
-            "online": "Онлайн",
-            "last_location": "Последня локация",
-            "last_ipv4_address": "Последний IP"
-          },
-          "employees": {
-            "title": "Список сотрудников",
-            "id": "ID",
-            "lastname": "Фамилия",
-            "name": "Имя",
-            "phones": "Телефоны"
-          },
-          "blacklist": {
-            "title": "Чёрный список",
-            "phone": "Телефон"
-          }
+        "controls": "Управление",
+        "page_counter": "Страница {current_page} из {total_pages}",
+        "found_counter": "Найдено: {count}",
+        "wifi_clients": {
+          "title": "WiFi Клиенты",
+          "mac": "Мак адрес",
+          "expire": "Срок доступа",
+          "is_employee": "Сотрудник",
+          "phone": "Номер телефона",
+          "online": "Онлайн",
+          "last_location": "Последня локация",
+          "last_ipv4_address": "Последний IP"
+        },
+        "employees": {
+          "title": "Список сотрудников",
+          "id": "ID",
+          "lastname": "Фамилия",
+          "name": "Имя",
+          "phones": "Телефоны"
+        },
+        "blacklist": {
+          "title": "Чёрный список",
+          "phone": "Телефон"
         },
         "edit": {
           "title": {

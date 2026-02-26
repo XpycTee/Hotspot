@@ -171,7 +171,7 @@ function updateFoundCounter(tableId, totalRows) {
         return;
     }
 
-    foundCounterSpan.innerHTML = getTranslate('html.admin.panel.tables.found_counter', { count: totalRows });
+    foundCounterSpan.innerHTML = getTranslate('html.admin.panel.found_counter', { count: totalRows });
 }
 
 function updateTable(tableId, rows) {
@@ -222,7 +222,7 @@ function updatePagination(tableId, currentPage, totalPages) {
     const nextButton = pagination.querySelector('.btn-next');
     const pageInfo = pagination.querySelector('.page_info');
 
-    pageInfo.textContent = getTranslate('html.admin.panel.tables.page_counter', {
+    pageInfo.textContent = getTranslate('html.admin.panel.page_counter', {
         current_page: currentPage,
         total_pages: totalPages,
     });

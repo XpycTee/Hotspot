@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='style/modals.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/filters.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='style/admin.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style/settings.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -35,9 +36,9 @@
     </div>
 
     <ul class="nav-tabs">
-        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.wifi_clients' else '' }}" href="{{ url_for('pages.admin.panel.wifi_clients') }}">{{ get_translate('html.admin.panel.tables.wifi_clients.title', session.user_lang) }}</a></li>
-        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.employees' else '' }}" href="{{ url_for('pages.admin.panel.employees') }}">{{ get_translate('html.admin.panel.tables.employees.title', session.user_lang) }}</a></li>
-        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.blacklist' else '' }}" href="{{ url_for('pages.admin.panel.blacklist') }}">{{ get_translate('html.admin.panel.tables.blacklist.title', session.user_lang) }}</a></li>
+        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.wifi_clients' else '' }}" href="{{ url_for('pages.admin.panel.wifi_clients') }}">{{ get_translate('html.admin.panel.wifi_clients.title', session.user_lang) }}</a></li>
+        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.employees' else '' }}" href="{{ url_for('pages.admin.panel.employees') }}">{{ get_translate('html.admin.panel.employees.title', session.user_lang) }}</a></li>
+        <li><a class="{{ 'active' if request.endpoint == 'pages.admin.panel.blacklist' else '' }}" href="{{ url_for('pages.admin.panel.blacklist') }}">{{ get_translate('html.admin.panel.blacklist.title', session.user_lang) }}</a></li>
     </ul>
 
     <div class="table-container">
