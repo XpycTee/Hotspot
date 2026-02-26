@@ -34,8 +34,8 @@ def _clear_db():
 class TestCoreAdminAuth(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        init_config('web')
         database.create_all()
+        init_config('web')
         _clear_db()
         create_user(ADMIN_USERNAME, ADMIN_PASSWORD, 'full')
 
