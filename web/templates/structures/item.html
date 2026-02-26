@@ -8,6 +8,20 @@
 
         {% for field in item.fields %}
         <div class="field">
+            {% if field.type == 'list' %}
+            {% set list_values = field.value if field.value else [''] %}
+            <span class="field-label">{{ field.label }}:</span>
+            {% set is_phone_list = field.name == 'phone' %}
+            <ul class="field-list" data-field-name="{{ field.name }}" data-input-type="{{ 'tel' if is_phone_list else 'text' }}" data-use-phone-mask="{{ 'true' if is_phone_list else 'false' }}">
+                {% for list_value in list_values %}
+                <li class="field-list-item">
+                    <input class="input input-settings" type="{{ 'tel' if is_phone_list else 'text' }}" name="{{ field.name }}_{{ key }}" value="{{ list_value }}" data-array="true"{{ ' data-tel-input' if is_phone_list else '' }}{{ ' required' if field.required else '' }}>
+                    <button class="btn btn-delete btn-controls btn-remove-list-field" type="button">x</button>
+                </li>
+                {% endfor %}
+            </ul>
+            <button class="btn btn-add-phone btn-add-list-field" type="button">{{ get_translate('buttons.add', session.user_lang) }}</button>
+            {% else %}
             <label class="field-label">
                 {{ field.label }}:
                 {% if field.type in ['checkbox', 'radio'] %}
@@ -22,6 +36,7 @@
                 <input class="input input-settings" type="{{ field.type.value }}" name="{{ field.name }}_{{ key }}" value="{{ field.value if field.value else '' }}"{{ ' required' if field.required else '' }}>
                 {% endif %}
             </label>
+            {% endif %}
         </div>
         {% endfor %}
 

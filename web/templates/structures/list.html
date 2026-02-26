@@ -15,6 +15,120 @@
     {% endif %}
 </div>
 <script>
+function createFieldListItem(id, fieldName, required = false, value = '', inputType = 'text', usePhoneMask = false) {
+    const li = document.createElement('li');
+    li.className = 'field-list-item';
+
+    const input = document.createElement('input');
+    input.className = 'input input-settings';
+    input.type = inputType;
+    input.name = `${fieldName}_${id}`;
+    input.value = value;
+    input.dataset.array = 'true';
+    if (usePhoneMask) {
+        input.setAttribute('data-tel-input', '');
+    }
+    if (required) {
+        input.required = true;
+    }
+
+    if (usePhoneMask && typeof detectPhoneInput === 'function') {
+        detectPhoneInput(input);
+    }
+
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'btn btn-delete btn-controls btn-remove-list-field';
+    deleteButton.type = 'button';
+    deleteButton.textContent = 'x';
+
+    li.appendChild(input);
+    li.appendChild(deleteButton);
+    return li;
+}
+
+function bindFieldListField(item, field) {
+    const list = field.querySelector('.field-list');
+    const addButton = field.querySelector('.btn-add-list-field');
+    if (!list || !addButton) {
+        return;
+    }
+
+    const fieldName = list.dataset.fieldName;
+    const id = item.dataset.id;
+    const isRequired = list.querySelector('input')?.required || false;
+    const inputType = list.dataset.inputType || 'text';
+    const usePhoneMask = list.dataset.usePhoneMask === 'true';
+
+    list.querySelectorAll('input').forEach(input => {
+        if (usePhoneMask && typeof detectPhoneInput === 'function') {
+            detectPhoneInput(input);
+        }
+    });
+
+    addButton.addEventListener('click', () => {
+        list.appendChild(createFieldListItem(id, fieldName, isRequired, '', inputType, usePhoneMask));
+    });
+
+    list.addEventListener('click', event => {
+        const deleteButton = event.target.closest('.btn-remove-list-field');
+        if (!deleteButton) {
+            return;
+        }
+
+        const itemNode = deleteButton.closest('.field-list-item');
+        if (!itemNode) {
+            return;
+        }
+
+        if (list.querySelectorAll('.field-list-item').length <= 1) {
+            const input = itemNode.querySelector('input');
+            if (input) {
+                input.value = '';
+            }
+            return;
+        }
+
+        itemNode.remove();
+    });
+}
+
+function collectItemFields(item, id) {
+    const fields = {};
+
+    item.querySelectorAll(`input[name$="_${id}"], select[name$="_${id}"], textarea[name$="_${id}"]`)
+        .forEach(control => {
+            const fieldName = control.name.replace(`_${id}`, '');
+            if (fieldName === 'enabled') {
+                return;
+            }
+
+            if (control.type === 'checkbox') {
+                fields[fieldName] = control.checked;
+                return;
+            }
+
+            if (control.type === 'radio') {
+                if (control.checked) {
+                    fields[fieldName] = control.value;
+                }
+                return;
+            }
+
+            if (control.dataset.array === 'true') {
+                if (!Array.isArray(fields[fieldName])) {
+                    fields[fieldName] = [];
+                }
+
+                fields[fieldName].push(control.value);
+                return;
+            }
+
+            fields[fieldName] = control.value;
+        });
+
+    return fields;
+}
+
 async function beforeDeleteItem(item) {
     const id = item.dataset.id;
     if (id.startsWith('new_')) {
@@ -38,29 +152,7 @@ async function beforeSaveItems(listBody) {
         const id = item.dataset.id;
         const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
         const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
-
-        const fields = {};
-        item.querySelectorAll(`input[name$="_${id}"], select[name$="_${id}"], textarea[name$="_${id}"]`)
-            .forEach(control => {
-                const fieldName = control.name.replace(`_${id}`, '');
-                if (fieldName === 'enabled') {
-                    return;
-                }
-
-                if (control.type === 'checkbox') {
-                    fields[fieldName] = control.checked;
-                    return;
-                }
-
-                if (control.type === 'radio') {
-                    if (control.checked) {
-                        fields[fieldName] = control.value;
-                    }
-                    return;
-                }
-
-                fields[fieldName] = control.value;
-            });
+        const fields = collectItemFields(item, id);
 
         data.items.push({
             id: id,
@@ -81,29 +173,7 @@ async function beforeSaveItem(item) {
     const id = item.dataset.id;
     const enabledCheckbox = item.querySelector('input[name="enabled_' + id + '"]');
     const enabled = enabledCheckbox ? enabledCheckbox.checked : true;
-
-    const fields = {};
-    item.querySelectorAll(`input[name$="_${id}"], select[name$="_${id}"], textarea[name$="_${id}"]`)
-        .forEach(control => {
-            const fieldName = control.name.replace(`_${id}`, '');
-            if (fieldName === 'enabled') {
-                return;
-            }
-
-            if (control.type === 'checkbox') {
-                fields[fieldName] = control.checked;
-                return;
-            }
-
-            if (control.type === 'radio') {
-                if (control.checked) {
-                    fields[fieldName] = control.value;
-                }
-                return;
-            }
-
-            fields[fieldName] = control.value;
-        });
+    const fields = collectItemFields(item, id);
 
     let data = {
         id: id,
@@ -143,16 +213,24 @@ function bindItemEvents(item) {
     const deleteBtn = item.querySelector('.btn-delete');
     const saveBtn = item.querySelector('.btn-save');
 
-    saveBtn.addEventListener('click', async () => {
-        await beforeSaveItem(item);
-    });
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            await beforeSaveItem(item);
+        });
+    }
 
-    deleteBtn.addEventListener('click', async () => {
-        await beforeDeleteItem(item);
-    });
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            await beforeDeleteItem(item);
+        });
+    }
 
     header.addEventListener('click', () => {
         toggleAccordion(body);
+    });
+
+    item.querySelectorAll('.field').forEach(field => {
+        bindFieldListField(item, field);
     });
 }
 
@@ -161,28 +239,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const listBody = list.querySelector('.list-body');
     const items = listBody.querySelectorAll('.item');
     const actions = list.querySelector('.list-actions');
-    const addItemBtn = actions.querySelector('.btn-add');
+    const addItemBtn = actions ? actions.querySelector('.btn-add') : null;
     let verificatorCounter = 1000; // временный ID до сохранения
 
-    addItemBtn.addEventListener('click', () => {
-        const newId = 'new_' + verificatorCounter++;
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', () => {
+            const newId = 'new_' + verificatorCounter++;
 
-        const item = document.createElement('div');
-        item.className = 'item';
-        item.dataset.id = newId;
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.dataset.id = newId;
 
-        item.innerHTML = `
-        {% with key='${newId}', item=empty_item %}
-            {% include "structures/item.html" %}
-        {% endwith %}`;
+            item.innerHTML = `
+            {% with key='${newId}', item=empty_item %}
+                {% include "structures/item.html" %}
+            {% endwith %}`;
 
-        listBody.appendChild(item);
-        const body = item.querySelector('.item-body');
+            listBody.appendChild(item);
+            const body = item.querySelector('.item-body');
 
-        bindItemEvents(item);
-        // сразу раскрываем
-        toggleAccordion(body);
-    });
+            bindItemEvents(item);
+            toggleAccordion(body);
+        });
+    }
 
     items.forEach(item => {
         bindItemEvents(item);

@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Mapping
+from typing import List, Mapping, Sequence
 
 class ViewFieldType(str, Enum):
     CHECKBOX = 'checkbox'
     RADIO = 'radio'
     TEXT = 'text'
     SELECT = 'select'
+    LIST = 'list'
     PASSWORD = 'password'
     PASSWORD_CONFIRM = 'passowrd'
     USERNAME = 'text'
@@ -17,7 +18,7 @@ class ViewItemField:
     label: str
     type: ViewFieldType
     required: bool = True
-    value: str | Mapping[str, bool] | None = None
+    value: str | Mapping[str, bool] | Sequence[str] | None = None
 
 @dataclass
 class ViewItem:

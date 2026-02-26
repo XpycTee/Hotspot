@@ -80,3 +80,21 @@
 .item {
     transition: transform 0.15s ease;
 }
+
+.field-list {
+    margin: 10px 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+}
+
+.field-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.field-list-item .input-settings {
+    margin: 0;
+}
