@@ -14,6 +14,53 @@
     margin: 10px 0; 
 }
 
+.field-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.field-inline .input-settings {
+    margin: 10px 0;
+    flex: 1 1 260px;
+}
+
+.btn-generate-key {
+    margin-top: 10px;
+}
+
+.btn-icon {
+    width: 38px;
+    height: 38px;
+    padding: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.btn-icon-success {
+    background-color: #2e7d32;
+}
+
+.btn-icon-success:hover {
+    background-color: #276a2b;
+}
+
+.btn-icon-error {
+    background-color: #c62828;
+}
+
+.btn-icon-error:hover {
+    background-color: #ad2323;
+}
+
 .settings-actions { 
     border-top: 1px solid #ccc; /* Замените #ccc на нужный вам цвет */
     margin-top: 20px;

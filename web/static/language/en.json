@@ -176,6 +176,11 @@
     "reset": "Reset",
     "retry": "Retry",
     "close": "Close",
+    "show": "Show",
+    "hide": "Hide",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copy_failed": "Copy failed",
     "block": "Block",
     "filters_open": "Filters ▾",
     "filters_close": "Filters ▴",
@@ -191,6 +196,7 @@
     "no": "No",
     "add_phone": "+ phone",
     "change_password": "Change password",
+    "generate": "Generate",
     "continue": "Continue"
   },
   "placeholders": {

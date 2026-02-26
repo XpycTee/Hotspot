@@ -204,6 +204,11 @@ class Configurator:
                             label="Call phone",
                             type="text",
                         ),
+                        VProviderField(
+                            name="api_key",
+                            label="API Key",
+                            type="password",
+                        ),
                     ],
                     supported_methods=[
                         VerificationMethod.CALL,

@@ -1,4 +1,4 @@
-from dataclasses import asdict, replace
+from dataclasses import replace
 from core.config import get_config
 from core.config.models.verificators import VProviderField, VProviderType, VerificationProvider
 from core.config.store import ConfigLoader
@@ -9,6 +9,15 @@ def get_verificators():
     config = get_config()
 
     verificators = [dataclass_to_dict(v) for v in config.verificators.items]
+    for v in verificators:
+        if v.get('type') != VProviderType.ASTERISK:
+            continue
+
+        fields = v.get('fields', [])
+        has_api_key = any(f.name == 'api_key' for f in fields)
+        if not has_api_key:
+            fields.append(VProviderField())
+
     order = [t.value for t in config.verificators.order]
 
     order_index = {value: index for index, value in enumerate(order)}
@@ -47,6 +56,14 @@ def update_verificator(
                             label="Call phone",
                             type="text",
                             value=fields.get('call_phone'),
+                        )
+                    )
+                    new_fields.append(
+                        VProviderField(
+                            name="api_key",
+                            label="API Key",
+                            type="password",
+                            value=fields.get('api_key'),
                         )
                     )
                 if v.type in [VProviderType.MIKROTIK, VProviderType.HUAWEI]:

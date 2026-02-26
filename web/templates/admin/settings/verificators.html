@@ -27,7 +27,49 @@
                             <div class="field">
                                 <label class="settings-label">
                                     {{ f.label }}:
+                                    {% if v.type == 'asterisk' and f.name == 'api_key' %}
+                                    <div class="field-inline">
+                                        <input class="input input-settings" type="{{ f.type }}" name="{{ f.name }}_{{ v.type }}" value="{{ f.value }}">
+                                        <button
+                                            type="button"
+                                            class="btn btn-settings btn-edit btn-icon btn-toggle-secret"
+                                            data-target-input="{{ f.name }}_{{ v.type }}"
+                                            data-show-label="{{ get_translate('buttons.show', session.user_lang) }}"
+                                            data-hide-label="{{ get_translate('buttons.hide', session.user_lang) }}"
+                                            title="{{ get_translate('buttons.show', session.user_lang) }}"
+                                            aria-label="{{ get_translate('buttons.show', session.user_lang) }}"
+                                        >
+                                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M12 5c-5.5 0-9.5 5.5-9.5 7s4 7 9.5 7 9.5-5.5 9.5-7-4-7-9.5-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+                                            </svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-settings btn-edit btn-icon btn-copy-secret"
+                                            data-target-input="{{ f.name }}_{{ v.type }}"
+                                            title="{{ get_translate('buttons.copy', session.user_lang) }}"
+                                            aria-label="{{ get_translate('buttons.copy', session.user_lang) }}"
+                                            data-copy-label="{{ get_translate('buttons.copy', session.user_lang) }}"
+                                            data-copied-label="{{ get_translate('buttons.copied', session.user_lang) }}"
+                                            data-copy-failed-label="{{ get_translate('buttons.copy_failed', session.user_lang) }}"
+                                        >
+                                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                <path d="M9 9h10v11H9z"/><path d="M5 4h10v2H7v10H5z"/>
+                                            </svg>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="btn btn-settings btn-edit btn-generate-key"
+                                            data-target-input="{{ f.name }}_{{ v.type }}"
+                                            title="{{ get_translate('buttons.generate', session.user_lang) }}"
+                                            aria-label="{{ get_translate('buttons.generate', session.user_lang) }}"
+                                        >
+                                            {{ get_translate('buttons.generate', session.user_lang) }}
+                                        </button>
+                                    </div>
+                                    {% else %}
                                     <input class="input input-settings" type="{{ f.type }}" name="{{ f.name }}_{{ v.type }}" value="{{ f.value }}">
+                                    {% endif %}
                                 </label>
                             </div>
                             {% endfor %}
@@ -151,6 +193,55 @@ function getOrder() {
     return ids;
 }
 
+function generateHexKey(length = 64) {
+    if (!window.crypto || !window.crypto.getRandomValues) {
+        return null;
+    }
+    const bytes = new Uint8Array(Math.ceil(length / 2));
+    window.crypto.getRandomValues(bytes);
+    const hex = [...bytes]
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+    return hex.slice(0, length);
+}
+
+function iconEye() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5c-5.5 0-9.5 5.5-9.5 7s4 7 9.5 7 9.5-5.5 9.5-7-4-7-9.5-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/></svg>';
+}
+
+function iconEyeOff() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4.3 4.3 3 21 19.7 19.7 21l-3-3A11.2 11.2 0 0 1 12 19c-5.5 0-9.5-5.5-9.5-7 0-1 .9-2.4 2.3-3.8L3 4.3zm5 5 7.7 7.7A4 4 0 0 1 8 9.3zM12 5c5.5 0 9.5 5.5 9.5 7 0 .8-.6 2-1.6 3.2l-2.2-2.2c.2-.3.3-.7.3-1a4 4 0 0 0-4-4c-.3 0-.7.1-1 .2L10.8 6A9.7 9.7 0 0 1 12 5z"/></svg>';
+}
+
+function iconCopy() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9h10v11H9z"/><path d="M5 4h10v2H7v10H5z"/></svg>';
+}
+
+function iconCheck() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>';
+}
+
+function iconError() {
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3z"/></svg>';
+}
+
+async function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.style.position = 'fixed';
+    area.style.left = '-9999px';
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    document.execCommand('copy');
+    area.remove();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const list = document.querySelector('.verificators-list');
     const items = document.querySelectorAll('.settings-item');
@@ -162,6 +253,75 @@ document.addEventListener('DOMContentLoaded', function () {
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.addEventListener('click', () => {
         updateVerificators(items);
+    });
+
+    const keyButtons = document.querySelectorAll('.btn-generate-key');
+    keyButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetName = button.dataset.targetInput;
+            const targetInput = document.querySelector(`input[name="${targetName}"]`);
+            if (!targetInput) return;
+
+            const key = generateHexKey(64);
+            if (key) {
+                targetInput.value = key;
+            }
+        });
+    });
+
+    const toggleButtons = document.querySelectorAll('.btn-toggle-secret');
+    toggleButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetName = button.dataset.targetInput;
+            const targetInput = document.querySelector(`input[name="${targetName}"]`);
+            if (!targetInput) return;
+
+            const showLabel = button.dataset.showLabel;
+            const hideLabel = button.dataset.hideLabel;
+            const isHidden = targetInput.type === 'password';
+
+            targetInput.type = isHidden ? 'text' : 'password';
+            button.innerHTML = isHidden ? iconEyeOff() : iconEye();
+            button.title = isHidden ? hideLabel : showLabel;
+            button.setAttribute('aria-label', isHidden ? hideLabel : showLabel);
+        });
+    });
+
+    const copyButtons = document.querySelectorAll('.btn-copy-secret');
+    copyButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const targetName = button.dataset.targetInput;
+            const targetInput = document.querySelector(`input[name="${targetName}"]`);
+            if (!targetInput || !targetInput.value) return;
+
+            const copyLabel = button.dataset.copyLabel;
+            const copiedLabel = button.dataset.copiedLabel;
+            const copyFailedLabel = button.dataset.copyFailedLabel;
+            try {
+                await copyToClipboard(targetInput.value);
+                button.innerHTML = iconCheck();
+                button.classList.add('btn-icon-success');
+                button.title = copiedLabel;
+                button.setAttribute('aria-label', copiedLabel);
+                setTimeout(() => {
+                    button.innerHTML = iconCopy();
+                    button.classList.remove('btn-icon-success');
+                    button.title = copyLabel;
+                    button.setAttribute('aria-label', copyLabel);
+                }, 1200);
+            } catch (_) {
+                button.innerHTML = iconError();
+                button.classList.add('btn-icon-error');
+                button.title = copyFailedLabel;
+                button.setAttribute('aria-label', copyFailedLabel);
+                setTimeout(() => {
+                    button.innerHTML = iconCopy();
+                    button.classList.remove('btn-icon-error');
+                    button.title = copyLabel;
+                    button.setAttribute('aria-label', copyLabel);
+                }, 1400);
+            }
+        });
     });
 
     attachDrag(list);
