@@ -1,6 +1,7 @@
 import unittest
 import os
 from unittest.mock import patch
+import json
 
 from flask import Flask
 
@@ -152,3 +153,68 @@ class TestHotspotViews(unittest.TestCase):
 
             response = c.get('/sendin')
             self.assertEqual(response.status_code, 401)
+
+    @patch('web.pages.hotspot.Verification.call_verification')
+    def test_call_check_stream_verified(self, mock_call_verification):
+        mock_call_verification.return_value = VerificationResponse(status=VerificationStatus.VERIFIED)
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.get('/call/check/stream')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.mimetype, 'text/event-stream')
+
+            body = response.data.decode('utf-8')
+            events = [line for line in body.splitlines() if line.startswith('data: ')]
+            self.assertTrue(events)
+
+            payload = json.loads(events[-1].replace('data: ', '', 1))
+            self.assertEqual(payload.get('state'), 'verified')
+
+    @patch('web.pages.hotspot.Verification.call_verification')
+    def test_call_check_stream_timeout(self, mock_call_verification):
+        mock_call_verification.return_value = VerificationResponse(
+            status=VerificationStatus.TIMEOUT,
+            error_message='call expired',
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.get('/call/check/stream')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.mimetype, 'text/event-stream')
+
+            body = response.data.decode('utf-8')
+            events = [line for line in body.splitlines() if line.startswith('data: ')]
+            self.assertTrue(events)
+
+            payload = json.loads(events[-1].replace('data: ', '', 1))
+            self.assertEqual(payload.get('state'), 'timeout')
+            self.assertEqual(payload.get('message'), 'call expired')
+
+    @patch('web.pages.hotspot.Verification.call_verification')
+    def test_call_check_stream_error(self, mock_call_verification):
+        mock_call_verification.return_value = VerificationResponse(
+            status=VerificationStatus.ERROR,
+            error_message='provider failed',
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.get('/call/check/stream')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.mimetype, 'text/event-stream')
+
+            body = response.data.decode('utf-8')
+            events = [line for line in body.splitlines() if line.startswith('data: ')]
+            self.assertTrue(events)
+
+            payload = json.loads(events[-1].replace('data: ', '', 1))
+            self.assertEqual(payload.get('state'), 'failed')
+            self.assertEqual(payload.get('message'), 'provider failed')

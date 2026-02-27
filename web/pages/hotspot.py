@@ -1,8 +1,10 @@
 import random
 import secrets
 import string
+import time
+import json
 
-from flask import Blueprint, jsonify, render_template, redirect, url_for, abort, session, request, current_app
+from flask import Blueprint, jsonify, render_template, redirect, url_for, abort, session, request, current_app, Response
 
 from core.hotspot.authorization.service import Authorization, AuthStatus
 from core.hotspot.verification.service import Verification, VerificationStatus
@@ -52,6 +54,25 @@ def _get_verify_session_id() -> str:
         verify_session_id = secrets.token_urlsafe(24)
         session['verify_session_id'] = verify_session_id
     return verify_session_id
+
+
+def _get_call_verification_payload(verify_session_id: str) -> dict:
+    service = Verification(verify_session_id)
+    response = service.call_verification()
+
+    if response.status == VerificationStatus.WAIT_CALL:
+        return {'state': 'pending'}
+
+    if response.status == VerificationStatus.TIMEOUT:
+        return {'state': 'timeout', 'message': response.error_message}
+
+    if response.status in [VerificationStatus.FAILED, VerificationStatus.ERROR]:
+        return {'state': 'failed', 'message': response.error_message}
+
+    if response.status == VerificationStatus.VERIFIED:
+        return {'state': 'verified'}
+
+    return {'state': 'failed'}
 
 
 @hotspot_bp.route('/', methods=['POST', 'GET'])
@@ -261,26 +282,39 @@ def call_check():
     if not verify_session_id:
         abort(400)
 
-    service = Verification(verify_session_id)
-    response = service.call_verification()
-
-    if response.status == VerificationStatus.WAIT_CALL:
-        return jsonify({'state': 'pending'})
-
-    if response.status == VerificationStatus.TIMEOUT:
-        return jsonify({'state': 'timeout', 'message': response.error_message})
-
-    if response.status == VerificationStatus.FAILED:
-        return jsonify({'state': 'failed', 'message': response.error_message})
-
-    if response.status == VerificationStatus.ERROR:
-        return jsonify({'state': 'failed', 'message': response.error_message})
-
-    if response.status == VerificationStatus.VERIFIED:
+    payload = _get_call_verification_payload(verify_session_id)
+    if payload.get('state') == 'verified':
         session.pop('verify_session_id', None)
-        return jsonify({'state': 'verified'})
+    return jsonify(payload)
 
-    abort(500)
+
+@hotspot_bp.route('/call/check/stream', methods=['GET'])
+def call_check_stream():
+    verify_session_id = session.get('verify_session_id')
+    if not verify_session_id:
+        abort(400)
+
+    poll_interval_seconds = 2
+
+    def event_stream():
+        # Let EventSource know preferred reconnection delay in milliseconds.
+        yield "retry: 3000\n\n"
+
+        while True:
+            payload = _get_call_verification_payload(verify_session_id)
+
+            yield f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+            if payload['state'] != 'pending':
+                break
+
+            time.sleep(poll_interval_seconds)
+
+    headers = {
+        'Cache-Control': 'no-cache',
+        'X-Accel-Buffering': 'no',
+    }
+    return Response(event_stream(), mimetype='text/event-stream', headers=headers)
 
 
 @hotspot_bp.route('/call/auth', methods=['POST', 'GET'])

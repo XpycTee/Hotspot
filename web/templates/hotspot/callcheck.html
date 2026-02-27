@@ -113,29 +113,131 @@
         }
 
         const POLL_BACKOFF_MS = [2000, 3000, 5000];
-        const MAX_WAIT_MS = 90000;
+        const SSE_SILENCE_TIMEOUT_MS = 45000;
         const MAX_CONSECUTIVE_ERRORS = 3;
         const DEFAULT_FAILED_MESSAGE = "Verification failed.";
         const DEFAULT_TIMEOUT_MESSAGE = "Verification timeout.";
         const DEFAULT_POLLING_ERROR_MESSAGE = "Failed to check verification status.";
+        const CALL_CHECK_URL = "{{ url_for('pages.hotspot.call_check') }}";
+        const CALL_CHECK_SSE_URL = "{{ url_for('pages.hotspot.call_check_stream') }}";
+        const CALL_AUTH_URL = "{{ url_for('pages.hotspot.call_auth') }}";
 
         let stopped = false;
+        let pollingStarted = false;
         let backoffIndex = 0;
         let consecutiveErrors = 0;
-        const startedAt = Date.now();
+        let sse = null;
+        let sseSilenceTimer = null;
 
-        function stopPollingWithError(message) {
+        function clearSseSilenceTimer() {
+            if (!sseSilenceTimer) return;
+            clearTimeout(sseSilenceTimer);
+            sseSilenceTimer = null;
+        }
+
+        function closeSSE() {
+            clearSseSilenceTimer();
+            if (sse) {
+                sse.close();
+                sse = null;
+            }
+        }
+
+        function stopWithError(message) {
             errorNotify.textContent = message;
             errorNotify.style.display = 'block';
             stopped = true;
+            closeSSE();
+        }
+
+        function stopWithoutError() {
+            stopped = true;
+            closeSSE();
+        }
+
+        function handleState(data) {
+            if (stopped || !data || !data.state) return;
+
+            const state = data.state;
+
+            if (state === 'verified') {
+                stopWithoutError();
+                window.location.href = CALL_AUTH_URL;
+                return;
+            }
+
+            if (state === 'pending') {
+                consecutiveErrors = 0;
+                return;
+            }
+
+            if (state === 'failed') {
+                stopWithError(data.message || DEFAULT_FAILED_MESSAGE);
+                return;
+            }
+
+            if (state === 'timeout') {
+                stopWithError(data.message || DEFAULT_TIMEOUT_MESSAGE);
+                return;
+            }
+
+            stopWithError(DEFAULT_FAILED_MESSAGE);
+        }
+
+        function scheduleSseSilenceCheck() {
+            if (stopped || !sse) return;
+            clearSseSilenceTimer();
+            sseSilenceTimer = setTimeout(() => {
+                verifyOnceBeforeFallback();
+            }, SSE_SILENCE_TIMEOUT_MS);
+        }
+
+        function startPolling(reason) {
+            if (stopped || pollingStarted) return;
+            closeSSE();
+            pollingStarted = true;
+            backoffIndex = 0;
+            consecutiveErrors = 0;
+            if (reason) {
+                console.warn("Switching to polling:", reason);
+            }
+            poll();
+        }
+
+        async function fetchCallState() {
+            const response = await fetch(CALL_CHECK_URL, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("HTTP " + response.status);
+            }
+
+            return response.json();
+        }
+
+        async function verifyOnceBeforeFallback() {
+            if (stopped || !sse) {
+                return;
+            }
+
+            try {
+                const data = await fetchCallState();
+                handleState(data);
+                if (!stopped && data.state === 'pending' && sse) {
+                    scheduleSseSilenceCheck();
+                }
+            } catch (err) {
+                console.warn("SSE silence check failed, fallback to polling:", err);
+                startPolling('sse_silence');
+            }
         }
 
         function scheduleNextPoll() {
             if (stopped) return;
-            if (Date.now() - startedAt >= MAX_WAIT_MS) {
-                stopPollingWithError(DEFAULT_TIMEOUT_MESSAGE);
-                return;
-            }
             const delay = POLL_BACKOFF_MS[Math.min(backoffIndex, POLL_BACKOFF_MS.length - 1)];
             backoffIndex += 1;
             setTimeout(poll, delay);
@@ -144,48 +246,17 @@
         async function poll() {
             if (stopped) return;
             try {
-                const response = await fetch("{{ url_for('pages.hotspot.call_check') }}", {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error("HTTP " + response.status);
-                }
-
-                const data = await response.json();
-                const state = data.state;
-
-                if (state === 'verified') {
-                    window.location.href = "{{ url_for('pages.hotspot.call_auth') }}";
-                    return;
-                }
-
-                if (state === 'pending') {
-                    consecutiveErrors = 0;
+                const data = await fetchCallState();
+                handleState(data);
+                if (!stopped && data.state === 'pending') {
                     scheduleNextPoll();
-                    return;
                 }
-
-                if (state === 'failed') {
-                    stopPollingWithError(data.message || DEFAULT_FAILED_MESSAGE);
-                    return;
-                }
-
-                if (state === 'timeout') {
-                    stopPollingWithError(data.message || DEFAULT_TIMEOUT_MESSAGE);
-                    return;
-                }
-
-                stopPollingWithError(DEFAULT_FAILED_MESSAGE);
                 return;
             } catch (err) {
                 console.error("Polling error:", err);
                 consecutiveErrors += 1;
                 if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-                    stopPollingWithError(DEFAULT_POLLING_ERROR_MESSAGE);
+                    stopWithError(DEFAULT_POLLING_ERROR_MESSAGE);
                     return;
                 }
             }
@@ -193,7 +264,38 @@
             scheduleNextPoll();
         }
 
-        poll();
+        function startSSE() {
+            if (stopped) return;
+
+            if (typeof EventSource === 'undefined') {
+                startPolling('eventsource_unsupported');
+                return;
+            }
+
+            sse = new EventSource(CALL_CHECK_SSE_URL);
+            scheduleSseSilenceCheck();
+
+            sse.onmessage = function (event) {
+                if (stopped) return;
+                scheduleSseSilenceCheck();
+
+                try {
+                    const data = JSON.parse(event.data);
+                    handleState(data);
+                } catch (err) {
+                    console.error("Invalid SSE payload:", err);
+                    startPolling('invalid_sse_payload');
+                }
+            };
+
+            sse.onerror = function (event) {
+                if (stopped) return;
+                console.warn("SSE error, fallback to polling:", event);
+                startPolling('sse_error');
+            };
+        }
+
+        startSSE();
     });
 </script>
 {% endblock %}
