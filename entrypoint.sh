@@ -81,17 +81,29 @@ fi
 #########################################
 
 GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
+GUNICORN_WORKER_CLASS=${GUNICORN_WORKER_CLASS:-gevent}
+GUNICORN_WORKER_CONNECTIONS=${GUNICORN_WORKER_CONNECTIONS:-1000}
+GUNICORN_TIMEOUT=${GUNICORN_TIMEOUT:-90}
+GUNICORN_KEEPALIVE=${GUNICORN_KEEPALIVE:-5}
 GUNICORN_PORT=${GUNICORN_PORT:-8080}
 GUNICORN_ADDR=${GUNICORN_BIND:-[::]}
 : "${GUNICORN_LOG_LEVEL=${LOG_LEVEL:-info}}"
 
 echo "Starting Gunicorn web server..."
 echo "Workers: $GUNICORN_WORKERS"
+echo "Worker class: $GUNICORN_WORKER_CLASS"
+echo "Worker connections: $GUNICORN_WORKER_CONNECTIONS"
+echo "Timeout: $GUNICORN_TIMEOUT"
+echo "Keep-alive: $GUNICORN_KEEPALIVE"
 echo "Bind: $GUNICORN_ADDR:$GUNICORN_PORT"
 echo "Log level: $GUNICORN_LOG_LEVEL"
 
 exec gunicorn \
     -w "$GUNICORN_WORKERS" \
+    -k "$GUNICORN_WORKER_CLASS" \
+    --worker-connections "$GUNICORN_WORKER_CONNECTIONS" \
+    --timeout "$GUNICORN_TIMEOUT" \
+    --keep-alive "$GUNICORN_KEEPALIVE" \
     -b "$GUNICORN_ADDR:$GUNICORN_PORT" \
     --log-level="$GUNICORN_LOG_LEVEL" \
     webrun:flask_app
