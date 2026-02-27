@@ -14,6 +14,7 @@ SMSRU_STATUS = {
     401: ConfirmStatus.VERIFIED,
     402: ConfirmStatus.TIEMOUT,
 }
+CALLCHECK_CACHE_TTL_SECONDS = 600
 
 
 class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
@@ -93,8 +94,8 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
             }
         }
         with get_cache() as cache:
-            cache.set(f'callcheck:smsru:id:{check_id}', cache_data, 600)
-            cache.set(f'callcheck:smsru:counter:{check_id}', 0, 600)
+            cache.set(f'callcheck:smsru:id:{check_id}', cache_data, CALLCHECK_CACHE_TTL_SECONDS)
+            cache.set(f'callcheck:smsru:counter:{check_id}', 0, CALLCHECK_CACHE_TTL_SECONDS)
         
         return ConfirmResult(
             status=ConfirmStatus.PENDING,
