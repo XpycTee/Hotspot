@@ -2,9 +2,11 @@ from uuid import uuid4
 from core.hotspot.verification.api import CallConfirmationProvider, ConfirmResult, ConfirmStatus
 from core.logging import get_logger
 from core.redis import get_cache
+from core.utils.phone import normalize_phone
 
 
 logger = get_logger('core.hotspot.verification.api.asterisk')
+CALLCHECK_CACHE_TTL_SECONDS = 300
 
 
 class AsteriskConfirm(CallConfirmationProvider):
@@ -41,14 +43,15 @@ class AsteriskConfirm(CallConfirmationProvider):
 
     def start_verification(self, phone: str):
         request_id = uuid4()
+        normalized_phone = normalize_phone(phone)
         phone_data = {
             'request_id': request_id,
             'status': False,
-            'phone': phone,
+            'phone': normalized_phone,
         }
         with get_cache() as cache:
-            cache.set(f'callcheck:asterisk:id:{request_id}', phone_data, 300)
-            cache.set(f'callcheck:asterisk:phone:{phone}', request_id, 300)
+            cache.set(f'callcheck:asterisk:id:{request_id}', phone_data, CALLCHECK_CACHE_TTL_SECONDS)
+            cache.set(f'callcheck:asterisk:phone:{normalized_phone}', request_id, CALLCHECK_CACHE_TTL_SECONDS)
         logger.info('Phone was added successfully')
         return ConfirmResult(
             status=ConfirmStatus.PENDING,
