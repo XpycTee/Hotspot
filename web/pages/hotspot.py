@@ -276,8 +276,8 @@ def code_auth():
     abort(500)
 
 
-@hotspot_bp.route('/call/check', methods=['GET'])
-def call_check():
+@hotspot_bp.route('/call/check/poll', methods=['GET'])
+def call_check_poll():
     verify_session_id = session.get('verify_session_id')
     if not verify_session_id:
         abort(400)
