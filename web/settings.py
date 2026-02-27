@@ -26,5 +26,8 @@ class Config:
 
         with env.prefixed("FLASK_"):
             cls.SECRET_KEY = env.str('SECRET_KEY', None)
+            cls.SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', False)
+            cls.SESSION_COOKIE_SAMESITE = env.str('SESSION_COOKIE_SAMESITE', 'Lax')
+            cls.SESSION_COOKIE_HTTPONLY = env.bool('SESSION_COOKIE_HTTPONLY', True)
 
         app.config.from_object(cls)

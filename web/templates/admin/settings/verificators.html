@@ -174,7 +174,7 @@ function updateVerificators(items) {
 
     fetch("{{ url_for('pages.admin.settings.verificators.update') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(data)
     }).then(response => response.json())
         .then(result => {

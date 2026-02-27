@@ -11,7 +11,7 @@ hotspot_bp = Blueprint('hotspot', __name__, url_prefix='/hotspot')
 
 
 @hotspot_bp.route('/deauth', methods=['POST'])
-@login_required
+@login_required(group='write')
 def deauth():
     data = request.json
     if not data or 'mac' not in data:
@@ -24,7 +24,7 @@ def deauth():
 
 
 @hotspot_bp.route('/block', methods=['POST'])
-@login_required
+@login_required(group='write')
 def block():
     data = request.json
     if not data or 'mac' not in data:

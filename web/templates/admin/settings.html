@@ -29,10 +29,12 @@
             {{ get_translate('buttons.panel', session.user_lang) }}
         </a>
 
-        <a href="{{ url_for('pages.admin.auth.logout') }}"
-           class="btn-action btn-logout">
-            {{ get_translate('buttons.logout', session.user_lang) }}
-        </a>
+        <form action="{{ url_for('pages.admin.auth.logout') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
+            <button type="submit" class="btn-action btn-logout">
+                {{ get_translate('buttons.logout', session.user_lang) }}
+            </button>
+        </form>
     </div>
     <ul class="nav-tabs">
         <li><a id="hotspot" class="{{ 'active' if request.endpoint == 'pages.admin.settings.hotspot.index' else '' }}" href="{{ url_for('pages.admin.settings.hotspot.index') }}">{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</a></li>
@@ -45,6 +47,15 @@
     </div>
 
 </div>
+<script>
+window.adminCsrfToken = "{{ session.get('csrf_token', '') }}";
+window.adminJsonHeaders = function () {
+    return {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': window.adminCsrfToken || '',
+    };
+};
+</script>
 {% endblock %}
 
 {% block footer %}

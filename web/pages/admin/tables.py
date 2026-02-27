@@ -1,5 +1,6 @@
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, abort, jsonify, request, session
 
+from core.admin.security.access import has_access
 from core.admin.tables import get_table
 from core.admin.tables.wifi_clients import get_wifi_clients
 from core.hotspot.user.blacklist import add_to_blacklist, delete_from_blacklist
@@ -11,10 +12,27 @@ from web.pages.admin.utils import login_required
 
 tables_bp = Blueprint('tables', __name__, url_prefix='/tables')
 
+TABLE_MIN_GROUP = {
+    'wifi_clients': 'read',
+    'employees': 'write',
+    'blacklist': 'write',
+}
+
+
+def _check_table_access(table_name: str) -> None:
+    required_group = TABLE_MIN_GROUP.get(table_name)
+    if required_group is None:
+        abort(404)
+
+    if not has_access(session['username'], required_group):
+        abort(403)
+
 
 @tables_bp.route('/<table_name>/save', methods=['POST'])
-@login_required
+@login_required(group='read')
 def save_data(table_name):
+    _check_table_access(table_name)
+
     data = request.json
     new_id = None
 
@@ -68,8 +86,10 @@ def save_data(table_name):
 
 
 @tables_bp.route('/<table_name>/delete', methods=['POST'])
-@login_required
+@login_required(group='read')
 def delete_data(table_name):
+    _check_table_access(table_name)
+
     data = request.json
 
     if not data:
@@ -99,7 +119,7 @@ def delete_data(table_name):
     return jsonify({'success': True})
 
 @tables_bp.route('/wifi_clients', methods=['GET'])
-@login_required
+@login_required(group='read')
 def wifi_clients_table():
     search_query = request.args.get('search', '').lower()
     online = request.args.get('online', 'all')
@@ -130,8 +150,10 @@ def wifi_clients_table():
 
 
 @tables_bp.route('/<table_name>', methods=['GET'])
-@login_required
+@login_required(group='read')
 def table(table_name):
+    _check_table_access(table_name)
+
     search_query = request.args.get('search', '').lower()
     page = int(request.args.get('page', 1))
     rows_per_page = int(request.args.get('rows_per_page', 10))

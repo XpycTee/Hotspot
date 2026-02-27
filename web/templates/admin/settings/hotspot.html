@@ -6,6 +6,7 @@
         <h2>{{ get_translate('html.admin.settings.hotspot.title', session.user_lang) }}</h2>
 
         <form id="hotspot-form" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
             <div class="settings-panel">
                 {% set type_state = 1 %}
                 {% if language is defined and language == 'en' %}{% set type_state = 1 %}

@@ -89,7 +89,7 @@ function showModal(title, template, settingId, action) {
         // Отправляем запрос на сервер
         fetch(`/admin/settings/${settingId}/${action}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: adminJsonHeaders(),
             body: JSON.stringify(data)
         })
         .then(response => response.json())
@@ -176,7 +176,7 @@ function deleteHostRow(button) {
     // Отправляем запрос на сервер
     fetch(`/admin/settings/radius/delete`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(data)
     })
     .then(response => response.json())
@@ -277,7 +277,7 @@ function deleteUserRow(button) {
     // Отправляем запрос на сервер
     fetch(`/admin/settings/users/delete`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(data)
     })
     .then(response => response.json())

@@ -15,6 +15,7 @@
 
 {% block content %}
 <form class="form form-login" action="/admin/auth/check" method="post">
+    <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
 
     <h2>{{ get_translate('html.admin.login.label', session.user_lang) }}</h2>
     <div>

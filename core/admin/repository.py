@@ -1,10 +1,14 @@
 from sqlalchemy import select
+from core.admin.security.access import is_valid_group
 from core.database.models.admin_users import AdminUsers
 from core.database.session import get_session
 from core.utils.password import hashpw
 
 
 def create_user(username: str, password: str, group: str, access: dict | None = None):
+    if not is_valid_group(group):
+        return {'status': 'BAD_GROUP'}
+
     with get_session() as db_session:        
         query = select(AdminUsers).where(AdminUsers.username==username)
         db_user = db_session.scalars(query).first()
@@ -62,6 +66,9 @@ def delete_user(username: str):
 
 
 def update_user(username: str, password: str | None = None, group: str | None = None, access: dict | None = None):
+    if group is not None and not is_valid_group(group):
+        return {'status': 'BAD_GROUP'}
+
     with get_session() as db_session:        
         query = select(AdminUsers).where(AdminUsers.username==username)
         db_user = db_session.scalars(query).first()

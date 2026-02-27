@@ -37,7 +37,7 @@ function saveItems(data) {
 function saveItem(data) {
     return fetch("{{ url_for('pages.admin.tables.save_data', table_name='employees') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(toEmployeePayload(data))
     }).then(response => response.json())
       .catch(error => {
@@ -53,7 +53,7 @@ function deleteItem(data) {
 
     return fetch("{{ url_for('pages.admin.tables.delete_data', table_name='employees') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify({ id: Number(data.id) })
     }).then(response => response.json())
       .catch(error => {

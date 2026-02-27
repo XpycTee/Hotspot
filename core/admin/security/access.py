@@ -10,9 +10,23 @@ ACCESS_GROUPS = {
 }
 
 
+def is_valid_group(group: str | None) -> bool:
+    return group in ACCESS_GROUPS
+
+
 def has_access(username: str, group: str) -> bool:
-     with get_session() as db_session:
+    required_level = ACCESS_GROUPS.get(group)
+    if required_level is None:
+        return False
+
+    with get_session() as db_session:
         query = select(AdminUsers).where(AdminUsers.username==username)
         user = db_session.scalars(query).first()
+        if not user:
+            return False
 
-        return ACCESS_GROUPS[user.group] >= ACCESS_GROUPS[group]
+        user_level = ACCESS_GROUPS.get(user.group)
+        if user_level is None:
+            return False
+
+        return user_level >= required_level

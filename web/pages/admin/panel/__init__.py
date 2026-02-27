@@ -1,5 +1,6 @@
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, redirect, render_template, request, session, url_for
 
+from core.admin.security.access import has_access
 from core.admin.tables.blacklist import get_blacklist
 from core.admin.tables.employee import get_employees
 from core.hotspot.wifi.repository import get_locations
@@ -113,13 +114,13 @@ def _build_empty_blacklist_item() -> ViewItem:
 
 
 @panel_bp.route('', methods=['GET'])
-@login_required
+@login_required(group='read')
 def index():
     return redirect(url_for('pages.admin.panel.wifi_clients'), 302)
 
 
 @panel_bp.route('/wifi-clients', methods=['GET'])
-@login_required
+@login_required(group='read')
 def wifi_clients():
     employee = request.args.get('employee', 'all')
     online = request.args.get('online', 'all')
@@ -129,11 +130,14 @@ def wifi_clients():
         locations=get_locations(),
         employee_state=TOGGLE_STATE.get(employee, 1),
         online_state=TOGGLE_STATE.get(online, 1),
+        can_manage_wifi_actions=has_access(session['username'], 'write'),
+        can_open_settings=has_access(session['username'], 'full'),
+        can_manage_directory=has_access(session['username'], 'write'),
     )
 
 
 @panel_bp.route('/employees', methods=['GET'])
-@login_required
+@login_required(group='write')
 def employees():
     employees_data = get_employees(1, 1000000).get('employees', [])
     data = {
@@ -146,11 +150,13 @@ def employees():
         data=data,
         actions=['add'],
         empty_item=_build_empty_employee_item(),
+        can_open_settings=has_access(session['username'], 'full'),
+        can_manage_directory=has_access(session['username'], 'write'),
     )
 
 
 @panel_bp.route('/blacklist', methods=['GET'])
-@login_required
+@login_required(group='write')
 def blacklist():
     blacklist_data = get_blacklist(1, 1000000).get('blacklist', [])
     data = {phone_number: _build_blacklist_item(phone_number) for phone_number in blacklist_data}
@@ -160,4 +166,6 @@ def blacklist():
         data=data,
         actions=['add'],
         empty_item=_build_empty_blacklist_item(),
+        can_open_settings=has_access(session['username'], 'full'),
+        can_manage_directory=has_access(session['username'], 'write'),
     )

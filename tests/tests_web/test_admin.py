@@ -65,6 +65,8 @@ class TestAdminViews(unittest.TestCase):
     @staticmethod
     def _create_users():
         create_user('admin', 'admin', 'full')
+        create_user('writer', 'writer', 'write')
+        create_user('reader', 'reader', 'read')
         with get_session() as db_session:
             # Add an employee
             employee = Employee(lastname='Doe', name='John')
@@ -154,3 +156,61 @@ class TestAdminViews(unittest.TestCase):
                     sess['is_authenticated'] = True
                 response = c.post(f'/admin/tables/{table_name}/delete', json=data)
                 self.assertEqual(response.status_code, 200)
+
+    def test_acl_read_group(self):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['username'] = 'reader'
+                sess['is_authenticated'] = True
+
+            allowed = [
+                ('get', '/admin/panel/wifi-clients', None, {200}),
+                ('get', '/admin/tables/wifi_clients', None, {200}),
+            ]
+            forbidden = [
+                ('get', '/admin/panel/employees'),
+                ('get', '/admin/panel/blacklist'),
+                ('post', '/admin/tables/employees/save', {'lastname': 'A', 'name': 'B', 'phone': ['70000000000']}),
+                ('post', '/admin/tables/blacklist/save', {'phone': '79998887766'}),
+                ('post', '/admin/hotspot/deauth', {'mac': '00:11:22:33:44:55'}),
+                ('post', '/admin/hotspot/block', {'mac': '00:11:22:33:44:55'}),
+                ('get', '/admin/settings'),
+            ]
+
+            for method, url, payload, expected_codes in allowed:
+                response = c.get(url) if method == 'get' else c.post(url, json=payload)
+                self.assertIn(response.status_code, expected_codes)
+
+            for method, url, *payload in forbidden:
+                response = c.get(url) if method == 'get' else c.post(url, json=payload[0])
+                self.assertEqual(response.status_code, 403)
+
+    def test_acl_write_group(self):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['username'] = 'writer'
+                sess['is_authenticated'] = True
+
+            allowed = [
+                ('get', '/admin/panel/wifi-clients', None, {200}),
+                ('get', '/admin/panel/employees', None, {200}),
+                ('get', '/admin/panel/blacklist', None, {200}),
+                ('get', '/admin/tables/wifi_clients', None, {200}),
+                ('post', '/admin/tables/employees/save', {'lastname': 'A', 'name': 'B', 'phone': ['70000000000']}, {200}),
+                ('post', '/admin/tables/blacklist/save', {'phone': '79998887766'}, {200}),
+                ('post', '/admin/hotspot/deauth', {'mac': '00:11:22:33:44:55'}, {200}),
+                ('post', '/admin/hotspot/block', {'mac': '00:11:22:33:44:55'}, {404}),
+            ]
+            forbidden = [
+                ('get', '/admin/settings'),
+                ('get', '/admin/settings/users'),
+                ('post', '/admin/settings/users/update', {'id': 'reader', 'fields': {'group': 'write'}}),
+            ]
+
+            for method, url, payload, expected_codes in allowed:
+                response = c.get(url) if method == 'get' else c.post(url, json=payload)
+                self.assertIn(response.status_code, expected_codes)
+
+            for method, url, *payload in forbidden:
+                response = c.get(url) if method == 'get' else c.post(url, json=payload[0])
+                self.assertEqual(response.status_code, 403)

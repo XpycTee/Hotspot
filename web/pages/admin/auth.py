@@ -4,6 +4,7 @@ from flask import Blueprint, abort, current_app, redirect, render_template, requ
 from core.config import get_config
 import web.logger as logger
 from core.admin.auth.login import login_by_password
+from web.pages.admin.utils import ensure_csrf_token, login_required, validate_csrf_token
 
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -29,8 +30,15 @@ def _log_masked_session():
     return result
 
 
+def _build_lockout_key(username: str | None, client_ip: str | None) -> str:
+    norm_username = (username or '').strip().lower() or '<anonymous>'
+    norm_ip = (client_ip or '').strip() or '<unknown-ip>'
+    return f'{norm_username}:{norm_ip}'
+
+
 @auth_bp.route('/login', methods=['POST', 'GET'])
 def login():
+    ensure_csrf_token()
     error = session.pop('error', None)
     return render_template('admin/login.html', error=error)
 
@@ -40,18 +48,25 @@ def check():
     username = request.form.get('username')
     password = request.form.get('password')
     client_ip = request.remote_addr
+
+    csrf_token = request.form.get('csrf_token')
+    if not validate_csrf_token(csrf_token):
+        abort(403)
+
     config = get_config()
     user_lang = request.form.get('language', config.language.name)
 
-    session_id = session.get('_id')
+    lockout_key = _build_lockout_key(username, client_ip)
 
-    response = login_by_password(session_id, username, password)
+    response = login_by_password(lockout_key, username, password)
     status = response.get('status')
 
     if status == 'OK':
+        session.clear()
         session['is_authenticated'] = True
         session['user_lang'] = user_lang if user_lang != 'auto' else None
         session['username'] = username
+        ensure_csrf_token()
         session.permanent = True
         current_app.permanent_session_lifetime = timedelta(minutes=30)
 
@@ -72,7 +87,8 @@ def check():
     abort(500, description="Unknown status")
 
 
-@auth_bp.route('/logout', methods=['POST', 'GET'])
+@auth_bp.route('/logout', methods=['POST'])
+@login_required(group='read')
 def logout():
-    session.clear()  # Очищаем сессию
+    session.clear()
     return redirect(url_for('pages.admin.auth.login'), 302)

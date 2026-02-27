@@ -13,7 +13,7 @@
 function saveItems(data) {
     return fetch("{{ url_for('pages.admin.settings.radius.update') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(data)
     }).then(response => response.json())
         .catch(error => console.error('Error:', error));
@@ -22,7 +22,7 @@ function saveItems(data) {
 function saveItem(data) {
     return fetch("{{ url_for('pages.admin.settings.radius.update') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(data)
     }).then(response => response.json())
         .catch(error => console.error('Error:', error));
@@ -31,7 +31,7 @@ function saveItem(data) {
 function deleteItem(data) {
     return fetch("{{ url_for('pages.admin.settings.radius.delete') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(data)
     }).then(response => response.json())
         .catch(error => console.error('Error:', error));

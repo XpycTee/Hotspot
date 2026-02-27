@@ -1,6 +1,7 @@
 from flask import Blueprint, abort, jsonify, request, session
 
 from core.admin.repository import create_user, delete_user, update_user
+from core.admin.security.access import is_valid_group
 from core.admin.tables.settings.users import get_users
 from core.utils.language import get_translate
 from web.pages.admin.settings.common import render_settings_page
@@ -112,12 +113,16 @@ def update():
         return jsonify({'success': False, 'error': {'description': "You can't update your self"}})
     
     if password != password_confirm:
-        jsonify({'success': False, 'error': {'description': 'Passwords do not match'}})
+        return jsonify({'success': False, 'error': {'description': 'Passwords do not match'}})
 
     group = req['fields'].get('group', None)
+    if not is_valid_group(group):
+        return jsonify({'success': False, 'error': {'description': 'Bad group'}})
 
     if username.startswith('new_'):
         username = req['fields'].get('username')
+        if not username:
+            return jsonify({'success': False, 'error': {'description': 'Username is required'}})
         response = create_user(username, password=password, group=group)
     else:
         response = update_user(username, password=password, group=group)

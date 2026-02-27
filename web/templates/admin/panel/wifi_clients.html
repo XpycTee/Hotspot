@@ -56,7 +56,9 @@
                 <th>{{ get_translate('html.admin.panel.wifi_clients.online', session.user_lang) }}</th>
                 <th>{{ get_translate('html.admin.panel.wifi_clients.last_location', session.user_lang) }}</th>
                 <th>{{ get_translate('html.admin.panel.wifi_clients.last_ipv4_address', session.user_lang) }}</th>
+                {% if can_manage_wifi_actions %}
                 <th class="column-controls">{{ get_translate('html.admin.panel.controls', session.user_lang) }}</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody id="wifi_clients_body"></tbody>
@@ -72,5 +74,6 @@
 
 <script>
 window.__PANEL_TABLE__ = 'wifi_clients';
+window.__CAN_MANAGE_WIFI_ACTIONS__ = {{ 'true' if can_manage_wifi_actions else 'false' }};
 </script>
 {% endblock %}

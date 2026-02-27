@@ -195,6 +195,13 @@ function generateRowHTML(row) {
         month: 'short',
         year: 'numeric',
     });
+    const canManageWifiActions = window.__CAN_MANAGE_WIFI_ACTIONS__ === true;
+    const controlsCell = canManageWifiActions ? `
+        <td class="column-controls">
+            <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('buttons.deauth')}</button>
+            <button class="btn btn-delete btn-controls" onclick="blockRow(this)">${getTranslate('buttons.block')}</button>
+        </td>
+    ` : '';
 
     return `
         <td>${row.mac}</td>
@@ -204,10 +211,7 @@ function generateRowHTML(row) {
         <td>${row.online ? getTranslate('buttons.yes') : getTranslate('buttons.no')}</td>
         <td>${row.last_location}</td>
         <td>${row.last_ipv4_address}</td>
-        <td class="column-controls">
-            <button class="btn btn-edit btn-controls" onclick="deauthRow(this)">${getTranslate('buttons.deauth')}</button>
-            <button class="btn btn-delete btn-controls" onclick="blockRow(this)">${getTranslate('buttons.block')}</button>
-        </td>
+        ${controlsCell}
     `;
 }
 
@@ -313,7 +317,7 @@ function deauthRow(button) {
 
     fetch('/admin/hotspot/deauth', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify({ mac: macAddress }),
     })
         .then(response => response.json())
@@ -345,7 +349,7 @@ function blockRow(button) {
 
     fetch('/admin/hotspot/block', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify({ mac: macAddress }),
     })
         .then(response => response.json())

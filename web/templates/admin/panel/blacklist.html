@@ -29,7 +29,7 @@ function saveItem(data) {
 
     return fetch("{{ url_for('pages.admin.tables.save_data', table_name='blacklist') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(payload)
     }).then(response => response.json())
       .catch(error => {
@@ -45,7 +45,7 @@ function deleteItem(data) {
 
     return fetch("{{ url_for('pages.admin.tables.delete_data', table_name='blacklist') }}", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: adminJsonHeaders(),
         body: JSON.stringify(payload)
     }).then(response => response.json())
       .catch(error => {

@@ -90,32 +90,6 @@
       },
       "panel": {
         "title": "Admin Panel",
-        "tables": {
-          "controls": "Controls",
-          "page_counter": "Page {current_page} of {total_pages}",
-          "found_counter": "Found: {count}",
-          "wifi_clients": {
-            "title": "WiFi Clients",
-            "mac": "MAC address",
-            "expire": "Access expiration",
-            "is_employee": "Employee",
-            "phone": "Phone number",
-            "online": "Online",
-            "last_location": "Last location",
-            "last_ipv4_address": "Last IP"
-          },
-          "employees": {
-            "title": "Employee List",
-            "id": "ID",
-            "lastname": "Last name",
-            "name": "First name",
-            "phones": "Phone numbers"
-          },
-          "blacklist": {
-            "title": "Blacklist",
-            "phone": "Phone"
-          }
-        },
         "edit": {
           "title": {
             "employees": "Add new employee",
@@ -124,6 +98,30 @@
           "lastname_palceholder": "Last name",
           "name_palceholder": "First name",
           "phones_label": "Phones"
+        },
+        "controls": "Controls",
+        "page_counter": "Page {current_page} of {total_pages}",
+        "found_counter": "Found: {count}",
+        "wifi_clients": {
+          "title": "WiFi Clients",
+          "mac": "MAC address",
+          "expire": "Access expiration",
+          "is_employee": "Employee",
+          "phone": "Phone number",
+          "online": "Online",
+          "last_location": "Last location",
+          "last_ipv4_address": "Last IP"
+        },
+        "employees": {
+          "title": "Employee List",
+          "id": "ID",
+          "lastname": "Last name",
+          "name": "First name",
+          "phones": "Phone numbers"
+        },
+        "blacklist": {
+          "title": "Blacklist",
+          "phone": "Phone"
         }
       },
       "settings": {
@@ -149,12 +147,6 @@
           "days": "days",
           "hours": "hours",
           "min": "minutes"
-        },
-        "sender": {
-          "title": "Sender",
-          "type": "Type",
-          "url": "URL",
-          "api_key": "API Key"
         },
         "verificators": {
           "title": "Providers",
@@ -196,7 +188,6 @@
     "auth": "Authorization",
     "send_code": "Send SMS with code",
     "call": "Call",
-    "send_sms": "Send SMS with code",
     "onfirm_code": "Confirm code",
     "panel": "Panel",
     "settings": "Settings",
