@@ -255,8 +255,8 @@ def code_auth():
     abort(500)
 
 
-@hotspot_bp.route('/call/check', methods=['POST'])
-def call_check():   
+@hotspot_bp.route('/call/check', methods=['GET'])
+def call_check():
     verify_session_id = session.get('verify_session_id')
     if not verify_session_id:
         abort(400)
@@ -265,17 +265,22 @@ def call_check():
     response = service.call_verification()
 
     if response.status == VerificationStatus.WAIT_CALL:
-        return jsonify({'success': False})
+        return jsonify({'state': 'pending'})
+
+    if response.status == VerificationStatus.TIMEOUT:
+        return jsonify({'state': 'timeout', 'message': response.error_message})
 
     if response.status == VerificationStatus.FAILED:
-        return jsonify({'success': False, 'error_message': response.error_message})
+        return jsonify({'state': 'failed', 'message': response.error_message})
 
     if response.status == VerificationStatus.ERROR:
-        return jsonify({'success': False, 'error_message': response.error_message})
+        return jsonify({'state': 'failed', 'message': response.error_message})
 
     if response.status == VerificationStatus.VERIFIED:
         session.pop('verify_session_id', None)
-        return jsonify({'success': True})
+        return jsonify({'state': 'verified'})
+
+    abort(500)
 
 
 @hotspot_bp.route('/call/auth', methods=['POST', 'GET'])

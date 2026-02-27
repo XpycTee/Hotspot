@@ -210,7 +210,7 @@ class Verification:
             if self._session.timeout and now_time > self._session.timeout:
                 self._clear_session()
                 return VerificationResponse(
-                    status=VerificationStatus.FAILED,
+                    status=VerificationStatus.TIMEOUT,
                     error_message=get_translate('errors.auth.timeout'),
                 )
 

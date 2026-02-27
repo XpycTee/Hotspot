@@ -112,41 +112,85 @@
             qrCanvas.style.display = "none";
         }
 
+        const POLL_BACKOFF_MS = [2000, 3000, 5000];
+        const MAX_WAIT_MS = 90000;
+        const MAX_CONSECUTIVE_ERRORS = 3;
+        const DEFAULT_FAILED_MESSAGE = "Verification failed.";
+        const DEFAULT_TIMEOUT_MESSAGE = "Verification timeout.";
+        const DEFAULT_POLLING_ERROR_MESSAGE = "Failed to check verification status.";
+
         let stopped = false;
+        let backoffIndex = 0;
+        let consecutiveErrors = 0;
+        const startedAt = Date.now();
+
+        function stopPollingWithError(message) {
+            errorNotify.textContent = message;
+            errorNotify.style.display = 'block';
+            stopped = true;
+        }
+
+        function scheduleNextPoll() {
+            if (stopped) return;
+            if (Date.now() - startedAt >= MAX_WAIT_MS) {
+                stopPollingWithError(DEFAULT_TIMEOUT_MESSAGE);
+                return;
+            }
+            const delay = POLL_BACKOFF_MS[Math.min(backoffIndex, POLL_BACKOFF_MS.length - 1)];
+            backoffIndex += 1;
+            setTimeout(poll, delay);
+        }
 
         async function poll() {
             if (stopped) return;
             try {
                 const response = await fetch("{{ url_for('pages.hotspot.call_check') }}", {
-                    method: 'POST',
+                    method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Accept': 'application/json'
                     }
                 });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        window.location.href = "{{ url_for('pages.hotspot.call_auth') }}";
-                        return;
-                    }
-                } else {
-                    let message = "Request failed";
-                    try {
-                        const errData = await response.json();
-                        message = errData.message || message;
-                    } catch (_) {
-                        message = "HTTP " + response.status;
-                    }
-                    errorNotify.textContent = 'Error: ' + message;
-                    errorNotify.style.display = 'block';
-                    stopped = true;
+
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
+                }
+
+                const data = await response.json();
+                const state = data.state;
+
+                if (state === 'verified') {
+                    window.location.href = "{{ url_for('pages.hotspot.call_auth') }}";
                     return;
                 }
+
+                if (state === 'pending') {
+                    consecutiveErrors = 0;
+                    scheduleNextPoll();
+                    return;
+                }
+
+                if (state === 'failed') {
+                    stopPollingWithError(data.message || DEFAULT_FAILED_MESSAGE);
+                    return;
+                }
+
+                if (state === 'timeout') {
+                    stopPollingWithError(data.message || DEFAULT_TIMEOUT_MESSAGE);
+                    return;
+                }
+
+                stopPollingWithError(DEFAULT_FAILED_MESSAGE);
+                return;
             } catch (err) {
                 console.error("Polling error:", err);
+                consecutiveErrors += 1;
+                if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+                    stopPollingWithError(DEFAULT_POLLING_ERROR_MESSAGE);
+                    return;
+                }
             }
-            setTimeout(poll, 3000);
+
+            scheduleNextPoll();
         }
 
         poll();
