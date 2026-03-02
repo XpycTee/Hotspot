@@ -2,7 +2,7 @@ from core.admin.security.access import has_access
 import web.logger as logger
 
 
-from flask import abort, redirect, request, session, url_for
+from flask import abort, current_app, redirect, request, session, url_for
 
 import secrets
 from hmac import compare_digest
@@ -52,6 +52,13 @@ def csrf_token_from_request() -> str | None:
     )
 
 
+def csrf_protection_enabled() -> bool:
+    enabled = current_app.config.get('ADMIN_CSRF_ENABLED')
+    if enabled is not None:
+        return bool(enabled)
+    return not (current_app.testing or current_app.debug)
+
+
 def login_required(_func=None, *, group='read'):
     def decorator(f):
         @wraps(f)
@@ -67,7 +74,7 @@ def login_required(_func=None, *, group='read'):
                 session.clear()
                 return redirect(url_for('pages.admin.auth.login'), 302)
 
-            if request.method in UNSAFE_METHODS:
+            if request.method in UNSAFE_METHODS and csrf_protection_enabled():
                 token = csrf_token_from_request()
                 if not validate_csrf_token(token):
                     return abort(403)

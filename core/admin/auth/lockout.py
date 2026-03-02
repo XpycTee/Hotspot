@@ -8,7 +8,11 @@ from datetime import datetime
 def check_lockout(session_id):
     with get_cache() as cache:
         lockout_until = cache.get(f'admin:login:lockout:{session_id}')
-    return lockout_until and datetime.now().timestamp() < lockout_until
+
+    if lockout_until is None:
+        return None
+
+    return datetime.now().timestamp() < float(lockout_until)
 
 
 def update_lockout(session_id):
@@ -16,4 +20,8 @@ def update_lockout(session_id):
     lockout_time = config.admin.lockout_time
     lockout_until = datetime.now() + lockout_time
     with get_cache() as cache:
-        cache.set(f'admin:login:lockout:{session_id}', lockout_until.timestamp(), lockout_time * 60)
+        cache.set(
+            f'admin:login:lockout:{session_id}',
+            lockout_until.timestamp(),
+            int(lockout_time.total_seconds()),
+        )

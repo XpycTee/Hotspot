@@ -4,7 +4,7 @@ from flask import Blueprint, abort, current_app, redirect, render_template, requ
 from core.config import get_config
 import web.logger as logger
 from core.admin.auth.login import login_by_password
-from web.pages.admin.utils import ensure_csrf_token, login_required, validate_csrf_token
+from web.pages.admin.utils import csrf_protection_enabled, ensure_csrf_token, login_required, validate_csrf_token
 
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -49,9 +49,10 @@ def check():
     password = request.form.get('password')
     client_ip = request.remote_addr
 
-    csrf_token = request.form.get('csrf_token')
-    if not validate_csrf_token(csrf_token):
-        abort(403)
+    if csrf_protection_enabled():
+        csrf_token = request.form.get('csrf_token')
+        if not validate_csrf_token(csrf_token):
+            abort(403)
 
     config = get_config()
     user_lang = request.form.get('language', config.language.name)
@@ -87,7 +88,7 @@ def check():
     abort(500, description="Unknown status")
 
 
-@auth_bp.route('/logout', methods=['POST'])
+@auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required(group='read')
 def logout():
     session.clear()

@@ -1,4 +1,5 @@
 from dataclasses import is_dataclass
+from datetime import timedelta
 from threading import Lock
 from time import time
 
@@ -39,6 +40,8 @@ class _InMemoryRedis:
         with self._lock:
             self._data[key] = str(value)
             if ex is not None:
+                if isinstance(ex, timedelta):
+                    ex = ex.total_seconds()
                 self._expires[key] = time() + ex
             else:
                 self._expires.pop(key, None)
@@ -50,10 +53,14 @@ class _InMemoryRedis:
                 return None
             return self._data.get(key)
 
-    def delete(self, key: str):
+    def delete(self, *keys: str):
         with self._lock:
-            self._expires.pop(key, None)
-            return 1 if self._data.pop(key, None) is not None else 0
+            deleted = 0
+            for key in keys:
+                self._expires.pop(key, None)
+                if self._data.pop(key, None) is not None:
+                    deleted += 1
+            return deleted
 
     def incr(self, key: str, amount=1):
         with self._lock:
