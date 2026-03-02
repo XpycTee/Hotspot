@@ -14,7 +14,7 @@ from core.database.session import get_session
 from core.hotspot.wifi.auth import get_credentials
 from core.hotspot.wifi.challange import _octal_string_to_bytes, hash_chap
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
-from core.hotspot.wifi.repository import create_or_udpate_wifi_client, find_by_fp, find_by_mac
+from core.hotspot.wifi.repository import create_wifi_client, update_wifi_client, find_by_fp, find_by_mac
 
 
 def _clear_db():
@@ -68,12 +68,14 @@ class TestCoreHotspotWiFi(unittest.TestCase):
         self.assertEqual(by_mac['mac'], '00:00:00:00:00:01')
         self.assertEqual(by_fp['mac'], '00:00:00:00:00:01')
 
-    def test_create_or_update_wifi_client(self):
+    def test_update_wifi_client(self):
         mac = 'FF:FF:FF:00:00:01'
         phone_guest = '79999990001'
         phone_employee = '79999990002'
+        user_fp = 'test-fp'
 
-        create_or_udpate_wifi_client(mac, phone_guest)
+        create_wifi_client(mac, phone_guest, user_fp)
+        update_wifi_client(mac, phone_guest, user_fp)
         self.assertEqual(find_by_mac(mac)['is_employee'], False)
 
         with get_session() as db_session:
@@ -83,7 +85,7 @@ class TestCoreHotspotWiFi(unittest.TestCase):
             db_session.add(EmployeePhone(phone_number=phone_employee, employee=employee))
             db_session.commit()
 
-        create_or_udpate_wifi_client(mac, phone_employee)
+        update_wifi_client(mac, phone_employee, user_fp)
         self.assertEqual(find_by_mac(mac)['is_employee'], True)
         self.assertEqual(find_by_mac(mac)['phone'], phone_employee)
 

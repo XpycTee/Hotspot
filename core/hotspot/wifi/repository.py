@@ -40,7 +40,7 @@ def find_by_fp(user_fp):
         }
 
 
-def create_or_udpate_wifi_client(mac, phone_number):
+def update_wifi_client(mac, phone_number, user_fp):
     """Создать запись WiFi клиента по MAC-адресу, если нету."""
     db_phone = get_or_create_clients_number(phone_number)
     db_employee = get_employee(phone_number)
@@ -48,17 +48,14 @@ def create_or_udpate_wifi_client(mac, phone_number):
     with get_session() as db_session:
         query = select(WifiClient).where(WifiClient.mac==mac)
         db_client = db_session.scalars(query).first()
-
         if not db_client:
-            db_client = WifiClient(mac=mac, expiration=expiration, employee=db_employee, phone=db_phone, user_fp=None)
-            db_session.add(db_client)
-            db_session.commit()
-        else:
-            db_client.expiration = expiration
-            db_client.employee = db_employee
-            db_client.phone = db_phone
-            db_session.commit()
+            raise RuntimeError("DB Error: wifi client not found")
 
+        db_client.expiration = expiration
+        db_client.employee = db_employee
+        db_client.phone = db_phone
+        db_client.user_fp = user_fp
+        db_session.commit()
 
 
 def create_wifi_client(mac, phone_number, user_fp):

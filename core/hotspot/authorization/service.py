@@ -4,7 +4,7 @@ from enum import Enum, auto
 from core.hotspot.user.blacklist import check_blacklist
 from core.hotspot.user.expiration import update_expiration
 from core.hotspot.wifi.fingerprint import hash_fingerprint
-from core.hotspot.wifi.repository import create_wifi_client, find_by_fp, find_by_mac, update_mac
+from core.hotspot.wifi.repository import update_wifi_client, create_wifi_client, find_by_fp, find_by_mac, update_mac
 from core.logging import get_logger
 
 logger = get_logger('core.hotspot.authorization.service')
@@ -134,26 +134,15 @@ class Authorization:
             create_wifi_client(mac, phone, user_fp)
             return AuthResponse(
                 status=AuthStatus.AUTHORIZED,
-                phone=phone,
-                user_fp=user_fp,
             )
         
-        if (db_phone:= wifi_client.get('phone')) and db_phone == phone:
-            wifi_client_mac = wifi_client.get('mac')
+        wifi_client_mac = wifi_client.get('mac')
+        update_wifi_client(wifi_client_mac, phone, user_fp)
+        
+        if use_fp:
+            update_mac(wifi_client_mac, mac)
 
-            update_expiration(wifi_client_mac)
-            
-            if use_fp:
-                update_mac(wifi_client_mac, mac)
-
-            logger.info(f"{mac} authing by {'phone & fp' if use_fp else 'phone & mac'}")
-            return AuthResponse(
-                status=AuthStatus.AUTHORIZED,
-                phone=phone,
-                user_fp=user_fp,
-            )
-        else:
-            return AuthResponse(
-                status=AuthStatus.FAILED,
-                error_message="User not found",
-            )
+        logger.info(f"{mac} authing by {'phone & fp' if use_fp else 'phone & mac'}")
+        return AuthResponse(
+            status=AuthStatus.AUTHORIZED,
+        )

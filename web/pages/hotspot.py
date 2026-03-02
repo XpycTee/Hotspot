@@ -275,7 +275,6 @@ def code_auth():
         if auth_response.status == AuthStatus.FAILED:
             session['error'] = auth_response.error_message
             session.pop('phone', None)
-            session.pop('verify_session_id', None)
             return redirect(url_for('pages.hotspot.login'), 302)
     
     abort(500)
