@@ -130,7 +130,15 @@ class Authorization:
             wifi_client = find_by_fp(user_fp)
             use_fp = True
 
-        if wifi_client and (db_phone:= wifi_client.get('phone')) and db_phone == phone:
+        if not wifi_client:
+            create_wifi_client(mac, phone, user_fp)
+            return AuthResponse(
+                status=AuthStatus.AUTHORIZED,
+                phone=phone,
+                user_fp=user_fp,
+            )
+        
+        if (db_phone:= wifi_client.get('phone')) and db_phone == phone:
             wifi_client_mac = wifi_client.get('mac')
 
             update_expiration(wifi_client_mac)
@@ -144,10 +152,8 @@ class Authorization:
                 phone=phone,
                 user_fp=user_fp,
             )
-        
-        create_wifi_client(mac, phone, user_fp)
-        return AuthResponse(
-            status=AuthStatus.AUTHORIZED,
-            phone=phone,
-            user_fp=user_fp,
-        )
+        else:
+            return AuthResponse(
+                status=AuthStatus.FAILED,
+                error_message="User not found",
+            )
