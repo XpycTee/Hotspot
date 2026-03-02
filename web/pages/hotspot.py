@@ -272,6 +272,11 @@ def code_auth():
             abort(403)
         if auth_response.status == AuthStatus.AUTHORIZED:
             return redirect(url_for('pages.hotspot.sendin'), 302)
+        if auth_response.status == AuthStatus.FAILED:
+            session['error'] = auth_response.error_message
+            session.pop('phone', None)
+            session.pop('verify_session_id', None)
+            return redirect(url_for('pages.hotspot.login'), 302)
     
     abort(500)
 
@@ -331,6 +336,11 @@ def call_auth():
         abort(403)
     if auth_response.status == AuthStatus.AUTHORIZED:
         return redirect(url_for('pages.hotspot.sendin'), 302)
+    if auth_response.status == AuthStatus.FAILED:
+        session['error'] = auth_response.error_message
+        session.pop('phone', None)
+        session.pop('verify_session_id', None)
+        return redirect(url_for('pages.hotspot.login'), 302)
 
     abort(500)
 

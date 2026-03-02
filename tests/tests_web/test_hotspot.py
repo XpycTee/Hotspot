@@ -142,6 +142,31 @@ class TestHotspotViews(unittest.TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertIn('/login', response.location)
 
+    @patch('web.pages.hotspot.Authorization.authorization')
+    @patch('web.pages.hotspot.Verification.code_verification')
+    def test_code_auth_verified_but_auth_failed_redirects_login(self, mock_code_verification, mock_authorization):
+        mock_code_verification.return_value = VerificationResponse(status=VerificationStatus.VERIFIED)
+        mock_authorization.return_value = AuthResponse(
+            status=AuthStatus.FAILED,
+            error_message='auth failed',
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verify_session_id'] = 'verify-session'
+                sess['mac'] = '00:00:00:00:00:01'
+                sess['phone'] = '79990000000'
+                sess['user_fp'] = 'user-fp'
+
+            response = c.post('/code/auth', data={'code': '0000'})
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/login', response.location)
+
+            with c.session_transaction() as sess:
+                self.assertEqual(sess.get('error'), 'auth failed')
+                self.assertIsNone(sess.get('phone'))
+                self.assertIsNone(sess.get('verify_session_id'))
+
     @patch('web.pages.hotspot.Authorization.authorized', return_value=False)
     def test_sendin_unauthorized(self, _):
         with self.client as c:
@@ -172,6 +197,29 @@ class TestHotspotViews(unittest.TestCase):
 
             payload = json.loads(events[-1].replace('data: ', '', 1))
             self.assertEqual(payload.get('state'), 'verified')
+
+    @patch('web.pages.hotspot.Authorization.authorization')
+    def test_call_auth_failed_redirects_login(self, mock_authorization):
+        mock_authorization.return_value = AuthResponse(
+            status=AuthStatus.FAILED,
+            error_message='auth failed',
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:01'
+                sess['phone'] = '79990000000'
+                sess['user_fp'] = 'user-fp'
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.get('/call/auth')
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/login', response.location)
+
+            with c.session_transaction() as sess:
+                self.assertEqual(sess.get('error'), 'auth failed')
+                self.assertIsNone(sess.get('phone'))
+                self.assertIsNone(sess.get('verify_session_id'))
 
     @patch('web.pages.hotspot.Verification.call_verification')
     def test_call_check_stream_timeout(self, mock_call_verification):
