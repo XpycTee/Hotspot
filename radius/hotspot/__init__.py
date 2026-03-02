@@ -1,10 +1,9 @@
 from core.config import get_config
 from core.hotspot.authorization.service import AuthStatus, Authorization
-from core.hotspot.user.employees import check_employee
 from core.hotspot.user.statistic import update_statistic
 from core.hotspot.user.token import get_token
+from core.hotspot.wifi.repository import find_by_mac
 from core.logging import get_logger
-from core.utils.phone import normalize_phone
 from radius.hotspot.packet import BasePacket, HotspotAcctPacket, HotspotAuthPacket
 from radius.hotspot.server import BaseServer
 
@@ -39,30 +38,26 @@ class HotspotRADIUS(BaseServer):
             mac = packet.get_attribute('Calling-Station-Id')
             username = packet.get_attribute('User-Name')
 
-            if username == mac:
-                if packet.verify_password(mac):
-                    auth_service = Authorization()
-                    client = auth_service.mac_authorization(mac, None)
-                    if client.status == AuthStatus.AUTHORIZED:
-                        is_employee = client.is_employee
-                        reply = self.reply_accept(packet, is_employee)
-                        reply_message = 'Auth by mac'
-                    else:
-                        reply = self.reply_reject(packet, client.error_message)
-                else:
-                    reply_message =  'Bad token'
-                    reply = self.reply_reject(packet ,reply_message)
-            else:
-                phone_number = normalize_phone(username)
-                token = get_token(phone_number)
+            token = get_token(username)
 
-                if token and packet.verify_password(token):
-                    is_employee = check_employee(phone_number)
+            if token and packet.verify_password(token):
+                wifi_client = find_by_mac(mac)
+                is_employee = wifi_client.get('is_employee') if wifi_client else False
+                reply = self.reply_accept(packet, is_employee)
+                reply_message = 'Auth by token (mac)'
+            elif packet.verify_password(mac):
+                auth_service = Authorization()
+                client = auth_service.mac_authorization(mac, None)
+                if client.status == AuthStatus.AUTHORIZED:
+                    is_employee = client.is_employee
                     reply = self.reply_accept(packet, is_employee)
-                    reply_message = 'Auth by token'
+                    reply_message = 'Auth by mac'
                 else:
-                    reply_message = 'Bad token'
-                    reply = self.reply_reject(packet, reply_message)
+                    reply = self.reply_reject(packet, client.error_message)
+                    reply_message = client.error_message
+            else:
+                reply_message =  'Bad token'
+                reply = self.reply_reject(packet, reply_message)
         else:
             reply_message = 'Bad Message-Authentificator'
             reply = self.reply_reject(packet, reply_message)

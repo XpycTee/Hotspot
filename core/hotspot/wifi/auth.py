@@ -13,8 +13,8 @@ logger = get_logger('core.hotspot.wifi.auth')
 def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challenge=None):
     config = get_config()
     if config.radius.enabled:
-        username = phone_number
-        password = generate_token(phone_number)
+        username = mac
+        password = generate_token(mac)
     else:
         if check_employee(phone_number):
             username = 'employee'

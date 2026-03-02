@@ -116,4 +116,5 @@ class TestCoreHotspotWiFi(unittest.TestCase):
         mock_config.radius.enabled = True
         mock_generate_token.return_value = 'token'
         result = get_credentials('CC', '79990000003')
-        self.assertEqual(result, {'username': '79990000003', 'password': 'token'})
+        self.assertEqual(result, {'username': 'CC', 'password': 'token'})
+        mock_generate_token.assert_called_with('CC')
