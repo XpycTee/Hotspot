@@ -47,7 +47,7 @@ class HotspotRADIUS(BaseServer):
                 reply_message = 'Auth by token (mac)'
             elif packet.verify_password(mac):
                 auth_service = Authorization()
-                client = auth_service.mac_authorization(mac, None)
+                client = auth_service.mac_authorization(mac)
                 if client.status == AuthStatus.AUTHORIZED:
                     is_employee = client.is_employee
                     reply = self.reply_accept(packet, is_employee)
