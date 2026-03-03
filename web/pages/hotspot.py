@@ -6,7 +6,7 @@ import json
 
 from flask import Blueprint, jsonify, render_template, redirect, url_for, abort, session, request, current_app, Response
 
-from core.hotspot.authorization.service import Authorization, AuthStatus
+from core.hotspot.authorization.service import Authorization, AuthStatus, AuthFailReason
 from core.hotspot.verification.service import Verification, VerificationStatus
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
@@ -139,6 +139,9 @@ def login():
     if response.status == AuthStatus.BLOCKED:
         abort(403)
     if response.status == AuthStatus.FAILED:
+        if response.fail_reason == AuthFailReason.NOT_FOUND:
+            return render_template('hotspot/login.html', error=None)
+
         return render_template(
             'hotspot/login.html', 
             error=response.error_message,

@@ -9,7 +9,7 @@ from core import database
 from core.config import get_config, init_config
 from core.database.models import Model
 from core.database.session import get_session
-from core.hotspot.authorization.service import AuthResponse, AuthStatus
+from core.hotspot.authorization.service import AuthResponse, AuthStatus, AuthFailReason
 from core.hotspot.verification.service import VerificationResponse, VerificationStatus
 from core.redis import get_cache
 from core.utils.language import get_translate
@@ -69,6 +69,23 @@ class TestHotspotViews(unittest.TestCase):
             'hardware_fp': 'abc123',
         })
         self.assertEqual(response.status_code, 200)
+
+    @patch('web.pages.hotspot.Authorization.mac_authorization')
+    def test_login_not_found_renders_page_without_error(self, mock_mac_auth):
+        mock_mac_auth.return_value = AuthResponse(
+            status=AuthStatus.FAILED,
+            error_message='User not found',
+            fail_reason=AuthFailReason.NOT_FOUND,
+        )
+
+        response = self.client.post('/login', data={
+            'link-login-only': 'link',
+            'link-orig': 'orig',
+            'mac': '00:00:00:00:00:01',
+            'hardware_fp': 'abc123',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('User not found', response.get_data(as_text=True))
 
     @patch('web.pages.hotspot.Authorization.mac_authorization')
     def test_login_authorized_redirects_sendin(self, mock_mac_auth):

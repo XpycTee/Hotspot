@@ -15,6 +15,13 @@ class AuthStatus(Enum):
     BLOCKED = auto()
 
 
+class AuthFailReason(Enum):
+    NOT_FOUND = auto()
+    EXPIRED = auto()
+    PHONE_MISSING = auto()
+    USER_FP_MISSING = auto()
+
+
 @dataclass
 class AuthResponse:
     status: AuthStatus
@@ -25,6 +32,7 @@ class AuthResponse:
     user_fp: str | None = None
     is_employee: bool | None = None
     error_message: str | None = None
+    fail_reason: AuthFailReason | None = None
 
 
 class Authorization:
@@ -47,6 +55,7 @@ class Authorization:
             return AuthResponse(
                 status=AuthStatus.FAILED,
                 error_message="User not found",
+                fail_reason=AuthFailReason.NOT_FOUND,
             )
 
         if now_time > wifi_client.get('expiration'):
@@ -54,6 +63,7 @@ class Authorization:
             return AuthResponse(
                 status=AuthStatus.FAILED,
                 error_message="User is exired",
+                fail_reason=AuthFailReason.EXPIRED,
             )
 
         phone = wifi_client.get('phone')
@@ -62,6 +72,7 @@ class Authorization:
             return AuthResponse(
                 status=AuthStatus.FAILED,
                 error_message="User's phone not found",
+                fail_reason=AuthFailReason.PHONE_MISSING,
             )
         
         if check_blacklist(phone):
@@ -77,6 +88,7 @@ class Authorization:
             return AuthResponse(
                 status=AuthStatus.FAILED,
                 error_message="User fingerprint not found",
+                fail_reason=AuthFailReason.USER_FP_MISSING,
             )
 
         logger.info(f"{mac} authing by expiration")
@@ -123,6 +135,7 @@ class Authorization:
         return AuthResponse(
             status=AuthStatus.FAILED,
             error_message="User not found",
+            fail_reason=AuthFailReason.NOT_FOUND,
         )
 
     def authorization(self, mac: str, phone: str, hardware_fp: str) -> AuthResponse:

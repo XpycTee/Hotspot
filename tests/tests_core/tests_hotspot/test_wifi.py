@@ -16,7 +16,7 @@ from core.hotspot.wifi.auth import get_credentials
 from core.hotspot.wifi.challange import _octal_string_to_bytes, hash_chap
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
 from core.hotspot.wifi.repository import create_wifi_client, update_wifi_client, find_by_fp, find_by_mac
-from core.hotspot.authorization.service import Authorization, AuthStatus
+from core.hotspot.authorization.service import Authorization, AuthStatus, AuthFailReason
 
 
 def _clear_db():
@@ -121,6 +121,13 @@ class TestCoreHotspotWiFi(unittest.TestCase):
 
         self.assertEqual(result.status, AuthStatus.FAILED)
         self.assertEqual(result.error_message, 'User fingerprint not found')
+
+    def test_mac_authorization_returns_not_found_reason_for_new_client(self):
+        service = Authorization()
+        result = service.mac_authorization('AA:AA:AA:00:00:03')
+
+        self.assertEqual(result.status, AuthStatus.FAILED)
+        self.assertEqual(result.fail_reason, AuthFailReason.NOT_FOUND)
 
     @patch('core.hotspot.wifi.auth.generate_token')
     @patch('core.hotspot.wifi.auth.get_config')
