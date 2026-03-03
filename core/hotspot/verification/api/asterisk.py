@@ -70,7 +70,7 @@ class AsteriskConfirm(CallConfirmationProvider):
         
         check_status = phone_data.get('status')
         if not check_status:
-            logger.error("Phone wasn't auth")
+            logger.debug("Phone is waiting for auth")
             return ConfirmResult(
                 status=ConfirmStatus.PENDING,
             )
