@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 from sqlalchemy import select
@@ -15,6 +16,7 @@ from core.hotspot.wifi.auth import get_credentials
 from core.hotspot.wifi.challange import _octal_string_to_bytes, hash_chap
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
 from core.hotspot.wifi.repository import create_wifi_client, update_wifi_client, find_by_fp, find_by_mac
+from core.hotspot.authorization.service import Authorization, AuthStatus
 
 
 def _clear_db():
@@ -88,6 +90,26 @@ class TestCoreHotspotWiFi(unittest.TestCase):
         update_wifi_client(mac, phone_employee, user_fp)
         self.assertEqual(find_by_mac(mac)['is_employee'], True)
         self.assertEqual(find_by_mac(mac)['phone'], phone_employee)
+
+    def test_phone_authorization_updates_user_fp_after_expiration(self):
+        mac = 'AA:AA:AA:00:00:01'
+        phone = '79999990003'
+        old_user_fp = hash_fingerprint(phone, 'old-hw')
+        new_user_fp = hash_fingerprint(phone, 'new-hw')
+        create_wifi_client(mac, phone, old_user_fp)
+
+        with get_session() as db_session:
+            wifi_client = db_session.scalars(select(WifiClient).where(WifiClient.mac == mac)).first()
+            wifi_client.expiration = datetime.now() - timedelta(hours=1)
+            db_session.commit()
+
+        service = Authorization()
+        result = service.phone_authorization(mac, phone, 'new-hw')
+
+        self.assertEqual(result.status, AuthStatus.AUTHORIZED)
+        self.assertEqual(result.user_fp, new_user_fp)
+        self.assertIsNotNone(find_by_fp(new_user_fp))
+        self.assertIsNone(find_by_fp(old_user_fp))
 
     @patch('core.hotspot.wifi.auth.generate_token')
     @patch('core.hotspot.wifi.auth.get_config')

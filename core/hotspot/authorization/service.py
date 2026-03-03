@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from core.hotspot.user.blacklist import check_blacklist
-from core.hotspot.user.expiration import update_expiration
 from core.hotspot.wifi.fingerprint import hash_fingerprint
 from core.hotspot.wifi.repository import update_wifi_client, create_wifi_client, find_by_fp, find_by_mac, update_mac
 from core.logging import get_logger
@@ -98,7 +97,8 @@ class Authorization:
         if wifi_client and (db_phone:= wifi_client.get('phone')) and db_phone == phone:
             wifi_client_mac = wifi_client.get('mac')
 
-            update_expiration(wifi_client_mac)
+            # Persist refreshed fingerprint so sendin authorization by user_fp stays consistent.
+            update_wifi_client(wifi_client_mac, phone, user_fp)
             
             if user_fp:
                 update_mac(wifi_client_mac, mac)
