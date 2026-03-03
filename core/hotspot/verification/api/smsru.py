@@ -54,7 +54,7 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
 
     def send_code(self, recipient, code):
         message = get_translate('sms_code', templates={"code": code})
-        resp = self._api.send(recipient, message=message, test=True)
+        resp = self._api.send(recipient, message=message)
         if resp.get('status') != "OK":
             if 104 <= resp.get('status_code') <= 150:
                 return SendCodeResult(
