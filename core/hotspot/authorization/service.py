@@ -5,6 +5,7 @@ from core.hotspot.user.blacklist import check_blacklist
 from core.hotspot.wifi.fingerprint import hash_fingerprint
 from core.hotspot.wifi.repository import update_wifi_client, create_wifi_client, find_by_fp, find_by_mac, update_mac
 from core.logging import get_logger
+from core.utils.language import get_translate
 
 logger = get_logger('core.hotspot.authorization.service')
 
@@ -54,7 +55,7 @@ class Authorization:
         if not wifi_client:
             return AuthResponse(
                 status=AuthStatus.FAILED,
-                error_message="User not found",
+                error_message=get_translate('errors.hotspot.auth.not_found'),
                 fail_reason=AuthFailReason.NOT_FOUND,
             )
 
@@ -62,7 +63,7 @@ class Authorization:
             logger.info(f"{mac} is exired")
             return AuthResponse(
                 status=AuthStatus.FAILED,
-                error_message="User is exired",
+                error_message=get_translate('errors.hotspot.auth.expired'),
                 fail_reason=AuthFailReason.EXPIRED,
             )
 
@@ -71,7 +72,7 @@ class Authorization:
             logger.warning(f"{mac}'s phone not found")
             return AuthResponse(
                 status=AuthStatus.FAILED,
-                error_message="User's phone not found",
+                error_message=get_translate('errors.hotspot.auth.phone_missing'),
                 fail_reason=AuthFailReason.PHONE_MISSING,
             )
         
@@ -79,7 +80,7 @@ class Authorization:
             logger.info(f"{mac} is blocked")
             return AuthResponse(
                 status=AuthStatus.BLOCKED,
-                error_message="User is blocked",
+                error_message=get_translate('errors.hotspot.auth.blocked'),
             )
 
         user_fp = wifi_client.get('user_fp')
@@ -87,7 +88,7 @@ class Authorization:
             logger.warning(f"{mac}'s fingerprint not found")
             return AuthResponse(
                 status=AuthStatus.FAILED,
-                error_message="User fingerprint not found",
+                error_message=get_translate('errors.hotspot.auth.user_fp_missing'),
                 fail_reason=AuthFailReason.USER_FP_MISSING,
             )
 
@@ -134,7 +135,7 @@ class Authorization:
             )
         return AuthResponse(
             status=AuthStatus.FAILED,
-            error_message="User not found",
+            error_message=get_translate('errors.hotspot.auth.not_found'),
             fail_reason=AuthFailReason.NOT_FOUND,
         )
 

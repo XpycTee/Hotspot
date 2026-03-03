@@ -72,9 +72,10 @@ class TestHotspotViews(unittest.TestCase):
 
     @patch('web.pages.hotspot.Authorization.mac_authorization')
     def test_login_not_found_renders_page_without_error(self, mock_mac_auth):
+        not_found_error = get_translate('errors.hotspot.auth.not_found')
         mock_mac_auth.return_value = AuthResponse(
             status=AuthStatus.FAILED,
-            error_message='User not found',
+            error_message=not_found_error,
             fail_reason=AuthFailReason.NOT_FOUND,
         )
 
@@ -85,7 +86,7 @@ class TestHotspotViews(unittest.TestCase):
             'hardware_fp': 'abc123',
         })
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn('User not found', response.get_data(as_text=True))
+        self.assertNotIn(not_found_error, response.get_data(as_text=True))
 
     @patch('web.pages.hotspot.Authorization.mac_authorization')
     def test_login_authorized_redirects_sendin(self, mock_mac_auth):

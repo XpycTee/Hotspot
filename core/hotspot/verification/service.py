@@ -122,20 +122,20 @@ class Verification:
 
         return VerificationResponse(
             status=VerificationStatus.ERROR,
-            error_message=get_translate('errors.auth.bad_status'),
+            error_message=get_translate('errors.hotspot.verify.bad_status'),
         )
         
     def send_code(self) -> VerificationResponse:
         if not self._session.phone:
             return VerificationResponse(
                 status=VerificationStatus.FAILED,
-                error_message=get_translate('errors.auth.bad_status'),
+                error_message=get_translate('errors.hotspot.verify.bad_status'),
             )
 
         if self._session.status == VSessionStatus.WAIT_CODE:
             return VerificationResponse(
                 status=VerificationStatus.FAILED,
-                error_message=get_translate("errors.auth.code_can_not_resend"),
+                error_message=get_translate("errors.hotspot.verify.code_can_not_resend"),
             )
         
         if self._session.code is None:
@@ -166,21 +166,21 @@ class Verification:
 
         return VerificationResponse(
             status=VerificationStatus.ERROR,
-            error_message=get_translate('errors.auth.bad_status'),
+            error_message=get_translate('errors.hotspot.verify.bad_status'),
         )
     
     def code_verification(self, code: str) -> VerificationResponse:
         if self._session.status != VSessionStatus.WAIT_CODE:
             return VerificationResponse(
                 status=VerificationStatus.FAILED,
-                error_message=get_translate('errors.auth.bad_status'),
+                error_message=get_translate('errors.hotspot.verify.bad_status'),
             )
 
         if self._session.timeout and datetime.now() > self._session.timeout:
             self._clear_session()
             return VerificationResponse(
                 status=VerificationStatus.FAILED,
-                error_message=get_translate('errors.auth.expired_code'),
+                error_message=get_translate('errors.hotspot.verify.expired_code'),
             )
 
         if self._session.code == code:
@@ -195,13 +195,13 @@ class Verification:
         if self._session.attempts < 3:
             return VerificationResponse(
                 status=VerificationStatus.RETRY,
-                error_message=get_translate('errors.auth.bad_code_try'),
+                error_message=get_translate('errors.hotspot.verify.bad_code_try'),
             )
 
         self._clear_session()
         return VerificationResponse(
             status=VerificationStatus.DENIED,
-            error_message=get_translate('errors.auth.bad_code_all'),
+            error_message=get_translate('errors.hotspot.verify.bad_code_all'),
         )
 
     def call_verification(self) -> VerificationResponse:
@@ -211,7 +211,7 @@ class Verification:
                 self._clear_session()
                 return VerificationResponse(
                     status=VerificationStatus.TIMEOUT,
-                    error_message=get_translate('errors.auth.timeout'),
+                    error_message=get_translate('errors.hotspot.verify.timeout'),
                 )
 
             router = VerificationRouter()
@@ -243,5 +243,5 @@ class Verification:
 
         return VerificationResponse(
             status=VerificationStatus.FAILED,
-            error_message=get_translate('errors.auth.bad_status'),
+            error_message=get_translate('errors.hotspot.verify.bad_status'),
         )

@@ -41,6 +41,23 @@
       "code_can_not_resend": "The code has already been sent, please wait one minute",
       "code_alredy_sended": "The code has already been sent, please enter the code"
     },
+    "hotspot": {
+      "auth": {
+        "not_found": "User not found",
+        "expired": "User access has expired",
+        "phone_missing": "User phone not found",
+        "user_fp_missing": "User fingerprint not found",
+        "blocked": "User is blocked"
+      },
+      "verify": {
+        "bad_status": "Invalid authorization status",
+        "code_can_not_resend": "The code has already been sent, please wait one minute",
+        "expired_code": "The code has expired, a new code has been sent to you",
+        "bad_code_try": "Invalid code, please try again",
+        "bad_code_all": "Invalid code, attempts exhausted. Please start over",
+        "timeout": "Verification time has expired"
+      }
+    },
     "admin": {
       "wrong_credentials": "Invalid username or password",
       "end_tries": "Too many attempts. Please try again in {lockout_time} minutes.",
