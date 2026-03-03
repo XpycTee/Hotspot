@@ -128,10 +128,9 @@ def login():
 
     logger.debug(f'Session data after form: {_log_masked_session()}')
     mac = session.get('mac')
-    hardware_fp = session.get('hardware_fp')
 
     auth_service = Authorization()
-    response = auth_service.mac_authorization(mac, hardware_fp)
+    response = auth_service.mac_authorization(mac)
 
     if response.status == AuthStatus.AUTHORIZED:
         session['phone'] = response.phone
@@ -164,8 +163,8 @@ def preauth():
     if auth_response.status == AuthStatus.BLOCKED:
         abort(403)
     
-    session['user_fp'] = auth_response.user_fp
     if auth_response.status == AuthStatus.AUTHORIZED:
+        session['user_fp'] = auth_response.user_fp
         return redirect(url_for('pages.hotspot.sendin'), 302)
     
     if auth_response.status == AuthStatus.FAILED:
@@ -233,7 +232,6 @@ def resend():
 
 @hotspot_bp.route('/code/auth', methods=['POST'])
 def code_auth():
-    user_fp = session.get('user_fp')
     verify_session_id = session.get('verify_session_id')
     form_code = request.form.get('code')
 
@@ -265,12 +263,14 @@ def code_auth():
         session.pop('verify_session_id', None)
         mac = session.get('mac')
         phone = session.get('phone')
+        hardware_fp = session.get('hardware_fp')
 
         auth_service = Authorization()
-        auth_response = auth_service.authorization(mac, phone, user_fp)
+        auth_response = auth_service.authorization(mac, phone, hardware_fp)
         if auth_response.status == AuthStatus.BLOCKED:
             abort(403)
         if auth_response.status == AuthStatus.AUTHORIZED:
+            session['user_fp'] = auth_response.user_fp
             return redirect(url_for('pages.hotspot.sendin'), 302)
         if auth_response.status == AuthStatus.FAILED:
             session['error'] = auth_response.error_message
@@ -325,15 +325,16 @@ def call_check_stream():
 def call_auth():
     mac = session.get('mac')
     phone = session.get('phone')
-    user_fp = session.get('user_fp')
-    if not mac or not phone or not user_fp:
+    hardware_fp = session.get('hardware_fp')
+    if not mac or not phone or not hardware_fp:
         abort(400)
 
     auth_service = Authorization()
-    auth_response = auth_service.authorization(mac, phone, user_fp)
+    auth_response = auth_service.authorization(mac, phone, hardware_fp)
     if auth_response.status == AuthStatus.BLOCKED:
         abort(403)
     if auth_response.status == AuthStatus.AUTHORIZED:
+        session['user_fp'] = auth_response.user_fp
         return redirect(url_for('pages.hotspot.sendin'), 302)
     if auth_response.status == AuthStatus.FAILED:
         session['error'] = auth_response.error_message

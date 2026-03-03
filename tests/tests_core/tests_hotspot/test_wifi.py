@@ -111,6 +111,17 @@ class TestCoreHotspotWiFi(unittest.TestCase):
         self.assertIsNotNone(find_by_fp(new_user_fp))
         self.assertIsNone(find_by_fp(old_user_fp))
 
+    def test_mac_authorization_fails_when_user_fp_missing(self):
+        mac = 'AA:AA:AA:00:00:02'
+        phone = '79999990004'
+        create_wifi_client(mac, phone, None)
+
+        service = Authorization()
+        result = service.mac_authorization(mac)
+
+        self.assertEqual(result.status, AuthStatus.FAILED)
+        self.assertEqual(result.error_message, 'User fingerprint not found')
+
     @patch('core.hotspot.wifi.auth.generate_token')
     @patch('core.hotspot.wifi.auth.get_config')
     def test_get_credentials(self, mock_get_config, mock_generate_token):

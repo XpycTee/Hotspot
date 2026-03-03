@@ -21,7 +21,8 @@ def find_by_mac(mac):
             "mac": wifi_client.mac,
             "expiration": wifi_client.expiration,
             "is_employee": wifi_client.is_employee,
-            "phone": wifi_client.phone_number
+            "phone": wifi_client.phone_number,
+            "user_fp": wifi_client.user_fp,
         }
 
 
@@ -36,7 +37,8 @@ def find_by_fp(user_fp):
             "mac": wifi_client.mac,
             "expiration": wifi_client.expiration,
             "is_employee": wifi_client.is_employee,
-            "phone": wifi_client.phone_number
+            "phone": wifi_client.phone_number,
+            "user_fp": wifi_client.user_fp,
         }
 
 

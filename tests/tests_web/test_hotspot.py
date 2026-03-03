@@ -156,11 +156,12 @@ class TestHotspotViews(unittest.TestCase):
                 sess['verify_session_id'] = 'verify-session'
                 sess['mac'] = '00:00:00:00:00:01'
                 sess['phone'] = '79990000000'
-                sess['user_fp'] = 'user-fp'
+                sess['hardware_fp'] = 'fp-hw'
 
             response = c.post('/code/auth', data={'code': '0000'})
             self.assertEqual(response.status_code, 302)
             self.assertIn('/login', response.location)
+            mock_authorization.assert_called_once_with('00:00:00:00:00:01', '79990000000', 'fp-hw')
 
             with c.session_transaction() as sess:
                 self.assertEqual(sess.get('error'), 'auth failed')
@@ -209,12 +210,13 @@ class TestHotspotViews(unittest.TestCase):
             with c.session_transaction() as sess:
                 sess['mac'] = '00:00:00:00:00:01'
                 sess['phone'] = '79990000000'
-                sess['user_fp'] = 'user-fp'
+                sess['hardware_fp'] = 'fp-hw'
                 sess['verify_session_id'] = 'verify-session'
 
             response = c.get('/call/auth')
             self.assertEqual(response.status_code, 302)
             self.assertIn('/login', response.location)
+            mock_authorization.assert_called_once_with('00:00:00:00:00:01', '79990000000', 'fp-hw')
 
             with c.session_transaction() as sess:
                 self.assertEqual(sess.get('error'), 'auth failed')
