@@ -154,6 +154,7 @@ cython_debug/
 .vscode/
 
 /config/hotspot.db
+/tests/hotspot_test.db
 /mikrotik/
 /html_examples for template/
 
