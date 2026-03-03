@@ -197,6 +197,10 @@ class TestHotspotViews(unittest.TestCase):
 
             response = c.get('/sendin')
             self.assertEqual(response.status_code, 401)
+            self.assertIn('http://test/login', response.get_data(as_text=True))
+
+            with c.session_transaction() as sess:
+                self.assertEqual(sess.get('link-login-only'), 'http://test/login')
 
     @patch('web.pages.hotspot.Verification.call_verification')
     def test_call_check_stream_verified(self, mock_call_verification):

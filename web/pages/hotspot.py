@@ -360,12 +360,17 @@ def sendin():
     chap_challenge = session.get('chap-challenge')
     mac = session.get('mac')
     user_fp = session.get('user_fp')
-    session.clear()
 
     auth_service = Authorization()
 
     if not auth_service.authorized(user_fp):
+        # Preserve login-only link so the 401 page can restart the auth flow.
+        session.clear()
+        if link_login_only:
+            session['link-login-only'] = link_login_only
         abort(401)
+
+    session.clear()
 
     if chap_id and chap_challenge:
         link_login_only = link_login_only.replace('https', 'http')
