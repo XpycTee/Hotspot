@@ -171,4 +171,5 @@ class Authorization:
         logger.info(f"{mac} authing by {'phone & fp' if use_fp else 'phone & mac'}")
         return AuthResponse(
             status=AuthStatus.AUTHORIZED,
+            user_fp=user_fp
         )
