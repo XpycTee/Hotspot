@@ -155,7 +155,6 @@ cython_debug/
 
 /config/hotspot.db
 /tests/hotspot_test.db
-/mikrotik/
 /html_examples for template/
 
 .DS_Store
