@@ -129,8 +129,17 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
         )
 
     def check_polling(self, request_id: str) -> ConfirmResult:
-        check_data = self._api.callcheck_status(request_id)
-        check_status = int(check_data.get('check_status'))
+        try:
+            check_data = self._api.callcheck_status(request_id)
+        except Exception as exc:
+            logger.warning(
+                f'Failed to poll callcheck status for {request_id}: {exc}'
+            )
+            # Temporary provider/network failures should not break verification flow.
+            return ConfirmResult(
+                status=ConfirmStatus.PENDING,
+            )
+
         if check_data.get('status') != 'OK':
             status_text = check_data.get('status_text')
             logger.error(f'Not OK status: {status_text}')
@@ -139,6 +148,15 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
                 error_message=status_text,
             )
 
+        try:
+            check_status = int(check_data.get('check_status'))
+        except (TypeError, ValueError):
+            logger.error(f'Invalid check_status in provider response: {check_data}')
+            return ConfirmResult(
+                status=ConfirmStatus.ERROR,
+                error_message='Invalid provider response',
+            )
+
         return ConfirmResult(
-            status=SMSRU_STATUS[check_status]
+            status=SMSRU_STATUS.get(check_status, ConfirmStatus.ERROR),
         )
