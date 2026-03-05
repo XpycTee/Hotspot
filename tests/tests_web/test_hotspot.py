@@ -179,7 +179,11 @@ class TestHotspotViews(unittest.TestCase):
             response = c.post('/code/auth', data={'code': '0000'})
             self.assertEqual(response.status_code, 302)
             self.assertIn('/login', response.location)
-            mock_authorization.assert_called_once_with('00:00:00:00:00:01', '79990000000', 'fp-hw')
+            mock_authorization.assert_called_once()
+            args, kwargs = mock_authorization.call_args
+            self.assertEqual(args[:3], ('00:00:00:00:00:01', '79990000000', 'fp-hw'))
+            self.assertIn('flow_ctx', kwargs)
+            self.assertEqual(kwargs['flow_ctx'].get('verify_session_id'), 'verify-session')
 
             with c.session_transaction() as sess:
                 self.assertEqual(sess.get('error'), 'auth failed')
@@ -238,7 +242,11 @@ class TestHotspotViews(unittest.TestCase):
             response = c.get('/call/auth')
             self.assertEqual(response.status_code, 302)
             self.assertIn('/login', response.location)
-            mock_authorization.assert_called_once_with('00:00:00:00:00:01', '79990000000', 'fp-hw')
+            mock_authorization.assert_called_once()
+            args, kwargs = mock_authorization.call_args
+            self.assertEqual(args[:3], ('00:00:00:00:00:01', '79990000000', 'fp-hw'))
+            self.assertIn('flow_ctx', kwargs)
+            self.assertEqual(kwargs['flow_ctx'].get('verify_session_id'), 'verify-session')
 
             with c.session_transaction() as sess:
                 self.assertEqual(sess.get('error'), 'auth failed')
@@ -290,3 +298,67 @@ class TestHotspotViews(unittest.TestCase):
             payload = json.loads(events[-1].replace('data: ', '', 1))
             self.assertEqual(payload.get('state'), 'failed')
             self.assertEqual(payload.get('message'), 'provider failed')
+
+    @patch('web.pages.hotspot.logger.debug')
+    @patch('web.pages.hotspot.Verification.start_verification')
+    @patch('web.pages.hotspot.Authorization.phone_authorization')
+    def test_preauth_logs_flow_ids(self, mock_phone_auth, mock_start_verification, mock_logger_debug):
+        mock_phone_auth.return_value = AuthResponse(status=AuthStatus.FAILED)
+        mock_start_verification.return_value = VerificationResponse(status=VerificationStatus.SENDING_CODE)
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:01'
+                sess['hardware_fp'] = 'fp-hw'
+
+            response = c.post('/preauth', data={'phone': '79990000000'})
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/code/send', response.location)
+
+            mock_phone_auth.assert_called_once()
+            _, kwargs = mock_phone_auth.call_args
+            self.assertIn('flow_ctx', kwargs)
+            self.assertTrue(kwargs['flow_ctx'].get('auth_flow_id'))
+
+            debug_messages = [args[0] for args, _ in mock_logger_debug.call_args_list]
+            self.assertTrue(any('[auth_flow=' in msg and 'verify=' in msg for msg in debug_messages))
+            self.assertTrue(any('verify=' in msg and 'stage=preauth' in msg for msg in debug_messages))
+
+    @patch('web.pages.hotspot.logger.warning')
+    @patch('web.pages.hotspot.Verification.code_verification')
+    def test_code_auth_retry_logs_flow_prefix(self, mock_code_verification, mock_logger_warning):
+        mock_code_verification.return_value = VerificationResponse(
+            status=VerificationStatus.RETRY,
+            error_message='retry',
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['auth_flow_id'] = 'flow-1'
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.post('/code/auth', data={'code': '0000'})
+            self.assertEqual(response.status_code, 307)
+
+            warning_messages = [args[0] for args, _ in mock_logger_warning.call_args_list]
+            self.assertTrue(any('[auth_flow=flow-1 verify=verify-session stage=code.auth]' in msg for msg in warning_messages))
+
+    @patch('web.pages.hotspot.logger.warning')
+    @patch('web.pages.hotspot.Verification.call_verification')
+    def test_call_check_stream_timeout_log_has_verify_session(self, mock_call_verification, mock_logger_warning):
+        mock_call_verification.return_value = VerificationResponse(
+            status=VerificationStatus.TIMEOUT,
+            error_message='call expired',
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['auth_flow_id'] = 'flow-1'
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.get('/call/check/stream')
+            self.assertEqual(response.status_code, 200)
+            _ = response.data.decode('utf-8')
+
+            extra_values = [kwargs.get('extra', {}) for _, kwargs in mock_logger_warning.call_args_list]
+            self.assertTrue(any(extra.get('verify_session_id') == 'verify-session' for extra in extra_values))
