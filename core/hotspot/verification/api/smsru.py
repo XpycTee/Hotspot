@@ -85,7 +85,7 @@ class SMSRU(CodeDeliveryProvider, CallConfirmationProvider):
         check_id = phone_data.get('check_id')
         
         # call_phone = phone_data.get('call_phone')      # Format: 7XXXXXXXXXX
-        call_phone = phone_data.get('call_phone_pretty') # Format: +7 (XXX) XXX-XXXX
+        call_phone = phone_data.get('call_phone_pretty') # Format: 8 (XXX) XXX-XXXX
 
         cache_data = {
             'start': phone_data,

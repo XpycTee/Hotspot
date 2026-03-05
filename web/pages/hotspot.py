@@ -64,14 +64,17 @@ def _get_call_verification_payload(verify_session_id: str) -> dict:
         return {'state': 'pending'}
 
     if response.status == VerificationStatus.TIMEOUT:
+        logger.debug(f'[{verify_session_id}] Timeout: {response.error_message}')
         return {'state': 'timeout', 'message': response.error_message}
 
     if response.status in [VerificationStatus.FAILED, VerificationStatus.ERROR]:
+        logger.debug(f'[{verify_session_id}] Failed: {response.error_message}')
         return {'state': 'failed', 'message': response.error_message}
 
     if response.status == VerificationStatus.VERIFIED:
         return {'state': 'verified'}
 
+    logger.debug(f'[{verify_session_id}] Failed: {response}')
     return {'state': 'failed'}
 
 
