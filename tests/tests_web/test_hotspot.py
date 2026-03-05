@@ -225,6 +225,33 @@ class TestHotspotViews(unittest.TestCase):
             payload = json.loads(events[-1].replace('data: ', '', 1))
             self.assertEqual(payload.get('state'), 'verified')
 
+    @patch('web.pages.hotspot.Verification.call_verification')
+    def test_call_check_poll_verified_sets_cached_marker(self, mock_call_verification):
+        mock_call_verification.return_value = VerificationResponse(status=VerificationStatus.VERIFIED)
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.get('/call/check/poll')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get_json(), {'state': 'verified'})
+
+            with c.session_transaction() as sess:
+                self.assertIsNone(sess.get('verify_session_id'))
+                self.assertEqual(sess.get('verified_call_session_id'), 'verify-session')
+
+    @patch('web.pages.hotspot.Verification.call_verification')
+    def test_call_check_poll_verified_marker_without_verify_session(self, mock_call_verification):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verified_call_session_id'] = 'verify-session'
+
+            response = c.get('/call/check/poll')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.get_json(), {'state': 'verified'})
+            mock_call_verification.assert_not_called()
+
     @patch('web.pages.hotspot.Authorization.authorization')
     def test_call_auth_failed_redirects_login(self, mock_authorization):
         mock_authorization.return_value = AuthResponse(

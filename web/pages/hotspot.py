@@ -16,6 +16,7 @@ from core.utils.phone import normalize_phone
 import web.logger as logger
 
 hotspot_bp = Blueprint('hotspot', __name__)
+_VERIFIED_CALL_SESSION_KEY = 'verified_call_session_id'
 
 
 def _mask_phone(phone: str | None) -> str | None:
@@ -115,6 +116,18 @@ def _flow_log(
 
 
 def _get_call_verification_payload(verify_session_id: str, base_ctx: dict[str, Any] | None = None) -> dict:
+    if session.get(_VERIFIED_CALL_SESSION_KEY) == verify_session_id:
+        _flow_log(
+            'debug',
+            'Call verification already finalized as verified',
+            'call.check',
+            verify_session_id=verify_session_id,
+            base_ctx=base_ctx,
+            event='verify.call.poll',
+            status='VERIFIED_CACHED',
+        )
+        return {'state': 'verified'}
+
     service = Verification(
         verify_session_id,
         flow_ctx=_build_flow_ctx('call.check', verify_session_id=verify_session_id, base_ctx=base_ctx),
@@ -134,6 +147,8 @@ def _get_call_verification_payload(verify_session_id: str, base_ctx: dict[str, A
         return {'state': 'pending'}
 
     if response.status == VerificationStatus.TIMEOUT:
+        if session.get(_VERIFIED_CALL_SESSION_KEY) == verify_session_id:
+            session.pop(_VERIFIED_CALL_SESSION_KEY, None)
         _flow_log(
             'warning',
             f'Call verification timeout: {response.error_message}',
@@ -146,6 +161,8 @@ def _get_call_verification_payload(verify_session_id: str, base_ctx: dict[str, A
         return {'state': 'timeout', 'message': response.error_message}
 
     if response.status in [VerificationStatus.FAILED, VerificationStatus.ERROR]:
+        if session.get(_VERIFIED_CALL_SESSION_KEY) == verify_session_id:
+            session.pop(_VERIFIED_CALL_SESSION_KEY, None)
         _flow_log(
             'error',
             f'Call verification failed: {response.error_message}',
@@ -158,6 +175,7 @@ def _get_call_verification_payload(verify_session_id: str, base_ctx: dict[str, A
         return {'state': 'failed', 'message': response.error_message}
 
     if response.status == VerificationStatus.VERIFIED:
+        session[_VERIFIED_CALL_SESSION_KEY] = verify_session_id
         _flow_log(
             'info',
             'Call verification completed',
@@ -328,6 +346,7 @@ def preauth():
         return redirect(url_for('pages.hotspot.sendin'), 302)
 
     if auth_response.status == AuthStatus.FAILED:
+        session.pop(_VERIFIED_CALL_SESSION_KEY, None)
         verify_session_id = _get_verify_session_id()
         verify_service = Verification(
             verify_session_id,
@@ -511,6 +530,17 @@ def code_auth():
 def call_check_poll():
     verify_session_id = session.get('verify_session_id')
     if not verify_session_id:
+        verified_call_session_id = session.get(_VERIFIED_CALL_SESSION_KEY)
+        if verified_call_session_id:
+            _flow_log(
+                'debug',
+                'Missing verify_session_id but call verification already marked as verified',
+                'call.check',
+                verify_session_id=verified_call_session_id,
+                event='verify.call.poll',
+                status='VERIFIED_CACHED',
+            )
+            return jsonify({'state': 'verified'})
         _flow_log('warning', 'Missing verify_session_id in call_check_poll', 'call.check', event='verify.call.poll')
         abort(400)
 
