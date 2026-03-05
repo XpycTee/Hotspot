@@ -76,3 +76,6 @@ input[type="submit"]:hover {
     color: white;
     text-decoration: none;
 }
+.center-block {
+  text-align: center;
+}
