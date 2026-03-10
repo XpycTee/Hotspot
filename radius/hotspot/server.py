@@ -24,9 +24,11 @@ class BaseServer(server.Server):
 
         return str(addr)
 
-    def reply_accept(self, packet, is_employee):
+    def reply_accept(self, packet, is_employee=None, group=None):
         reply = self.create_reply_packet(packet)
-        reply.AddAttribute('MT-Group', 'employee' if is_employee else 'guest')
+        if group is None:
+            group = 'employee' if is_employee else 'guest'
+        reply.AddAttribute('MT-Group', group)
         reply.code = PacketType.AccessAccept
         return reply
 

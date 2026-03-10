@@ -12,12 +12,14 @@ from core.database.models.employee import Employee
 from core.database.models.employee_phone import EmployeePhone
 from core.database.models.wifi_client import WifiClient
 from core.database.session import get_session
-from core.hotspot.wifi.auth import get_credentials
+from core.hotspot.wifi.auth import get_credentials, get_trial_credentials
 from core.hotspot.wifi.challange import _octal_string_to_bytes, hash_chap
 from core.hotspot.wifi.fingerprint import hash_fingerprint, update_fingerprint
 from core.hotspot.wifi.repository import create_wifi_client, update_wifi_client, find_by_fp, find_by_mac
 from core.hotspot.authorization.service import Authorization, AuthStatus, AuthFailReason
+from core.hotspot.user.token import generate_trial_token, get_trial_token
 from core.utils.language import get_translate
+from core.redis import get_cache
 
 
 def _clear_db():
@@ -161,3 +163,20 @@ class TestCoreHotspotWiFi(unittest.TestCase):
         result = get_credentials('CC', '79990000003')
         self.assertEqual(result, {'username': 'CC', 'password': 'token'})
         mock_generate_token.assert_called_with('CC')
+
+    @patch('core.hotspot.wifi.auth.generate_trial_token')
+    def test_get_trial_credentials(self, mock_generate_trial_token):
+        mock_generate_trial_token.return_value = 'trial-token'
+
+        plain = get_trial_credentials('AA:BB:CC')
+        self.assertEqual(plain, {'username': 'AA:BB:CC', 'password': 'trial-token'})
+
+        chap = get_trial_credentials('AA:BB:CC', '\\000', '\\141\\142\\143')
+        self.assertEqual(chap['username'], 'AA:BB:CC')
+        self.assertEqual(chap['password'], hash_chap('\\000', 'trial-token', '\\141\\142\\143'))
+
+    def test_generate_trial_token(self):
+        mac = 'AA:AA:AA:00:00:10'
+        token = generate_trial_token(mac, ttl=300)
+        self.assertIsNotNone(token)
+        self.assertEqual(get_trial_token(mac), token)

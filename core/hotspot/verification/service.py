@@ -57,6 +57,7 @@ class VerificationSession:
 
     # Call
     call_id: str | None = None
+    call_phone: str | None = None
 
     # Code
     code: str | None = None
@@ -130,6 +131,24 @@ class Verification:
         self._cache.delete(f'verify:session:{self._session.session_id}')
 
     def start_verification(self, phone: str) -> VerificationResponse:
+        if self._session.status == VSessionStatus.WAIT_CALL and self._session.phone == phone:
+            if self._session.timeout and datetime.now() > self._session.timeout:
+                self._clear_session()
+                self._log('warning', 'Call verification timeout reached before restart', 'verify.start')
+                return VerificationResponse(
+                    status=VerificationStatus.TIMEOUT,
+                    error_message=get_translate('errors.hotspot.verify.timeout'),
+                )
+
+            router = VerificationRouter(flow_ctx=self._ctx('verify.start'))
+            code_avail = VerificationMethod.CODE in router.available_methods
+            self._log('info', 'Reusing existing call verification session', 'verify.start', code_avail=code_avail)
+            return VerificationResponse(
+                status=VerificationStatus.WAIT_CALL,
+                call_phone=self._session.call_phone,
+                code_avail=code_avail,
+            )
+
         self._session.phone = phone
         self._save_session()
 
@@ -154,6 +173,7 @@ class Verification:
                 self._session.status = VSessionStatus.WAIT_CALL
                 self._session.call_id = router_resp.request_id
                 self._session.provider = router_resp.provider
+                self._session.call_phone = router_resp.call_phone
                 self._session.timeout = datetime.now() + timedelta(minutes=5)
                 self._save_session()
                 self._log(

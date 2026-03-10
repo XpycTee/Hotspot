@@ -5,11 +5,11 @@ import string
 import time
 from typing import Any
 
-from flask import Blueprint, Response, abort, current_app, has_request_context, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, abort, current_app, has_request_context, jsonify, redirect, render_template, request, session, stream_with_context, url_for
 
 from core.hotspot.authorization.service import AuthFailReason, AuthStatus, Authorization
 from core.hotspot.verification.service import Verification, VerificationStatus
-from core.hotspot.wifi.auth import get_credentials
+from core.hotspot.wifi.auth import get_credentials, get_trial_credentials
 from core.utils.language import get_translate
 from core.utils.phone import normalize_phone
 
@@ -199,6 +199,79 @@ def _get_call_verification_payload(verify_session_id: str, base_ctx: dict[str, A
     return {'state': 'failed'}
 
 
+def _get_call_verification_stream_payload(
+    verify_service: Verification,
+    verify_session_id: str,
+    base_ctx: dict[str, Any] | None = None,
+) -> dict:
+    response = verify_service.call_verification()
+
+    if response.status == VerificationStatus.WAIT_CALL:
+        _flow_log(
+            'debug',
+            'Call verification still pending',
+            'call.check',
+            verify_session_id=verify_session_id,
+            base_ctx=base_ctx,
+            event='verify.call.poll',
+            status=response.status.name,
+        )
+        return {'state': 'pending'}
+
+    if response.status == VerificationStatus.TIMEOUT:
+        _flow_log(
+            'warning',
+            f'Call verification timeout: {response.error_message}',
+            'call.check',
+            verify_session_id=verify_session_id,
+            base_ctx=base_ctx,
+            event='verify.call.poll',
+            status=response.status.name,
+        )
+        return {'state': 'timeout', 'message': response.error_message}
+
+    if response.status in [VerificationStatus.FAILED, VerificationStatus.ERROR]:
+        _flow_log(
+            'error',
+            f'Call verification failed: {response.error_message}',
+            'call.check',
+            verify_session_id=verify_session_id,
+            base_ctx=base_ctx,
+            event='verify.call.poll',
+            status=response.status.name,
+        )
+        return {'state': 'failed', 'message': response.error_message}
+
+    if response.status == VerificationStatus.VERIFIED:
+        _flow_log(
+            'info',
+            'Call verification completed',
+            'call.check',
+            verify_session_id=verify_session_id,
+            base_ctx=base_ctx,
+            event='verify.call.poll',
+            status=response.status.name,
+        )
+        return {'state': 'verified'}
+
+    _flow_log(
+        'error',
+        f'Unexpected call verification response: {response}',
+        'call.check',
+        verify_session_id=verify_session_id,
+        base_ctx=base_ctx,
+        event='verify.call.poll',
+        status=response.status.name,
+    )
+    return {'state': 'failed'}
+
+
+def _is_iphone_user_agent(user_agent: str | None) -> bool:
+    if not user_agent:
+        return False
+    return 'iphone' in user_agent.lower()
+
+
 @hotspot_bp.route('/', methods=['POST', 'GET'])
 def index():
     required_keys = ['link-login-only', 'link-orig', 'mac']
@@ -348,6 +421,25 @@ def preauth():
     if auth_response.status == AuthStatus.FAILED:
         session.pop(_VERIFIED_CALL_SESSION_KEY, None)
         verify_session_id = _get_verify_session_id()
+        iphone_mode = _is_iphone_user_agent(request.headers.get('User-Agent'))
+
+        if iphone_mode:
+            _flow_log(
+                'info',
+                'Using iPhone manual call-start flow',
+                'preauth',
+                verify_session_id=verify_session_id,
+                event='verify.start',
+                iphone_mode=True,
+            )
+            return render_template(
+                'hotspot/callcheck.html',
+                call_phone=None,
+                code_avail=False,
+                iphone_mode=True,
+                manual_fallback_enabled=True,
+            )
+
         verify_service = Verification(
             verify_session_id,
             flow_ctx=_build_flow_ctx('preauth', verify_session_id=verify_session_id, event='verify.start'),
@@ -367,12 +459,66 @@ def preauth():
                 'hotspot/callcheck.html',
                 call_phone=verify_response.call_phone,
                 code_avail=verify_response.code_avail,
+                iphone_mode=False,
+                manual_fallback_enabled=True,
             )
         if verify_response.status == VerificationStatus.SENDING_CODE:
             return redirect(url_for('pages.hotspot.code_send'), 302)
 
     _flow_log('error', 'Unexpected preauth result', 'preauth', event='auth.phone.check')
     abort(500)
+
+
+@hotspot_bp.route('/preauth/call/start', methods=['POST'])
+def call_start():
+    phone_number = session.get('phone')
+    verify_session_id = session.get('verify_session_id')
+
+    if not phone_number or not verify_session_id:
+        _flow_log('warning', 'Missing phone or verify_session_id in call_start', 'call.start', event='verify.start')
+        abort(400)
+
+    service = Verification(
+        verify_session_id,
+        flow_ctx=_build_flow_ctx('call.start', verify_session_id=verify_session_id, event='verify.start'),
+    )
+    response = service.start_verification(phone_number)
+    _flow_log(
+        'debug',
+        f'Call start result: {response.status.name}',
+        'call.start',
+        verify_session_id=verify_session_id,
+        event='verify.start',
+        status=response.status.name,
+    )
+
+    if response.status == VerificationStatus.WAIT_CALL:
+        return jsonify(
+            {
+                'state': 'pending',
+                'call_phone': response.call_phone,
+                'code_avail': response.code_avail,
+            }
+        )
+
+    if response.status == VerificationStatus.SENDING_CODE:
+        return jsonify(
+            {
+                'state': 'sending_code',
+                'redirect_url': url_for('pages.hotspot.code_send'),
+            }
+        )
+
+    if response.status in (VerificationStatus.FAILED, VerificationStatus.ERROR, VerificationStatus.TIMEOUT):
+        return jsonify(
+            {
+                'state': 'failed',
+                'message': response.error_message or get_translate('errors.hotspot.verify.bad_status'),
+            }
+        ), 400
+
+    _flow_log('error', 'Unexpected call_start status', 'call.start', verify_session_id=verify_session_id, event='verify.start')
+    return jsonify({'state': 'failed', 'message': get_translate('errors.hotspot.verify.bad_status')}), 500
 
 
 @hotspot_bp.route('/code/send', methods=['POST', 'GET'])
@@ -559,12 +705,21 @@ def call_check_stream():
 
     poll_interval_seconds = 2
     stream_ctx = _build_flow_ctx('call.check', verify_session_id=verify_session_id, event='verify.call.poll')
+    verify_service = Verification(
+        verify_session_id,
+        flow_ctx=_build_flow_ctx('call.check', verify_session_id=verify_session_id, base_ctx=stream_ctx),
+    )
 
+    @stream_with_context
     def event_stream():
         yield "retry: 3000\n\n"
 
         while True:
-            payload = _get_call_verification_payload(verify_session_id, base_ctx=stream_ctx)
+            payload = _get_call_verification_stream_payload(
+                verify_service,
+                verify_session_id,
+                base_ctx=stream_ctx,
+            )
             _flow_log(
                 'debug',
                 f'Call stream poll state: {payload.get("state")}',
@@ -660,6 +815,36 @@ def sendin():
 
     return render_template(
         'hotspot/sendin.html',
+        username=username,
+        password=password,
+        link_login_only=link_login_only,
+        link_orig=link_orig,
+    )
+
+
+@hotspot_bp.route('/sendin/trial', methods=['GET'])
+def sendin_trial():
+    link_login_only = session.get('link-login-only')
+    link_orig = session.get('link-orig')
+    chap_id = session.get('chap-id')
+    chap_challenge = session.get('chap-challenge')
+    mac = session.get('mac')
+    verify_session_id = session.get('verify_session_id')
+
+    if not link_login_only or not link_orig or not mac:
+        _flow_log('warning', 'Missing required data in sendin_trial', 'sendin.trial', verify_session_id=verify_session_id, event='auth.flow.end')
+        abort(400)
+
+    if chap_id and chap_challenge:
+        link_login_only = link_login_only.replace('https', 'http')
+
+    credentials = get_trial_credentials(mac, chap_id, chap_challenge)
+    username = credentials.get('username')
+    password = credentials.get('password')
+
+    _flow_log('info', 'Issued trial credentials for CNA fallback', 'sendin.trial', verify_session_id=verify_session_id, event='auth.flow.end', status='AUTHORIZED')
+    return render_template(
+        'hotspot/sendin_trial.html',
         username=username,
         password=password,
         link_login_only=link_login_only,

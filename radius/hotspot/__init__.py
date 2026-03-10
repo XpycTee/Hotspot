@@ -1,7 +1,7 @@
 from core.config import get_config
 from core.hotspot.authorization.service import AuthStatus, Authorization
 from core.hotspot.user.statistic import update_statistic
-from core.hotspot.user.token import get_token
+from core.hotspot.user.token import get_token, get_trial_token
 from core.hotspot.wifi.repository import find_by_mac
 from core.logging import get_logger
 from radius.hotspot.packet import BasePacket, HotspotAcctPacket, HotspotAuthPacket
@@ -38,9 +38,13 @@ class HotspotRADIUS(BaseServer):
             mac = packet.get_attribute('Calling-Station-Id')
             username = packet.get_attribute('User-Name')
 
+            trial_token = get_trial_token(username)
             token = get_token(username)
 
-            if token and packet.verify_password(token):
+            if trial_token and packet.verify_password(trial_token):
+                reply = self.reply_accept(packet, group='trial')
+                reply_message = 'Auth by trial token (mac)'
+            elif token and packet.verify_password(token):
                 wifi_client = find_by_mac(mac)
                 is_employee = wifi_client.get('is_employee') if wifi_client else False
                 reply = self.reply_accept(packet, is_employee)

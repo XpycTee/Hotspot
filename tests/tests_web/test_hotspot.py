@@ -132,6 +132,97 @@ class TestHotspotViews(unittest.TestCase):
             self.assertEqual(response.status_code, 302)
             self.assertIn('/code/send', response.location)
 
+    @patch('web.pages.hotspot.Verification.start_verification')
+    @patch('web.pages.hotspot.Authorization.phone_authorization')
+    def test_preauth_iphone_uses_manual_flow_without_start(self, mock_phone_auth, mock_start_verification):
+        mock_phone_auth.return_value = AuthResponse(status=AuthStatus.FAILED, user_fp='user-fp')
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = '00:00:00:00:00:01'
+                sess['hardware_fp'] = 'fp-hw'
+
+            response = c.post(
+                '/preauth',
+                data={'phone': '79990000000'},
+                headers={'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)'},
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('callActionButton', response.get_data(as_text=True))
+            mock_start_verification.assert_not_called()
+
+    @patch('web.pages.hotspot.Verification.start_verification')
+    def test_call_start_wait_call(self, mock_start_verification):
+        mock_start_verification.return_value = VerificationResponse(
+            status=VerificationStatus.WAIT_CALL,
+            call_phone='79990001122',
+            code_avail=True,
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79990000000'
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.post('/preauth/call/start')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                response.get_json(),
+                {'state': 'pending', 'call_phone': '79990001122', 'code_avail': True},
+            )
+
+    @patch('web.pages.hotspot.Verification.start_verification')
+    def test_call_start_failed(self, mock_start_verification):
+        mock_start_verification.return_value = VerificationResponse(
+            status=VerificationStatus.FAILED,
+            error_message='provider failed',
+        )
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['phone'] = '79990000000'
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.post('/preauth/call/start')
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.get_json(), {'state': 'failed', 'message': 'provider failed'})
+
+    @patch('web.pages.hotspot.get_trial_credentials')
+    def test_sendin_trial(self, mock_get_trial_credentials):
+        mock_get_trial_credentials.return_value = {'username': 'AA', 'password': 'trial'}
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = 'AA'
+                sess['link-login-only'] = 'http://test/login'
+                sess['link-orig'] = 'http://test/orig'
+                sess['verify_session_id'] = 'verify-session'
+
+            response = c.get('/sendin/trial')
+            self.assertEqual(response.status_code, 200)
+            body = response.get_data(as_text=True)
+            self.assertIn('name="username" value="AA"', body)
+            self.assertIn('name="password" value="trial"', body)
+            mock_get_trial_credentials.assert_called_once_with('AA', None, None)
+
+    @patch('web.pages.hotspot.get_trial_credentials')
+    def test_sendin_trial_chap_switches_login_url_to_http(self, mock_get_trial_credentials):
+        mock_get_trial_credentials.return_value = {'username': 'AA', 'password': 'trial-hash'}
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['mac'] = 'AA'
+                sess['link-login-only'] = 'https://test/login'
+                sess['link-orig'] = 'http://test/orig'
+                sess['chap-id'] = '\\000'
+                sess['chap-challenge'] = '\\141\\142\\143'
+
+            response = c.get('/sendin/trial')
+            self.assertEqual(response.status_code, 200)
+            body = response.get_data(as_text=True)
+            self.assertIn('action="http://test/login"', body)
+            mock_get_trial_credentials.assert_called_once_with('AA', '\\000', '\\141\\142\\143')
+
     @patch('web.pages.hotspot.Verification.send_code')
     def test_code_send_wait_code(self, mock_send_code):
         mock_send_code.return_value = VerificationResponse(status=VerificationStatus.WAIT_CODE)

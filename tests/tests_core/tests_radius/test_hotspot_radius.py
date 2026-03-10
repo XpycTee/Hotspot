@@ -22,8 +22,9 @@ class TestHotspotRADIUS(unittest.TestCase):
         return packet
 
     @patch("radius.hotspot.find_by_mac")
+    @patch("radius.hotspot.get_trial_token")
     @patch("radius.hotspot.get_token")
-    def test_handle_auth_packet_accepts_token_auth(self, mock_get_token, mock_find_by_mac):
+    def test_handle_auth_packet_accepts_token_auth(self, mock_get_token, mock_get_trial_token, mock_find_by_mac):
         packet = self._packet()
         packet.verify_message_authenticator.return_value = True
         packet.get_attribute.side_effect = (
@@ -36,6 +37,7 @@ class TestHotspotRADIUS(unittest.TestCase):
         self.server.reply_reject.return_value = MagicMock()
 
         mock_get_token.return_value = "token-123"
+        mock_get_trial_token.return_value = None
         mock_find_by_mac.return_value = {"is_employee": True}
 
         self.server.handle_auth_packet(packet)
@@ -44,9 +46,32 @@ class TestHotspotRADIUS(unittest.TestCase):
         self.server.send_reply.assert_called_once_with(packet.fd, accept_reply)
         accept_reply.add_message_authenticator.assert_called_once()
 
-    @patch("radius.hotspot.Authorization")
+    @patch("radius.hotspot.get_trial_token")
     @patch("radius.hotspot.get_token")
-    def test_handle_auth_packet_accepts_mac_auth(self, mock_get_token, mock_authorization_cls):
+    def test_handle_auth_packet_accepts_trial_token(self, mock_get_token, mock_get_trial_token):
+        packet = self._packet()
+        packet.verify_message_authenticator.return_value = True
+        packet.get_attribute.side_effect = (
+            lambda name: {"Calling-Station-Id": "AA:BB:CC", "User-Name": "AA:BB:CC"}[name]
+        )
+        packet.verify_password.side_effect = lambda password: password == "trial-token"
+
+        accept_reply = MagicMock()
+        self.server.reply_accept.return_value = accept_reply
+        self.server.reply_reject.return_value = MagicMock()
+        mock_get_trial_token.return_value = "trial-token"
+        mock_get_token.return_value = None
+
+        self.server.handle_auth_packet(packet)
+
+        self.server.reply_accept.assert_called_once_with(packet, group="trial")
+        self.server.send_reply.assert_called_once_with(packet.fd, accept_reply)
+        accept_reply.add_message_authenticator.assert_called_once()
+
+    @patch("radius.hotspot.Authorization")
+    @patch("radius.hotspot.get_trial_token")
+    @patch("radius.hotspot.get_token")
+    def test_handle_auth_packet_accepts_mac_auth(self, mock_get_token, mock_get_trial_token, mock_authorization_cls):
         packet = self._packet()
         packet.verify_message_authenticator.return_value = True
         packet.get_attribute.side_effect = (
@@ -65,6 +90,7 @@ class TestHotspotRADIUS(unittest.TestCase):
         self.server.reply_accept.return_value = accept_reply
         self.server.reply_reject.return_value = MagicMock()
         mock_get_token.return_value = None
+        mock_get_trial_token.return_value = None
 
         self.server.handle_auth_packet(packet)
 
@@ -73,8 +99,9 @@ class TestHotspotRADIUS(unittest.TestCase):
         self.server.send_reply.assert_called_once_with(packet.fd, accept_reply)
         accept_reply.add_message_authenticator.assert_called_once()
 
+    @patch("radius.hotspot.get_trial_token")
     @patch("radius.hotspot.get_token")
-    def test_handle_auth_packet_rejects_bad_token(self, mock_get_token):
+    def test_handle_auth_packet_rejects_bad_token(self, mock_get_token, mock_get_trial_token):
         packet = self._packet()
         packet.verify_message_authenticator.return_value = True
         packet.get_attribute.side_effect = (
@@ -82,6 +109,7 @@ class TestHotspotRADIUS(unittest.TestCase):
         )
         packet.verify_password.return_value = False
         mock_get_token.return_value = "token-123"
+        mock_get_trial_token.return_value = None
 
         initial_reply = MagicMock()
         bad_token_reply = MagicMock()
@@ -170,4 +198,3 @@ class TestHotspotRADIUS(unittest.TestCase):
         self.server.update_hosts()
 
         self.assertEqual(self.server.hosts, hosts)
-

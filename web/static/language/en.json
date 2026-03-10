@@ -93,7 +93,11 @@
     },
     "callcheck": {
       "label_code": "Tap the call button to authorize",
-      "validity_message": "The call verification is valid for 5 minutes"
+      "validity_message": "The call verification is valid for 5 minutes",
+      "get_phone": "Get phone number",
+      "show_phone": "Show phone",
+      "preparing_phone": "Preparing phone number...",
+      "auto_failed_manual": "Automatic verification failed, use manual mode"
     },
     "sendin": {
       "title": "Authorization completed",

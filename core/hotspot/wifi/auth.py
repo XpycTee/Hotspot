@@ -1,5 +1,5 @@
 from core.config import get_config
-from core.hotspot.user.token import generate_token
+from core.hotspot.user.token import generate_token, generate_trial_token
 from core.hotspot.user.repository import update_clients_numbers_last_seen
 from core.hotspot.user.employees import check_employee
 from core.logging import get_logger
@@ -34,4 +34,16 @@ def get_credentials(mac, phone_number, user_fp=None, chap_id=None, chap_challeng
     return {
         "username": username,
         "password": password
+    }
+
+
+def get_trial_credentials(mac, chap_id=None, chap_challenge=None):
+    password = generate_trial_token(mac)
+
+    if chap_id and chap_challenge:
+        password = hash_chap(chap_id, password, chap_challenge)
+
+    return {
+        "username": mac,
+        "password": password,
     }

@@ -13,10 +13,21 @@ def _token_key(identity: str) -> str:
     return f"auth:token:{_normalize_mac(identity)}"
 
 
+def _trial_token_key(identity: str) -> str:
+    return f"auth:trial:{_normalize_mac(identity)}"
+
+
 def generate_token(mac):
     token = secrets.token_hex(32)
     with get_cache() as cache:
         cache.set(_token_key(mac), token, 3600)
+    return token
+
+
+def generate_trial_token(mac, ttl=300):
+    token = secrets.token_hex(32)
+    with get_cache() as cache:
+        cache.set(_trial_token_key(mac), token, ttl)
     return token
 
 
@@ -29,4 +40,10 @@ def check_token(mac, token):
 def get_token(mac):
     with get_cache() as cache:
         cache_token = cache.get(_token_key(mac))
+    return cache_token
+
+
+def get_trial_token(mac):
+    with get_cache() as cache:
+        cache_token = cache.get(_trial_token_key(mac))
     return cache_token

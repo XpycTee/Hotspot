@@ -1,0 +1,18 @@
+{% extends 'hotspot/base.html' %}
+
+{% block title %}
+{{ get_translate('html.sendin.title', session.user_lang) }}
+{% endblock %}
+
+{% block content %}
+<form class="form form-login" action="{{ link_login_only }}" method="post">
+    <input type="hidden" name="username" value="{{ username }}">
+    <input type="hidden" name="password" value="{{ password }}">
+    <input type="hidden" name="dst" value="{{ link_orig }}">
+    <input type="hidden" name="popup" value="true">
+</form>
+{% endblock %}
+
+{% block footer %}
+<script>document.forms[0].submit()</script>
+{% endblock %}
