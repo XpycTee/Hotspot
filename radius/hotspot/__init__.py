@@ -4,6 +4,7 @@ from core.hotspot.user.statistic import update_statistic
 from core.hotspot.user.token import get_token, get_trial_token
 from core.hotspot.wifi.repository import find_by_mac
 from core.logging import get_logger
+from core.redis import get_cache
 from radius.hotspot.packet import BasePacket, HotspotAcctPacket, HotspotAuthPacket
 from radius.hotspot.server import BaseServer
 
@@ -18,6 +19,13 @@ class HotspotRADIUS(BaseServer):
 
     def update_hosts(self):
         self.hosts = get_config().radius.hosts
+
+    @staticmethod
+    def _trial_nas_key(mac: str | None) -> str | None:
+        if not mac:
+            return None
+        normalized = mac.strip().replace('-', ':').lower()
+        return f'auth:trial:nas:{normalized}'
 
     def handle_auth_packet(self, packet: HotspotAuthPacket):
         self.logger.info('Received an authentication request')
@@ -37,11 +45,27 @@ class HotspotRADIUS(BaseServer):
         if verify_packet:
             mac = packet.get_attribute('Calling-Station-Id')
             username = packet.get_attribute('User-Name')
+            try:
+                framed_ip = packet.get_attribute('Framed-IP-Address')
+            except Exception:
+                framed_ip = None
 
             trial_token = get_trial_token(username)
             token = get_token(username)
 
             if trial_token and packet.verify_password(trial_token):
+                nas_key = self._trial_nas_key(mac)
+                if nas_key:
+                    with get_cache() as cache:
+                        cache.set(
+                            nas_key,
+                            {
+                                'radius_client_ip': packet.source[0] if packet.source else None,
+                                'nas_ip': packet.get_attribute('NAS-IP-Address'),
+                                'framed_ip': framed_ip,
+                            },
+                            300,
+                        )
                 reply = self.reply_accept(packet, group='trial')
                 reply_message = 'Auth by trial token (mac)'
             elif token and packet.verify_password(token):

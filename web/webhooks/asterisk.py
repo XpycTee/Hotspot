@@ -5,6 +5,7 @@ from flask import Blueprint, Response, request
 
 from core.config import get_config
 from core.config.models.verificators import VProviderType
+from core.hotspot.verification.webhook_finalize import finalize_verified_trial
 from core.logging import get_logger
 from core.redis import get_cache
 from core.utils.phone import normalize_phone
@@ -89,5 +90,6 @@ def index():
         if not check_status:
             phone_data['status'] = True
             cache.set(f'callcheck:asterisk:id:{request_id}', phone_data, CALLCHECK_CACHE_TTL_SECONDS)
+            finalize_verified_trial('asterisk', str(request_id))
 
     return Response('OK', status=200)

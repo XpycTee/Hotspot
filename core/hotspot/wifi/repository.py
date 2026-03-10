@@ -26,6 +26,18 @@ def find_by_mac(mac):
         }
 
 
+def find_session_attrs_by_mac(mac):
+    with get_session() as db_session:
+        query = select(WifiClient).where(WifiClient.mac == mac)
+        wifi_client = db_session.scalars(query).first()
+        if not wifi_client:
+            return None
+        return {
+            "last_ipv4_address": wifi_client.last_ipv4_address,
+            "last_location": wifi_client.last_location,
+        }
+
+
 def find_by_fp(user_fp):
     with get_session() as db_session:
         query = select(WifiClient).where(WifiClient.user_fp==user_fp)

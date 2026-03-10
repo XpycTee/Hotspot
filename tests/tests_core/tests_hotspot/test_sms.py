@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from core.config import init_config
+from core.config.models.verificators import VProviderType, VerificationMethod
 from core.hotspot.verification.router import VRouterStatus, VRouterResponse
 from core.hotspot.verification.service import Verification, VerificationStatus, VSessionStatus
 
@@ -95,3 +96,29 @@ class TestCoreHotspotVerification(unittest.TestCase):
         info_messages = [args[0] for args, _ in mock_logger_info.call_args_list]
         self.assertTrue(any('Code verification retry required' in msg for msg in warning_messages))
         self.assertTrue(any('Code verification passed' in msg for msg in info_messages))
+
+    @patch('core.hotspot.verification.service.VerificationRouter')
+    def test_start_verification_saves_hotspot_context_and_request_mapping(self, mock_router_cls):
+        mock_router = MagicMock()
+        mock_router.available_methods = {VerificationMethod.CALL}
+        mock_router.start_confirm.return_value = VRouterResponse(
+            status=VRouterStatus.SENDED,
+            provider=VProviderType.SMSRU,
+            request_id='request-1',
+            call_phone='79990001122',
+        )
+        mock_router_cls.return_value = mock_router
+
+        service = Verification('verify-request-map')
+        service.set_hotspot_context('AA:BB:CC:00:00:01', 'fp-hw')
+        service.mark_trial_issued()
+        result = service.start_verification('79990000000')
+
+        self.assertEqual(result.status, VerificationStatus.WAIT_CALL)
+        self.assertEqual(service.session.mac, 'AA:BB:CC:00:00:01')
+        self.assertEqual(service.session.hardware_fp, 'fp-hw')
+        self.assertTrue(service.session.trial_issued)
+        self.assertEqual(
+            Verification.resolve_session_id_by_request('smsru', 'request-1'),
+            'verify-request-map',
+        )

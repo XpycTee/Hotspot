@@ -47,3 +47,8 @@ def get_trial_token(mac):
     with get_cache() as cache:
         cache_token = cache.get(_trial_token_key(mac))
     return cache_token
+
+
+def delete_trial_token(mac):
+    with get_cache() as cache:
+        cache.delete(_trial_token_key(mac))

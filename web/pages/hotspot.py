@@ -422,6 +422,11 @@ def preauth():
         session.pop(_VERIFIED_CALL_SESSION_KEY, None)
         verify_session_id = _get_verify_session_id()
         iphone_mode = _is_iphone_user_agent(request.headers.get('User-Agent'))
+        verify_service = Verification(
+            verify_session_id,
+            flow_ctx=_build_flow_ctx('preauth', verify_session_id=verify_session_id, event='verify.start'),
+        )
+        verify_service.set_hotspot_context(mac, hardware_fp)
 
         if iphone_mode:
             _flow_log(
@@ -439,11 +444,6 @@ def preauth():
                 iphone_mode=True,
                 manual_fallback_enabled=True,
             )
-
-        verify_service = Verification(
-            verify_session_id,
-            flow_ctx=_build_flow_ctx('preauth', verify_session_id=verify_session_id, event='verify.start'),
-        )
 
         verify_response = verify_service.start_verification(norm_phone)
         _flow_log(
@@ -841,6 +841,12 @@ def sendin_trial():
     credentials = get_trial_credentials(mac, chap_id, chap_challenge)
     username = credentials.get('username')
     password = credentials.get('password')
+    if verify_session_id:
+        verify_service = Verification(
+            verify_session_id,
+            flow_ctx=_build_flow_ctx('sendin.trial', verify_session_id=verify_session_id, event='auth.flow.end'),
+        )
+        verify_service.mark_trial_issued()
 
     _flow_log('info', 'Issued trial credentials for CNA fallback', 'sendin.trial', verify_session_id=verify_session_id, event='auth.flow.end', status='AUTHORIZED')
     return render_template(

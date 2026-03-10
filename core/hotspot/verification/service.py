@@ -4,6 +4,7 @@ from enum import Enum, auto
 from random import randint
 from typing import Any
 
+from core.config.models.verificators import VProviderType
 from core.config.models.verificators import VerificationMethod
 from core.exceptions.verification import NoAvailableMethodError
 from core.hotspot.verification.router import VRouterStatus, VerificationRouter
@@ -51,9 +52,13 @@ class VerificationSession:
     session_id: str
     status: VSessionStatus
     phone: str | None = None
+    mac: str | None = None
+    hardware_fp: str | None = None
+    trial_issued: bool = False
+    webhook_finalized: bool = False
 
     # Options
-    provider: str | None = None
+    provider: VProviderType | None = None
 
     # Call
     call_id: str | None = None
@@ -66,6 +71,8 @@ class VerificationSession:
 
 
 class Verification:
+    _SESSION_TTL_SECONDS = 600
+
     def __init__(self, session_id: str, flow_ctx: dict[str, Any] | None = None):
         self._cache = RedisCache()
         self._flow_ctx = dict(flow_ctx or {})
@@ -90,6 +97,12 @@ class Verification:
                         chached_session['status'] = VSessionStatus[cached_status]
             except (ValueError, KeyError):
                 chached_session['status'] = VSessionStatus.START
+            cached_provider = chached_session.get('provider')
+            if cached_provider is not None and not isinstance(cached_provider, VProviderType):
+                try:
+                    chached_session['provider'] = VProviderType(cached_provider)
+                except (ValueError, KeyError):
+                    chached_session['provider'] = None
             self._session = VerificationSession(**chached_session)
             self._log('debug', 'Loaded verification session from cache', 'verify.start', session_status=self._session.status.name)
 
@@ -125,10 +138,64 @@ class Verification:
         log_fn(f'{self._prefix(ctx)} {message}', extra=ctx)
 
     def _save_session(self):
-        self._cache.set(f'verify:session:{self._session.session_id}', self._session, 600)
+        self._cache.set(
+            f'verify:session:{self._session.session_id}',
+            self._session,
+            self._SESSION_TTL_SECONDS,
+        )
 
     def _clear_session(self):
         self._cache.delete(f'verify:session:{self._session.session_id}')
+
+    def _request_mapping_key(self, provider: str, request_id: str) -> str:
+        return f'verify:request:{provider}:{request_id}'
+
+    def _save_request_mapping(self, provider: VProviderType | str | None, request_id: str | None):
+        if not provider or not request_id:
+            return
+        provider_name = getattr(provider, 'value', str(provider))
+        self._cache.set(
+            self._request_mapping_key(provider_name, str(request_id)),
+            self._session.session_id,
+            self._SESSION_TTL_SECONDS,
+        )
+
+    @classmethod
+    def resolve_session_id_by_request(cls, provider: str, request_id: str) -> str | None:
+        cache = RedisCache()
+        return cache.get(f'verify:request:{provider}:{request_id}')
+
+    @classmethod
+    def clear_session_request_mapping(cls, provider: str, request_id: str):
+        cache = RedisCache()
+        cache.delete(f'verify:request:{provider}:{request_id}')
+
+    def set_hotspot_context(self, mac: str | None, hardware_fp: str | None):
+        updated = False
+        if mac and self._session.mac != mac:
+            self._session.mac = mac
+            updated = True
+        if hardware_fp and self._session.hardware_fp != hardware_fp:
+            self._session.hardware_fp = hardware_fp
+            updated = True
+        if updated:
+            self._save_session()
+
+    def mark_trial_issued(self):
+        if self._session.trial_issued:
+            return
+        self._session.trial_issued = True
+        self._save_session()
+
+    def mark_webhook_finalized(self):
+        if self._session.webhook_finalized:
+            return
+        self._session.webhook_finalized = True
+        self._save_session()
+
+    @property
+    def session(self) -> VerificationSession:
+        return self._session
 
     def start_verification(self, phone: str) -> VerificationResponse:
         if self._session.status == VSessionStatus.WAIT_CALL and self._session.phone == phone:
@@ -176,6 +243,7 @@ class Verification:
                 self._session.call_phone = router_resp.call_phone
                 self._session.timeout = datetime.now() + timedelta(minutes=5)
                 self._save_session()
+                self._save_request_mapping(router_resp.provider, router_resp.request_id)
                 self._log(
                     'info',
                     'Call verification started',

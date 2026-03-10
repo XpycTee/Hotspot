@@ -59,6 +59,22 @@ class TestAsteriskWebhook(unittest.TestCase):
             data = cache.get('callcheck:asterisk:id:req-1')
             self.assertTrue(data['status'])
 
+    @patch('web.webhooks.asterisk.finalize_verified_trial')
+    @patch('web.webhooks.asterisk._get_expected_api_key')
+    def test_post_header_token_triggers_trial_finalize(self, mock_expected_key, mock_finalize):
+        mock_expected_key.return_value = self.api_key
+        with get_cache() as cache:
+            cache.set('callcheck:asterisk:phone:79990000003', 'req-4', 300)
+            cache.set('callcheck:asterisk:id:req-4', {'status': False, 'phone': '79990000003'}, 300)
+
+        response = self.client.post(
+            '/webhook/asterisk',
+            json={'phone': '+7 (999) 000-00-03'},
+            headers={'X-Webhook-Token': self.api_key},
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_finalize.assert_called_once_with('asterisk', 'req-4')
+
     @patch('web.webhooks.asterisk._get_expected_api_key')
     def test_get_compatibility(self, mock_expected_key):
         mock_expected_key.return_value = self.api_key

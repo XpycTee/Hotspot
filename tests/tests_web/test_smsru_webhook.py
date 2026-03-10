@@ -66,6 +66,22 @@ class TestSmsruWebhook(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_data(as_text=True), "100")
 
+    @patch('web.webhooks.smsru.finalize_verified_trial')
+    @patch('web.webhooks.smsru._get_smsru_api_key')
+    def test_verified_status_triggers_trial_finalize(self, mock_api_key, mock_finalize):
+        mock_api_key.return_value = self.api_key
+        check_id = "check-finalize"
+        with get_cache() as cache:
+            cache.set(f'callcheck:smsru:id:{check_id}', {'confirm': {'check_status': 400}}, 600)
+
+        entry = _build_callcheck_entry(check_id, 401)
+        payload = {'data[0]': entry}
+        payload['hash'] = _build_hash(self.api_key, [entry])
+
+        response = self.client.post('/webhook/smsru', data=payload)
+        self.assertEqual(response.status_code, 200)
+        mock_finalize.assert_called_once_with('smsru', check_id)
+
     @patch('web.webhooks.smsru._get_smsru_api_key')
     def test_replay_is_ignored(self, mock_api_key):
         mock_api_key.return_value = self.api_key

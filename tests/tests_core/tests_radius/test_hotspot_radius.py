@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from core.hotspot.authorization.service import AuthResponse, AuthStatus
+from core.redis import get_cache
 from radius.hotspot import HotspotRADIUS
 from pyrad2.constants import PacketType
 
@@ -49,11 +50,20 @@ class TestHotspotRADIUS(unittest.TestCase):
     @patch("radius.hotspot.get_trial_token")
     @patch("radius.hotspot.get_token")
     def test_handle_auth_packet_accepts_trial_token(self, mock_get_token, mock_get_trial_token):
+        with get_cache() as cache:
+            cache.clear()
+
         packet = self._packet()
         packet.verify_message_authenticator.return_value = True
         packet.get_attribute.side_effect = (
-            lambda name: {"Calling-Station-Id": "AA:BB:CC", "User-Name": "AA:BB:CC"}[name]
+            lambda name: {
+                "Calling-Station-Id": "AA:BB:CC",
+                "User-Name": "AA:BB:CC",
+                "NAS-IP-Address": "10.0.0.1",
+                "Framed-IP-Address": "10.0.0.50",
+            }[name]
         )
+        packet.source = ("10.0.0.2", 1812)
         packet.verify_password.side_effect = lambda password: password == "trial-token"
 
         accept_reply = MagicMock()
@@ -67,6 +77,9 @@ class TestHotspotRADIUS(unittest.TestCase):
         self.server.reply_accept.assert_called_once_with(packet, group="trial")
         self.server.send_reply.assert_called_once_with(packet.fd, accept_reply)
         accept_reply.add_message_authenticator.assert_called_once()
+        with get_cache() as cache:
+            nas_ctx = cache.get('auth:trial:nas:aa:bb:cc')
+        self.assertEqual(nas_ctx, {'radius_client_ip': '10.0.0.2', 'nas_ip': '10.0.0.1', 'framed_ip': '10.0.0.50'})
 
     @patch("radius.hotspot.Authorization")
     @patch("radius.hotspot.get_trial_token")

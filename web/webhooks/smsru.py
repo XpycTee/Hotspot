@@ -6,6 +6,7 @@ from flask import Blueprint, Response, request
 
 from core.config import get_config
 from core.config.models.verificators import VProviderType
+from core.hotspot.verification.webhook_finalize import finalize_verified_trial
 from core.redis import get_cache
 from web import logger
 
@@ -128,5 +129,7 @@ def index():
 
             cached_data['confirm'] = confirm_data
             cache.set(cache_key, cached_data, CALLCHECK_CACHE_TTL_SECONDS)
+        if confirm_data.get('check_status') == 401:
+            finalize_verified_trial('smsru', check_id)
 
     return Response("100", status=200)
