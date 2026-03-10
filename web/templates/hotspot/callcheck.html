@@ -16,19 +16,19 @@
 
     <div class="error-notify" {{ 'style=display:none;' if not error else '' }}>{{ error }}</div>
 
-    <a id="callLinkButton" class="mt-2 btn btn-submit btn-link" href="#"
+    <a id="callLinkButton" class="mt-2 btn btn-submit" href="#"
        style="{{ '' if call_phone else 'display:none;' }}">
         {{ get_translate('html.callcheck.show_phone', session.user_lang) }}
     </a>
 
-    <button id="callActionButton" type="button" class="mt-2 btn btn-submit btn-link"
+    <button id="callActionButton" type="button" class="mt-2 btn btn-wide btn-submit"
             style="{{ '' if iphone_mode else 'display:none;' }}">
         {{ get_translate('html.callcheck.get_phone', session.user_lang) }}
     </button>
 
-    {% if code_avail %}
-    <a class="text-center mt-2 link-line" href="{{ url_for('pages.hotspot.code_send') }}">{{ get_translate('buttons.send_code', session.user_lang) }}</a>
-    {% endif %}
+    <a id="codeSendLink" class="text-center mt-2 link-line" href="{{ url_for('pages.hotspot.code_send') }}">
+        {{ get_translate('buttons.send_code', session.user_lang) }}
+    </a>
 
     <label id="modal_trigger" class="text-center mt-2 link-line" data-modal-target="#privacyPolicyModal">{{ get_translate('html.privacy_policy_label', session.user_lang) }}</label>
 </div>
@@ -425,7 +425,6 @@
         } else if (qrCanvas) {
             qrCanvas.style.display = "none";
         }
-
         if (iphoneMode) {
             showFallbackButton();
             return;
