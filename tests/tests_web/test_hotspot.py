@@ -234,6 +234,32 @@ class TestHotspotViews(unittest.TestCase):
             response = c.post('/code/send')
             self.assertEqual(response.status_code, 200)
 
+    @patch('web.pages.hotspot.Verification.send_code')
+    def test_code_send_with_session_error_does_not_resend(self, mock_send_code):
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verify_session_id'] = 'verify-session'
+                sess['error'] = 'retry'
+
+            response = c.get('/code/send')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('retry', response.get_data(as_text=True))
+            mock_send_code.assert_not_called()
+
+    @patch('web.pages.hotspot.Verification.send_code')
+    @patch('web.pages.hotspot.Verification.ensure_phone')
+    def test_code_send_recovers_phone_from_web_session(self, mock_ensure_phone, mock_send_code):
+        mock_send_code.return_value = VerificationResponse(status=VerificationStatus.WAIT_CODE)
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['verify_session_id'] = 'verify-session'
+                sess['phone'] = '79990000000'
+
+            response = c.post('/code/send')
+            self.assertEqual(response.status_code, 200)
+            mock_ensure_phone.assert_called_once_with('79990000000')
+
     @patch('web.pages.hotspot.Verification.code_verification')
     def test_code_auth_denied_redirects_login(self, mock_code_verification):
         mock_code_verification.return_value = VerificationResponse(
@@ -456,7 +482,8 @@ class TestHotspotViews(unittest.TestCase):
                 sess['verify_session_id'] = 'verify-session'
 
             response = c.post('/code/auth', data={'code': '0000'})
-            self.assertEqual(response.status_code, 307)
+            self.assertEqual(response.status_code, 302)
+            self.assertIn('/code/send', response.location)
 
             warning_messages = [args[0] for args, _ in mock_logger_warning.call_args_list]
             self.assertTrue(any('[auth_flow=flow-1 verify=verify-session stage=code.auth]' in msg for msg in warning_messages))

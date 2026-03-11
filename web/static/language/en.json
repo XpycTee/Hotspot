@@ -209,6 +209,7 @@
     "auth": "Authorization",
     "send_code": "Send SMS with code",
     "call": "Call",
+    "confirm_code": "Confirm code",
     "onfirm_code": "Confirm code",
     "panel": "Panel",
     "settings": "Settings",

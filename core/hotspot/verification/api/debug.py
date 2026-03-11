@@ -11,9 +11,11 @@ class DebugCodeDelivery(CodeDeliveryProvider):
         self.name = name
         logger.debug(f"{self.name} initialized")
 
-    def send_code(self, phone: str, code: str) -> bool:
-        logger.info(f"[{self.name}] send_code called: phone={phone}, code={code}")
-        # Просто возвращаем True, как будто доставка прошла успешно
+    def send_code(self, phone: str, code: str) -> SendCodeResult:
+        message = f"[{self.name}] verification code for {phone}: {code}"
+        # Debug provider should always expose the OTP in terminal, regardless of logger level.
+        print(message, flush=True)
+        logger.info(message)
         return SendCodeResult(
             status=DeliveryStatus.SENT,
         )
@@ -33,7 +35,7 @@ class DebugCallConfirmation(CallConfirmationProvider):
         self._counter = 0
         logger.debug(f"{self.name} initialized")
 
-    def start_verification(self, phone: str) -> str:
+    def start_verification(self, phone: str) -> ConfirmResult:
         self._counter += 1
         request_id = f"debug-{self._counter}"
         session = DebugCallSession(request_id=request_id, phone=phone)
@@ -45,7 +47,7 @@ class DebugCallConfirmation(CallConfirmationProvider):
             call_phone="Debug",
         )
 
-    def check_verification(self, request_id: str) -> bool:
+    def check_verification(self, request_id: str) -> ConfirmResult:
         session = self._sessions.get(request_id)
         if not session:
             logger.warning(f"[{self.name}] check_verification: unknown request_id={request_id}")

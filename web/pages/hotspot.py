@@ -531,10 +531,15 @@ def code_send():
         _flow_log('warning', 'Missing verify_session_id in code_send', 'code.send', event='verify.code.send')
         abort(400)
 
+    if error:
+        _flow_log('debug', 'Rendering code page with existing error without resend', 'code.send', verify_session_id=verify_session_id, event='verify.code.send')
+        return render_template('hotspot/code.html', error=error)
+
     service = Verification(
         verify_session_id,
         flow_ctx=_build_flow_ctx('code.send', verify_session_id=verify_session_id, event='verify.code.send'),
     )
+    service.ensure_phone(session.get('phone'))
     response = service.send_code()
     _flow_log(
         'debug',
@@ -575,6 +580,7 @@ def resend():
         verify_session_id,
         flow_ctx=_build_flow_ctx('code.resend', verify_session_id=verify_session_id, event='verify.code.send'),
     )
+    service.ensure_phone(phone_number)
     response = service.send_code()
 
     if response.status in (VerificationStatus.FAILED, VerificationStatus.ERROR):
@@ -625,7 +631,7 @@ def code_auth():
     if verify_response.status == VerificationStatus.RETRY:
         session['error'] = verify_response.error_message
         _flow_log('warning', 'Invalid code, retry allowed', 'code.auth', verify_session_id=verify_session_id, event='verify.code.check', status='RETRY')
-        return redirect(url_for('pages.hotspot.code_send'), 307)
+        return redirect(url_for('pages.hotspot.code_send'), 302)
 
     if verify_response.status == VerificationStatus.DENIED:
         session['error'] = verify_response.error_message

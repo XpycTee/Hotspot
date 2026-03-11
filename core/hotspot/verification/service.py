@@ -181,6 +181,13 @@ class Verification:
         if updated:
             self._save_session()
 
+    def ensure_phone(self, phone: str | None):
+        if not phone or self._session.phone:
+            return
+        self._session.phone = phone
+        self._save_session()
+        self._log('info', 'Recovered phone into verification session from web session', 'verify.code.send')
+
     def mark_trial_issued(self):
         if self._session.trial_issued:
             return
